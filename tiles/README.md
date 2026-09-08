@@ -12,7 +12,8 @@ Class directories (not product names). Each child README will lock LDS and
 | [`comm/`](comm/README.md) | `pcie` (stub) |
 
 **DOT tiles** (`fa_fdot2`, `w4a16_fdot2`, `exl3_3inst`, `moe/shared`) share
-one source compiled for gfx1030 and gfx1100 as two fatbins. See
-`include/hippihx/dot.hpp`. gfx900 does not load them.
+one source compiled for gfx1030 and gfx1100/1101/1102 as separate fatbins.
+See `include/hippihx/dot.hpp`. gfx900 does not load them. gfx1013 (BC-250 /
+Cyan Skillfish) must VERIFY before sharing this header.
 
 `smoke.hip` is a CMake link stub only.

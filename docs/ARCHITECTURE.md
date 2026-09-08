@@ -24,36 +24,43 @@ and launch one V1 op.
                     run(binding)  # no D2H under capture
 ```
 
-## Shared DOT source (gfx1030 + gfx1100)
+## Shared DOT source (gfx1030 + gfx110x)
 
 FA, EXL3, AWQ/W4A16, and `moe/shared` are **the same tile source**.
-gfx1100 is a **first-class DOT consumer**, not a later port.
+gfx1100/1101/1102 are **first-class DOT consumers**, not a later port.
 
 | Rule | Meaning |
 |---|---|
 | One source | `tiles/attn/fa_fdot2`, `tiles/gemm/w4a16_fdot2`, `tiles/gemm/exl3_3inst`, `tiles/moe/shared` |
-| Two fatbins | `--offload-arch=gfx1030` and `--offload-arch=gfx1100` as **two CMake trees** |
+| Separate fatbins | one `--offload-arch` per CMake tree (`gfx1030`, `gfx1100`, `gfx1101`, `gfx1102`) |
 | No multi-arch object | Never `--offload-arch=gfx1030,gfx1100` in one `.a` / `.so` |
+| No foreign ISA load | **Never** `HSA_OVERRIDE_GFX_VERSION` or load gfx1030 objects on another GFX |
 | No WMMA gate | **Never** `#ifdef WMMA` (or WMMA-only paths) in those files |
-| WMMA Later | gfx1100-only overlay, optional, never required for DOT |
+| WMMA Later | gfx110x overlay, optional, never required for DOT |
 | wave32 only | DOT tiles do not ship a wave64 path |
 | No `fdot2.bf16` | `fdot2` / `v_dot2c` only |
 
 `include/hippihx/dot.hpp` is the compile-time lock. CMake omits the DOT
-list from the gfx900 archive so Vega cannot pick up a DOT object.
+list from the gfx900 archive.
 
 ## Fatbin policy
 
-| Slot | Built? | Loads DOT? | Notes |
+| Target | Built? | Shared DOT with gfx1030? | Notes |
 |---|---|---|---|
-| gfx1030 | yes | yes | V620, ROCm 7.14, wave32 |
-| gfx1100 | yes | yes | same source as gfx1030 |
-| gfx900 | yes | **no** | `mad_mix` / `pk_fma` — do not conflate with gfx1030 DOT |
-| gfx906 | **Later** | **no** | fourth Vega-variant slot; enum + docs only; CMake refuses to configure |
+| **gfx1030** | yes (primary) | — | V620 dest |
+| **gfx1100/1101/1102** | yes | **yes** (same `dot.hpp`, no WMMA gate) | separate fatbin |
+| **gfx1151** Strix Halo | Later DOT fatbin | VERIFY then likely yes if wave32 DOT path | not WMMA-gated |
+| **gfx1031/1032/1033/1035/1036** Deck/mobile | Later DOT fatbin | yes (RDNA2 DOT class) | separate objects |
+| **gfx1013** BC-250 | Later fatbin | **VERIFY before sharing** `dot.hpp` | Cyan Skillfish ≠ Navi21. akandr uses RDNA1-macro paths for 1010/1012/1013. `--offload-arch=gfx1013` only |
+| **gfx900** | yes stub / Later mad_mix | **no** | never load FA/EXL3 DOT |
+| **gfx906** (real Vega20/MI50) | Later non-DOT if ever | **no** | **not** BC-250 |
 
 One configure tree → one `libhippihx_<arch>.a` in `build/fatbin/<arch>/`.
-CMake rejects a multi-arch `HIPPIHX_ARCH` or `CMAKE_HIP_ARCHITECTURES`
-list, and rejects `gfx906` as “Later — not built yet.”
+CMake rejects multi-arch lists and refuses Later slots (`gfx1013`,
+`gfx906`, `gfx1151`, Deck `gfx103x`) until they are opened.
+
+**BC-250 is not Vega20.** Real dumps: Cyan Skillfish **`gfx1013`** (Oberon
+cut-down APU). `gfx906` is MI50/Vega20 only.
 
 ## ROCm pin (V620)
 
@@ -119,8 +126,9 @@ Do not add `produce/`, `awq/`, or `3inst/` packer trees to hippihx.
 
 `hippihx.list_ops()` enumerates contracts. Each op is
 `hippihx.<group>.<op>` with `Caps`, `plan`, `bind`, `run`, `is_supported`.
-DOT ops report `META.dot is True` and `is_supported` only on gfx1030 /
-gfx1100. The skeleton is host-side and torch-free.
+DOT ops report `META.dot is True` and `is_supported` only on built DOT
+slots (gfx1030 + gfx1100/1101/1102). The skeleton is host-side and
+torch-free.
 
 ## Non-goals (room lock)
 

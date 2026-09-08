@@ -55,9 +55,9 @@ target_include_directories(hippihx PUBLIC
 )
 
 # Shared DOT source: FA / EXL3 / AWQ-W4A16 / moe.shared.
-# Same .hip for gfx1030 and gfx1100; two --offload-arch builds, never one
-# multi-arch object. gfx900 does not load these (mad_mix / pk_fma slot).
-# Never #ifdef WMMA in these files.
+# Same .hip for gfx1030 and gfx1100/1101/1102; one --offload-arch each.
+# gfx900 does not load these (mad_mix / pk_fma). Never #ifdef WMMA.
+# Never HSA_OVERRIDE a foreign ISA (esp. gfx1030 objects onto gfx1013).
 set(HIPPIHX_DOT_SOURCES
   tiles/attn/fa_fdot2/kernel.hip
   tiles/gemm/w4a16_fdot2/kernel.hip
@@ -83,7 +83,7 @@ if(HIPPIHX_IS_DOT_SLOT)
   list(APPEND HIPPIHX_TILE_SOURCES ${HIPPIHX_DOT_SOURCES})
   message(STATUS "hippihx: DOT shared source ON for ${HIPPIHX_ARCH} (wave32, no WMMA gate)")
 else()
-  message(STATUS "hippihx: Vega slot ${HIPPIHX_ARCH} — no DOT tiles (mad_mix / pk_fma)")
+  message(STATUS "hippihx: non-DOT slot ${HIPPIHX_ARCH} — no FA/EXL3 DOT (mad_mix / pk_fma)")
 endif()
 
 if(NOT HIPPIHX_HAS_HIP)
@@ -109,5 +109,5 @@ set_target_properties(hippihx_smoke_host PROPERTIES
 # Convenience: document slots without mixing them into this .a.
 add_custom_target(hippihx_list_fatbin_slots
   COMMAND ${CMAKE_COMMAND} -E echo
-          "DOT fatbins: gfx1030 | gfx1100 (same source, two builds) ; Vega: gfx900 ; Later: gfx906"
+          "built: gfx1030 + gfx1100/1101/1102 DOT, gfx900 stub; Later: gfx1151 gfx103x gfx1013(BC-250) gfx906(Vega20)"
 )

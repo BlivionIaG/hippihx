@@ -17,15 +17,17 @@ Do not copy CUDA, CuTe, CE, or NVFP4 objects from
 ## ROCm / arch
 
 - V620 = **gfx1030**, **wave32**, **ROCm 7.14**.
-- **gfx1100** is a first-class DOT consumer of the **same** FA / EXL3 /
-  AWQ / `moe.shared` source. Two `--offload-arch` builds, never one
-  multi-arch object.
-- gfx900 is a Vega fatbin (`mad_mix` / `pk_fma`). It does **not** load
-  DOT tiles. gfx906 is Later (docs/enum only).
-- CMake must keep failing if someone passes multiple `--offload-arch`
-  values into one target, or `HIPPIHX_ARCH=gfx906`.
+- **gfx1100/1101/1102** are first-class DOT consumers of the **same** FA /
+  EXL3 / AWQ / `moe.shared` source. One `--offload-arch` per fatbin.
+- gfx900 is a Vega stub (`mad_mix` / `pk_fma`). It does **not** load DOT
+  tiles.
+- **BC-250 is gfx1013** (Cyan Skillfish), Later — VERIFY before sharing
+  `dot.hpp`. **gfx906 is Vega20/MI50**, Later non-DOT, **not** BC-250.
+- gfx1151 and Deck gfx103x are Later DOT fatbins (separate objects).
+- CMake must refuse multi-arch lists, Later slots, and never imply
+  `HSA_OVERRIDE` / foreign ISA load.
 - Shared DOT tiles: **wave32 only**, **no `fdot2.bf16`**, **never
-  `#ifdef WMMA`**. WMMA is a gfx1100-only Later overlay.
+  `#ifdef WMMA`**. WMMA is a gfx110x-only Later overlay.
 
 ## Landing a tile
 
@@ -40,7 +42,8 @@ Do not copy CUDA, CuTe, CE, or NVFP4 objects from
 5. Host tests for the protocol stay torch-free until a HIP extension exists.
 6. If the tile is DOT, include `hippihx/dot.hpp` (not a WMMA header) and
    mark `make_op(..., dot=True)`. Do not add a gfx1030-only or
-   gfx1100-only copy of the file.
+   gfx110x-only copy of the file. Do not share `dot.hpp` with gfx1013
+   until VERIFY.
 
 ## Build checks
 

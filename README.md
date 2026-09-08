@@ -1,9 +1,9 @@
 # hippihx
 
 HIP kernel / op zoo. **gfx1030** (Radeon Pro **V620**, RDNA2, wave32, ROCm
-7.14) and **gfx1100** are first-class **DOT** consumers of the **same tile
-source**. **gfx900** is a separate Vega fatbin (`mad_mix` / `pk_fma` — not
-DOT). **gfx906** is a Later fourth slot, documented only.
+7.14) and **gfx1100/1101/1102** are first-class **DOT** consumers of the
+**same tile source**. **gfx900** is a Vega stub (`mad_mix` / `pk_fma` — not
+DOT). **BC-250 is gfx1013** (Cyan Skillfish), not Vega20/`gfx906`.
 
 hippihx is the place tile contracts live so Blivion’s
 [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
@@ -61,17 +61,21 @@ fa_fdot2.run(binding)  # stub: no device work yet
 
 ## Arch targets
 
-| Slot | Role | Wave | Hardware assumptions |
+| Target | Built? | Shared DOT with gfx1030? | Notes |
 |---|---|---|---|
-| **gfx1030** | DOT consumer. V620. **ROCm 7.14** pin. | 32 | `fdot2` / `v_dot2c`. No WMMA, no MFMA, no FP8 HW, **no `fdot2.bf16`**. |
-| **gfx1100** | **First-class DOT consumer.** Same tile source as gfx1030. | 32 | Same DOT contract. WMMA is a **Later overlay only** — never `#ifdef WMMA` on shared tiles, never required. |
-| **gfx900** | Third fatbin. Vega. **Not** a load of DOT tiles. | 64 | `mad_mix` / `pk_fma`. Do not reuse a gfx1030/gfx1100 object. |
-| **gfx906** | **Later** fourth slot / Vega variant. Not built yet. | 64 | Same “no shared objects / no DOT objects on Vega” rule. |
+| **gfx1030** | yes (primary) | — | V620 dest. ROCm 7.14. wave32. |
+| **gfx1100/1101/1102** | yes | **yes** (same `dot.hpp` source, no WMMA gate) | separate fatbin each |
+| **gfx1151** Strix Halo | Later DOT fatbin | VERIFY then likely yes if wave32 DOT path | not WMMA-gated |
+| **gfx1031/1032/1033/1035/1036** Deck/mobile | Later DOT fatbin | yes (RDNA2 DOT class) | separate objects |
+| **gfx1013** BC-250 | Later fatbin | **VERIFY before sharing** `dot.hpp` | Cyan Skillfish ≠ Navi21. `--offload-arch=gfx1013` only |
+| **gfx900** | yes stub / Later mad_mix | **no** | never load FA/EXL3 DOT |
+| **gfx906** (real Vega20/MI50) | Later non-DOT if ever | **no** | **not** BC-250 |
 
-**Separate fatbins, no shared objects.** DOT source is shared; objects are
-not. One configure tree → one `libhippihx_<arch>.a` under
-`build/fatbin/<arch>/`. Never `--offload-arch=gfx1030,gfx1100` in a single
-artifact.
+**Separate fatbins, no shared objects.** DOT source may be shared; objects
+are not. One configure tree → one `libhippihx_<arch>.a`. Never
+`--offload-arch=gfx1030,gfx1100` in one artifact. **Never
+`HSA_OVERRIDE_GFX_VERSION` / never load a foreign ISA** (especially never
+run gfx1030 objects on gfx1013).
 
 ## Shared DOT source
 
@@ -80,9 +84,10 @@ FA (`attn/fa_fdot2`), EXL3 (`gemm/exl3_3inst`), AWQ/W4A16
 twice:
 
 ```bash
-# two builds, same tiles/*.hip
+# same tiles/*.hip, one --offload-arch per tree
 cmake -S . -B build-gfx1030 -DHIPPIHX_ARCH=gfx1030
 cmake -S . -B build-gfx1100 -DHIPPIHX_ARCH=gfx1100
+# gfx1101 / gfx1102 are the same DOT source, separate fatbins
 ```
 
 Craft locks: **wave32 only**, **no `fdot2.bf16`**, **never `#ifdef WMMA`**.
@@ -163,7 +168,8 @@ consume layout and ships HIP that reads it.
 - No production GEMM or attention ISA in this skeleton (stubs exist so
   CMake is real).
 - No multi-arch `.so`. No `#ifdef WMMA` on shared DOT tiles. No
-  `fdot2.bf16`. No DOT objects on gfx900 / gfx906.
+  `fdot2.bf16`. No DOT objects on gfx900 / gfx906. No HSA_OVERRIDE.
+- BC-250 is **gfx1013** (Cyan Skillfish), not gfx906.
 
 ## Docs
 
