@@ -8,7 +8,7 @@ CODE = {".py", ".hip", ".cu", ".cuh", ".hpp", ".h", ".cpp", ".cc"}
 
 IMPORT_RE = re.compile(
     r"^\s*(?:import|from)\s+(cute|cutlass|b12x)\b"
-    r"|^\s*#include\s*[<\"](?:cute/|cutlass/|cuda_runtime)",
+    r"|^\s*#include\s*[<\"](?:cute/|cutlass/|cuda_runtime|mma\.h|hip_wmma)",
     re.MULTILINE,
 )
 

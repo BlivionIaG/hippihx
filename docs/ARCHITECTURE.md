@@ -24,30 +24,42 @@ and launch one V1 op.
                     run(binding)  # no D2H under capture
 ```
 
-## Fatbin policy
+## Shared DOT source (gfx1030 + gfx1100)
+
+FA, EXL3, AWQ/W4A16, and `moe/shared` are **the same tile source**.
+gfx1100 is a **first-class DOT consumer**, not a later port.
 
 | Rule | Meaning |
 |---|---|
-| Three slots | `gfx1030`, `gfx1100`, `gfx900` |
-| One arch per artifact | `libhippihx_<arch>.a` in `build/fatbin/<arch>/` |
-| No shared objects across arches | Do not ship one `.so` / `.a` with multiple `--offload-arch` |
-| No object reuse | A gfx1030 code object is invalid on gfx1100 / gfx900 |
-| Default | `HIPPIHX_ARCH=gfx1030` |
+| One source | `tiles/attn/fa_fdot2`, `tiles/gemm/w4a16_fdot2`, `tiles/gemm/exl3_3inst`, `tiles/moe/shared` |
+| Two fatbins | `--offload-arch=gfx1030` and `--offload-arch=gfx1100` as **two CMake trees** |
+| No multi-arch object | Never `--offload-arch=gfx1030,gfx1100` in one `.a` / `.so` |
+| No WMMA gate | **Never** `#ifdef WMMA` (or WMMA-only paths) in those files |
+| WMMA Later | gfx1100-only overlay, optional, never required for DOT |
+| wave32 only | DOT tiles do not ship a wave64 path |
+| No `fdot2.bf16` | `fdot2` / `v_dot2c` only |
 
-CMake rejects a multi-arch `HIPPIHX_ARCH` or `CMAKE_HIP_ARCHITECTURES` list.
+`include/hippihx/dot.hpp` is the compile-time lock. CMake omits the DOT
+list from the gfx900 archive so Vega cannot pick up a DOT object.
 
-Configure **three build trees** if you need all slots. A convenience target
-`hippihx_list_fatbin_slots` only prints the policy; it does not merge
-objects.
+## Fatbin policy
+
+| Slot | Built? | Loads DOT? | Notes |
+|---|---|---|---|
+| gfx1030 | yes | yes | V620, ROCm 7.14, wave32 |
+| gfx1100 | yes | yes | same source as gfx1030 |
+| gfx900 | yes | **no** | `mad_mix` / `pk_fma` — do not conflate with gfx1030 DOT |
+| gfx906 | **Later** | **no** | fourth Vega-variant slot; enum + docs only; CMake refuses to configure |
+
+One configure tree → one `libhippihx_<arch>.a` in `build/fatbin/<arch>/`.
+CMake rejects a multi-arch `HIPPIHX_ARCH` or `CMAKE_HIP_ARCHITECTURES`
+list, and rejects `gfx906` as “Later — not built yet.”
 
 ## ROCm pin (V620)
 
 V620 work is pinned to **ROCm 7.14**. That pin is documented and carried as
 `HIPPIHX_ROCM_PIN` in CMake. Do not silently retarget gfx1030 tiles to a
 newer toolchain without an explicit contract change.
-
-gfx1030: **wave32**. No WMMA, no MFMA, no FP8 hardware. DOT math is
-`fdot2` / `v_dot2c` unless a tile README records a different unit.
 
 ## Engine bind rules
 
@@ -72,14 +84,27 @@ These are room-locked for future Python / `torch.ops` and for anyone wiring
 
 Directories are classes, not SKUs:
 
-- `attn/fa_fdot2`, `attn/gdn_scan`, `attn/kda_scan`, `attn/qsa_indexer`,
-  `attn/dsa_nope`
-- `gemm/w4a16_fdot2`, `gemm/exl3_3inst` (consume hook)
-- `moe/routed` (gate/up/down), `moe/shared`, `moe/leftover_bf16`
-- `comm/pcie` (Uncached + push AR, INT8/Q8 wire class — stub)
+- `attn/fa_fdot2` (DOT), `attn/gdn_scan`, `attn/kda_scan`,
+  `attn/qsa_indexer`, `attn/dsa_nope`
+- `gemm/w4a16_fdot2` (DOT), `gemm/exl3_3inst` (DOT consume hook)
+- `moe/routed` (gate/up/down), `moe/shared` (DOT), `moe/leftover_bf16`
+- `sequence/causal_conv` — scalar FMA, `state_len≈4`; **not** under
+  `gdn_scan`. GDN vs KDA layouts differ (do not retarget GDN 16/48 onto
+  KDA 64×128).
+- `comm/pcie` — Uncached+push **Later**; INT8/Q8 wire class preferred;
+  Leave E4M3 / `f8_dma` without FP8 HW
 
 Each tile README will lock **LDS** and **`__launch_bounds__`** before ISA
 lands. Occupancy notes (VGPR vs `waves_per_eu`) belong there too.
+
+### FA LDS pins (before extras migrate)
+
+Recorded on `tiles/attn/fa_fdot2/README.md`. Fill numbers at migrate; do
+not invent tok/s:
+
+- prefill leftover launch shape hygiene `(N,1)`
+- ≤48 KiB TopK / LDS budget + `attn_stages` guard (64 KiB class)
+- `LDS_PAD=8` on W4 A-tile paths where relevant
 
 ## Produce vs consume
 
@@ -94,12 +119,13 @@ Do not add `produce/`, `awq/`, or `3inst/` packer trees to hippihx.
 
 `hippihx.list_ops()` enumerates contracts. Each op is
 `hippihx.<group>.<op>` with `Caps`, `plan`, `bind`, `run`, `is_supported`.
-The skeleton is host-side and torch-free. Device launches wait for real
-tiles + a HIP extension.
+DOT ops report `META.dot is True` and `is_supported` only on gfx1030 /
+gfx1100. The skeleton is host-side and torch-free.
 
 ## Non-goals (room lock)
 
-- Importing or forking b12x CUDA / CuTe / CE / NVFP4 sources
+- Importing or forking b12x CUDA / CuTe / CE / NVFP4 / WMMA sources
 - A serve stack, model registry, or vLLM plugin inside this repo
 - PRs against upstream vLLM
 - Editing `opengfx1030/vllm-rdna` from this tree
+- Migrating real `fa_rdna2` / EXL3 / AWQ bodies in this change

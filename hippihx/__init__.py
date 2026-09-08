@@ -1,4 +1,4 @@
-"""hippihx — HIP kernel / op zoo (gfx1030 first).
+"""hippihx — HIP kernel / op zoo (gfx1030 + gfx1100 shared DOT source).
 
 Library, not a serve stack. ``rdna_extras`` wires one ``torch.ops`` entry
 per op. Pack produce (AWQ / ``3inst``) stays outside this tree.
@@ -13,8 +13,10 @@ from typing import Final
 
 from .protocol import (
     DEFAULT_ARCH,
+    DOT_ARCHES,
     GFX1030_WAVE,
     KNOWN_ARCHES,
+    LATER_ARCHES,
     ROCM_PIN,
     Binding,
     Caps,
@@ -37,6 +39,7 @@ _OPS: Final[tuple[str, ...]] = (
     "moe.routed",
     "moe.shared",
     "moe.leftover_bf16",
+    "sequence.causal_conv",
     "comm.pcie",
 )
 
@@ -58,8 +61,10 @@ __all__ = [
     "Binding",
     "Caps",
     "DEFAULT_ARCH",
+    "DOT_ARCHES",
     "GFX1030_WAVE",
     "KNOWN_ARCHES",
+    "LATER_ARCHES",
     "OpMeta",
     "Plan",
     "ROCM_PIN",

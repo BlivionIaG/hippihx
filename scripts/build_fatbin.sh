@@ -8,6 +8,10 @@ BUILD="${BUILD_DIR:-$ROOT/build-$ARCH}"
 
 case "$ARCH" in
   gfx1030|gfx1100|gfx900) ;;
+  gfx906)
+    echo "gfx906 is a Later fatbin slot (Vega variant; not DOT) — not built yet" >&2
+    exit 1
+    ;;
   *)
     echo "HIPPIHX_ARCH must be gfx1030, gfx1100, or gfx900 (got '$ARCH')" >&2
     exit 1

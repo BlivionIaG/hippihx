@@ -1,6 +1,6 @@
-#include "hippihx/tile_stub.hpp"
+#include "hippihx/dot.hpp"
 
-// Contract: gemm/exl3_3inst — HIP consume hook for 3inst-packed EXL3 (fdot2).
+// Shared DOT source (gfx1030 + gfx1100, two fatbins). Never #ifdef WMMA.
+// EXL3 consume hook: 3inst → half2 → fdot2. No fdot2.bf16. wave32.
 // Produce (`-cb 3inst`) is not a hippihx directory.
-// LDS / __launch_bounds__ locked in README.md when the real tile lands.
 __global__ void hippihx_gemm_exl3_3inst_stub() {}

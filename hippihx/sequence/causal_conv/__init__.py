@@ -1,9 +1,9 @@
 from hippihx._ops import make_op
 
 _op = make_op(
-    "attn.fa_fdot2",
-    "Flash-attn / paged FA via fdot2 (shared gfx1030+gfx1100 DOT source)",
-    dot=True,
+    "sequence.causal_conv",
+    "Short-window causal conv (scalar FMA, state_len≈4; not gdn_scan)",
+    dot=False,
 )
 META = _op.META
 Caps = _op.Caps

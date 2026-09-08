@@ -16,9 +16,14 @@ from dataclasses import dataclass, field
 from typing import Any, Mapping, Protocol, runtime_checkable
 
 KNOWN_ARCHES: tuple[str, ...] = ("gfx1030", "gfx1100", "gfx900")
+DOT_ARCHES: tuple[str, ...] = ("gfx1030", "gfx1100")
+LATER_ARCHES: tuple[str, ...] = ("gfx906",)
 DEFAULT_ARCH = "gfx1030"
 ROCM_PIN = "7.14"
 GFX1030_WAVE = 32
+DOT_WAVE = 32
+NO_FDOT2_BF16 = True
+NO_WMMA_ON_SHARED_DOT = True
 
 # Engine bind rules (room-locked). Serve wiring in rdna_extras must honor these.
 ONE_TORCH_OP_PER_KERNEL = True
@@ -47,12 +52,18 @@ class Caps:
     device: str = "hip"
 
     def __post_init__(self) -> None:
+        if self.arch in LATER_ARCHES:
+            raise ValueError(
+                f"{self.arch} is a Later fatbin slot (Vega variant; "
+                "mad_mix / pk_fma — not DOT). Documented, not built yet"
+            )
         if self.arch not in KNOWN_ARCHES:
             raise ValueError(
-                f"unknown arch {self.arch!r}; fatbin slots are {KNOWN_ARCHES}"
+                f"unknown arch {self.arch!r}; built slots {KNOWN_ARCHES}; "
+                f"Later slots {LATER_ARCHES}"
             )
         if self.wave is None:
-            object.__setattr__(self, "wave", 64 if self.arch == "gfx900" else 32)
+            object.__setattr__(self, "wave", 64 if self.arch == "gfx900" else DOT_WAVE)
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,6 +95,7 @@ class OpMeta:
     name: str
     summary: str
     planned: bool = True
+    dot: bool = False
 
 
 @runtime_checkable
@@ -127,6 +139,13 @@ def stub_run(binding: Binding) -> None:
 def require_single_arch(arch: str) -> str:
     if "," in arch or " " in arch:
         raise ValueError("one fatbin slot per artifact; no multi-arch objects")
+    if arch in LATER_ARCHES:
+        raise ValueError(f"{arch} is a Later fatbin slot — not built yet")
     if arch not in KNOWN_ARCHES:
         raise ValueError(f"unknown fatbin slot {arch!r}")
     return arch
+
+
+def supported_arches(dot: bool) -> tuple[str, ...]:
+    """DOT tiles: gfx1030 + gfx1100 only. Vega slots do not load DOT objects."""
+    return DOT_ARCHES if dot else KNOWN_ARCHES

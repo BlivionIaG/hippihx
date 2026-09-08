@@ -54,22 +54,37 @@ target_include_directories(hippihx PUBLIC
   "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
-# Tile sources: smoke stub plus one empty kernel per contract class.
-# Production GEMM / attn bodies land later; these exist so CMake is real.
-set(HIPPIHX_TILE_SOURCES
-  tiles/smoke.hip
+# Shared DOT source: FA / EXL3 / AWQ-W4A16 / moe.shared.
+# Same .hip for gfx1030 and gfx1100; two --offload-arch builds, never one
+# multi-arch object. gfx900 does not load these (mad_mix / pk_fma slot).
+# Never #ifdef WMMA in these files.
+set(HIPPIHX_DOT_SOURCES
   tiles/attn/fa_fdot2/kernel.hip
+  tiles/gemm/w4a16_fdot2/kernel.hip
+  tiles/gemm/exl3_3inst/kernel.hip
+  tiles/moe/shared/kernel.hip
+)
+
+# Non-DOT contracts compile for every built fatbin (stubs).
+set(HIPPIHX_COMMON_SOURCES
+  tiles/smoke.hip
   tiles/attn/gdn_scan/kernel.hip
   tiles/attn/kda_scan/kernel.hip
   tiles/attn/qsa_indexer/kernel.hip
   tiles/attn/dsa_nope/kernel.hip
-  tiles/gemm/w4a16_fdot2/kernel.hip
-  tiles/gemm/exl3_3inst/kernel.hip
   tiles/moe/routed/kernel.hip
-  tiles/moe/shared/kernel.hip
   tiles/moe/leftover_bf16/kernel.hip
+  tiles/sequence/causal_conv/kernel.hip
   tiles/comm/pcie/kernel.hip
 )
+
+set(HIPPIHX_TILE_SOURCES ${HIPPIHX_COMMON_SOURCES})
+if(HIPPIHX_IS_DOT_SLOT)
+  list(APPEND HIPPIHX_TILE_SOURCES ${HIPPIHX_DOT_SOURCES})
+  message(STATUS "hippihx: DOT shared source ON for ${HIPPIHX_ARCH} (wave32, no WMMA gate)")
+else()
+  message(STATUS "hippihx: Vega slot ${HIPPIHX_ARCH} — no DOT tiles (mad_mix / pk_fma)")
+endif()
 
 if(NOT HIPPIHX_HAS_HIP)
   foreach(_src IN LISTS HIPPIHX_TILE_SOURCES)
@@ -91,8 +106,8 @@ set_target_properties(hippihx_smoke_host PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/fatbin/${HIPPIHX_ARCH}"
 )
 
-# Convenience: document the other two slots without mixing them into this .a.
+# Convenience: document slots without mixing them into this .a.
 add_custom_target(hippihx_list_fatbin_slots
   COMMAND ${CMAKE_COMMAND} -E echo
-          "fatbin slots: gfx1030 (default) | gfx1100 | gfx900 — one tree each"
+          "DOT fatbins: gfx1030 | gfx1100 (same source, two builds) ; Vega: gfx900 ; Later: gfx906"
 )

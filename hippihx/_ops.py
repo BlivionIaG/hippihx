@@ -12,6 +12,7 @@ from .protocol import (
     stub_bind,
     stub_plan,
     stub_run,
+    supported_arches,
 )
 
 
@@ -41,9 +42,11 @@ class StubOp:
 
     def is_supported(self, caps: Caps | None = None) -> bool:
         caps = caps or Caps()
-        return caps.arch in ("gfx1030", "gfx1100", "gfx900")
+        return caps.arch in supported_arches(self.META.dot)
 
 
-def make_op(qualname: str, summary: str) -> StubOp:
+def make_op(qualname: str, summary: str, *, dot: bool = False) -> StubOp:
     group, name = qualname.split(".", 1)
-    return StubOp(OpMeta(qualname=qualname, group=group, name=name, summary=summary))
+    return StubOp(
+        OpMeta(qualname=qualname, group=group, name=name, summary=summary, dot=dot)
+    )
