@@ -29,7 +29,13 @@ else()
   endif()
 endif()
 
-message(STATUS "hippihx: fatbin slot ${HIPPIHX_ARCH} (wave${HIPPIHX_WAVE_SIZE})")
+if(HIPPIHX_WAVE_UNVERIFIED)
+  message(STATUS "hippihx: fatbin slot ${HIPPIHX_ARCH} (wave unverified; not Deck wave32)")
+elseif(DEFINED HIPPIHX_WAVE_SIZE)
+  message(STATUS "hippihx: fatbin slot ${HIPPIHX_ARCH} (wave${HIPPIHX_WAVE_SIZE})")
+else()
+  message(STATUS "hippihx: fatbin slot ${HIPPIHX_ARCH}")
+endif()
 message(STATUS "hippihx: ROCm pin for V620 is ${HIPPIHX_ROCM_PIN}")
 
 add_library(hippihx STATIC)
@@ -55,8 +61,8 @@ target_include_directories(hippihx PUBLIC
 )
 
 # Shared DOT source: FA / EXL3 / AWQ-W4A16 / moe.shared.
-# Same .hip for every DOT slot (gfx1030, gfx110x, gfx1151, gfx103x).
-# gfx1013 is Later VERIFY — not in this list until warpSize is measured.
+# Same .hip for every DOT slot (gfx1030, gfx110x, gfx1151, gfx103x, gfx1013).
+# gfx1013 builds; wave is VERIFY — never force -mwavefrontsize32.
 # gfx900 does not load these. Never #ifdef WMMA. Never HSA_OVERRIDE.
 set(HIPPIHX_DOT_SOURCES
   tiles/attn/fa_fdot2/kernel.hip
@@ -81,7 +87,12 @@ set(HIPPIHX_COMMON_SOURCES
 set(HIPPIHX_TILE_SOURCES ${HIPPIHX_COMMON_SOURCES})
 if(HIPPIHX_IS_DOT_SLOT)
   list(APPEND HIPPIHX_TILE_SOURCES ${HIPPIHX_DOT_SOURCES})
-  if(HIPPIHX_DOT_UNOPTIMIZED)
+  if(HIPPIHX_WAVE_UNVERIFIED)
+    message(STATUS
+      "hippihx: DOT shared source ON for ${HIPPIHX_ARCH} "
+      "(portable/unoptimized; wave VERIFY — do not force -mwavefrontsize32; "
+      "never HSA_OVERRIDE; bind on arch + wave)")
+  elseif(HIPPIHX_DOT_UNOPTIMIZED)
     message(STATUS
       "hippihx: DOT shared source ON for ${HIPPIHX_ARCH} "
       "(portable/unoptimized; own --offload-arch; never HSA_OVERRIDE)")
@@ -115,5 +126,5 @@ set_target_properties(hippihx_smoke_host PROPERTIES
 # Convenience: document slots without mixing them into this .a.
 add_custom_target(hippihx_list_fatbin_slots
   COMMAND ${CMAKE_COMMAND} -E echo
-          "DOT: gfx1030 gfx110x gfx1151 gfx103x; stub gfx900; Later gfx1013(VERIFY) gfx906(Vega20)"
+          "DOT: gfx1030 gfx110x gfx1151 gfx103x gfx1013(BC-250 wave VERIFY); stub gfx900; Later gfx906(Vega20)"
 )

@@ -50,33 +50,32 @@ list from the gfx900 archive.
 | **gfx1030** | yes (primary) | — | V620 dest |
 | **gfx1100/1101/1102** | yes | **yes** (same `dot.hpp`, no WMMA gate) | separate fatbin |
 | **gfx1151** Strix Halo | yes (portable) | **yes** (same `dot.hpp`) | can run, not dest-tuned; not WMMA-gated |
-| **gfx1031/1032/1033/1035/1036** Deck/mobile | yes (portable) | **yes** (RDNA2 DOT class) | can run, not dest-tuned; separate objects |
-| **gfx1013** BC-250 | Later VERIFY | **no** until wave measured | Cyan Skillfish ≠ Navi21. See gate below. |
+| **gfx1031/1032/1033/1035/1036** Deck/mobile | yes (portable) | **yes** (RDNA2 DOT class, **wave32**) | Steam Deck is **gfx1033 / wave32**. Same class as gfx1030; not dest-tuned |
+| **gfx1013** BC-250 | yes (portable) | **yes** (same stubs; not Navi21-tuned) | Cyan Skillfish ≠ Deck ≠ Navi21. Can run, unoptimized. See wave note below. |
 | **gfx900** | yes stub / Later mad_mix | **no** | never load FA/EXL3 DOT |
 | **gfx906** (real Vega20/MI50) | Later non-DOT if ever | **no** | **not** BC-250 |
 
 One configure tree → one `libhippihx_<arch>.a` in `build/fatbin/<arch>/`.
-CMake rejects multi-arch lists and refuses **gfx906** and **gfx1013**.
-Portable DOT slots (1151 / 103x) configure and compile the same stubs.
+CMake rejects multi-arch lists and refuses **gfx906** only. Portable DOT
+slots (1151 / 103x / 1013) configure and compile the same stubs.
 
-**BC-250 is not Vega20.** Real dumps: Cyan Skillfish **`gfx1013`** (Oberon
-cut-down APU). `gfx906` is MI50/Vega20 only.
+**BC-250 is not Vega20 and is not Steam Deck.** Real dumps: Cyan Skillfish
+**`gfx1013`** (Oberon cut-down APU). Steam Deck is **gfx1033**, RDNA2,
+**wave32**. `gfx906` is MI50/Vega20 only.
 
-### gfx1013 Later VERIFY (BC-250 / Cyan Skillfish)
+### gfx1013 wave note (BC-250 / Cyan Skillfish)
 
+gfx1013 **builds** (portable / unoptimized; CMake does not refuse it).
 RADV / llama.cpp dumps on Cyan Skillfish report **warp size 64** and **no
-matrix cores**. Do **not** share wave32 `dot.hpp` / FA tiles with gfx1030
-until this gate passes on **real BC-250**:
+matrix cores**. That report is **Skillfish-only** — do not apply it to
+Deck gfx103x.
 
-1. Measure `hipDeviceProp.warpSize` and inspect
-   `hipcc --offload-arch=gfx1013` ISA for wave32 vs wave64.
-2. If HIP is **wave64**, keep a **Skillfish-only** path
-   (`-mwavefrontsize64` or leave the wave32 flag off). **Do not** force
-   `-mwavefrontsize32` or `HSA_OVERRIDE` to fake Navi21.
-3. Serve bind must key on **arch + wave size**, not the arch name alone.
-   A gfx1013/wave64 object is not a gfx1030/wave32 object.
-
-Never load a gfx1030 fatbin on gfx1013.
+On real BC-250, still measure `hipDeviceProp.warpSize` and inspect
+`hipcc --offload-arch=gfx1013` ISA. If HIP is **wave64**, keep a
+Skillfish-only path (`-mwavefrontsize64` or leave the wave32 flag off).
+**Do not** force `-mwavefrontsize32` or `HSA_OVERRIDE` to fake Navi21 or
+Deck. Serve bind keys on **arch + wave size**. Never load a gfx1030 /
+gfx1033 fatbin on gfx1013.
 
 ## ROCm pin (V620)
 
@@ -103,8 +102,8 @@ These are room-locked for future Python / `torch.ops` and for anyone wiring
    `bind`. Fresh binding every call is fine; a cached workspace is not
    required and must not be introduced for the vLLM path.
 6. **Key on arch + wave size.** Serve must not select a fatbin from the
-   GFX name alone. gfx1013 (VERIFY) in particular: RADV reports wave64;
-   do not bind a wave32 Navi21 object because the arch string is “RDNA2”.
+   GFX name alone. Deck gfx1033 is wave32. gfx1013 is Skillfish (RADV
+   reports wave64) — do not bind a gfx1030/gfx1033 object onto it.
 
 ## Tile classes
 
@@ -146,9 +145,8 @@ Do not add `produce/`, `awq/`, or `3inst/` packer trees to hippihx.
 `hippihx.list_ops()` enumerates contracts. Each op is
 `hippihx.<group>.<op>` with `Caps`, `plan`, `bind`, `run`, `is_supported`.
 DOT ops report `META.dot is True` and `is_supported` on every built DOT
-slot (gfx1030, gfx110x, gfx1151, gfx103x). gfx1013 is Later VERIFY — not
-in that set until wave size is measured. The skeleton is host-side and
-torch-free.
+slot (gfx1030, gfx110x, gfx1151, gfx103x, gfx1013). The skeleton is
+host-side and torch-free.
 
 ## Non-goals (room lock)
 

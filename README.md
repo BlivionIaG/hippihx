@@ -2,12 +2,12 @@
 
 HIP kernel / op zoo. **gfx1030** (Radeon Pro **V620**, RDNA2, wave32, ROCm
 7.14) and **gfx1100/1101/1102** are first-class **DOT** consumers of the
-**same tile source**. **gfx1151** and Deck **gfx103x** build the same DOT
-stubs — they can run, not dest-tuned. **gfx1013** (BC-250 / Cyan Skillfish)
-is Later VERIFY: RADV reports warp 64 / no matrix cores — do not share
-wave32 `dot.hpp` until `hipDeviceProp.warpSize` is measured. **gfx900** is
-a Vega stub (`mad_mix` / `pk_fma` — not DOT). **gfx906** is Later
-Vega20/MI50, not BC-250.
+**same tile source**. **gfx1151**, Deck **gfx103x** (**wave32**, including
+Steam Deck gfx1033), and **gfx1013** (BC-250 / Cyan Skillfish) build the
+same DOT stubs — they can run, not dest-tuned. gfx1013 is not Deck:
+RADV reports Skillfish warp 64 — do not force `-mwavefrontsize32`.
+**gfx900** is a Vega stub (`mad_mix` / `pk_fma` — not DOT). **gfx906** is
+Later Vega20/MI50, not BC-250.
 
 hippihx is the place tile contracts live so Blivion’s
 [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
@@ -70,8 +70,8 @@ fa_fdot2.run(binding)  # stub: no device work yet
 | **gfx1030** | yes (primary) | — | V620 dest. ROCm 7.14. wave32. |
 | **gfx1100/1101/1102** | yes | **yes** (same `dot.hpp` source, no WMMA gate) | separate fatbin each |
 | **gfx1151** Strix Halo | yes (portable) | **yes** (same `dot.hpp`) | can run, not dest-tuned; not WMMA-gated |
-| **gfx1031/1032/1033/1035/1036** Deck/mobile | yes (portable) | **yes** (RDNA2 DOT class) | can run, not dest-tuned; separate objects |
-| **gfx1013** BC-250 | Later VERIFY | **no** until wave measured | Cyan Skillfish. RADV/llama.cpp: warp 64, no matrix cores. Skillfish-only if HIP is wave64; never force `-mwavefrontsize32` / `HSA_OVERRIDE`. Serve bind keys on **arch + wave**. |
+| **gfx1031/1032/1033/1035/1036** Deck/mobile | yes (portable) | **yes** (RDNA2 DOT class, **wave32**) | Steam Deck is gfx1033 / wave32. Not dest-tuned |
+| **gfx1013** BC-250 | yes (portable) | **yes** (same stubs; not Navi21-tuned) | Cyan Skillfish ≠ Deck. Can run, unoptimized. RADV: warp 64 — never force `-mwavefrontsize32` / `HSA_OVERRIDE`. Bind on **arch + wave**. |
 | **gfx900** | yes stub / Later mad_mix | **no** | never load FA/EXL3 DOT |
 | **gfx906** (real Vega20/MI50) | Later non-DOT if ever | **no** | **not** BC-250 |
 
@@ -91,7 +91,7 @@ once per `--offload-arch`:
 # same tiles/*.hip, one --offload-arch per tree
 cmake -S . -B build-gfx1030 -DHIPPIHX_ARCH=gfx1030
 cmake -S . -B build-gfx1100 -DHIPPIHX_ARCH=gfx1100
-# gfx1101 / gfx1102 first-class; gfx1151 / gfx103x portable; gfx1013 Later VERIFY
+# gfx1101 / gfx1102 first-class; gfx1151 / gfx103x (wave32) / gfx1013 portable
 ```
 
 Craft locks: **wave32 only**, **no `fdot2.bf16`**, **never `#ifdef WMMA`**.
@@ -111,8 +111,9 @@ cmake --build build
 
 cmake -S . -B build-gfx1100 -DHIPPIHX_ARCH=gfx1100
 cmake -S . -B build-gfx1151 -DHIPPIHX_ARCH=gfx1151  # portable / unoptimized
+cmake -S . -B build-gfx1033 -DHIPPIHX_ARCH=gfx1033  # Steam Deck, wave32
+cmake -S . -B build-gfx1013 -DHIPPIHX_ARCH=gfx1013  # BC-250; never HSA_OVERRIDE
 cmake -S . -B build-gfx900  -DHIPPIHX_ARCH=gfx900   # no DOT objects
-# gfx1013 is Later VERIFY — CMake refuses until warpSize is measured
 ```
 
 Without ROCm (layout check only):
@@ -175,9 +176,9 @@ consume layout and ships HIP that reads it.
   CMake is real).
 - No multi-arch `.so`. No `#ifdef WMMA` on shared DOT tiles. No
   `fdot2.bf16`. No DOT objects on gfx900 / gfx906. No HSA_OVERRIDE.
-- BC-250 is **gfx1013** (Cyan Skillfish), not gfx906. Later VERIFY:
-  measure `hipDeviceProp.warpSize` before sharing wave32 DOT/FA.
-  Serve bind keys on **arch + wave size**.
+- BC-250 is **gfx1013** (Cyan Skillfish), not gfx906 and not Steam Deck.
+  Deck gfx1033 is wave32. gfx1013 builds unoptimized; do not force
+  `-mwavefrontsize32`. Serve bind keys on **arch + wave size**.
 
 ## Docs
 

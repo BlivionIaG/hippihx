@@ -50,9 +50,15 @@ def test_fatbin_slots_named() -> None:
 def test_gfx1013_verify_gate_documented() -> None:
     text = _docs()
     low = text.lower()
-    assert "later verify" in low
     assert "warpsize" in low or "warp size" in low
     assert "hipdeviceprop.warpsize" in low
     assert "-mwavefrontsize64" in low
     assert "-mwavefrontsize32" in low
     assert "arch + wave" in low
+    assert "steam deck" in low
+    assert "wave32" in low
+    assert "gfx1033" in low
+    # Deck is wave32; Skillfish wave note must not refuse the slot.
+    assert "does not refuse" in low or "cmake does not refuse" in low or (
+        "builds" in low and "gfx1013" in low
+    )
