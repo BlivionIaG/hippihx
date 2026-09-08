@@ -157,4 +157,7 @@ host-side and torch-free.
 - A serve stack, model registry, or vLLM plugin inside this repo
 - PRs against upstream vLLM
 - Editing `opengfx1030/vllm-rdna` from this tree
-- Migrating real `fa_rdna2` / EXL3 / AWQ bodies in this change
+- Dumping extras `csrc/rocm/*.cu` here before extras can consume hippihx
+  (see [`BACKPORT.md`](BACKPORT.md))
+- Re-authoring foreign HIP as Cursor / Blivion commits (cherry-pick `-x`,
+  keep source Author **and** Committer)

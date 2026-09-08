@@ -11,3 +11,6 @@ selected set is a different launch (`fa_fdot2` or a later QSA-attn tile).
 | Not | V4 C4A compressed Lightning indexer |
 
 One V1 entry. No Triton→HIP double-fire from this library.
+
+extras relatives: `indexer_paged_mqa_rdna2.cu` (dest) and PR #2
+`glm5_dsa_indexer_rdna2.cu` (Later). Confirm class before a body migrate.

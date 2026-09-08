@@ -24,3 +24,29 @@ def test_no_b12x_or_cuda_imports() -> None:
         if IMPORT_RE.search(text):
             hits.append(str(path.relative_to(ROOT)))
     assert hits == []
+
+
+def test_tiles_are_torch_aten_free() -> None:
+    """extras HIP is ATen-wrapped. A body dump is not a migrate."""
+    tiles = ROOT / "tiles"
+    hits: list[str] = []
+    forbidden = ("torch/all.h", "ATen/", "c10/cuda/")
+    for path in tiles.rglob("*"):
+        if path.suffix not in {".hip", ".cu", ".cuh", ".hpp", ".h", ".cpp"}:
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if any(token in text for token in forbidden):
+            hits.append(str(path.relative_to(ROOT)))
+    assert hits == []
+
+
+def test_foreign_hip_attribution_policy() -> None:
+    text = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
+    assert "cherry-pick -x" in text
+    assert "GIT_COMMITTER_NAME" in text
+    assert "--reset-author" in text
+    bp = (ROOT / "docs" / "BACKPORT.md").read_text(encoding="utf-8")
+    assert "kletorch" in bp
+    assert "leapdragon@gmail.com" in bp
+    assert "agent@opencode.local" in bp
+    assert "cursoragent@cursor.com" in bp
