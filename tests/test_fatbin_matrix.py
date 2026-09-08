@@ -19,6 +19,7 @@ def test_bc250_is_gfx1013_not_gfx906() -> None:
     text = _docs()
     assert "gfx1013" in text
     assert "Cyan Skillfish" in text
+    assert "RDNA2" in text
     assert "not** BC-250" in text or "NOT BC-250" in text or "not BC-250" in text
     for line in text.splitlines():
         low = line.lower()
@@ -58,6 +59,7 @@ def test_gfx1013_verify_gate_documented() -> None:
     assert "steam deck" in low
     assert "wave32" in low
     assert "gfx1033" in low
+    assert "same generation" in low or "same gen" in low
     # Deck is wave32; Skillfish wave note must not refuse the slot.
     assert "does not refuse" in low or "cmake does not refuse" in low or (
         "builds" in low and "gfx1013" in low

@@ -8,12 +8,13 @@
 #   gfx1151              Strix Halo — portable/unoptimized, can run
 #   gfx1031..1036        Deck/mobile RDNA2 — portable/unoptimized, wave32
 #                        (Steam Deck gfx1033 is wave32, same class as gfx1030)
-#   gfx1013              BC-250 / Cyan Skillfish — portable/unoptimized,
-#                        can run. Wave VERIFY: RADV/llama.cpp report warp
-#                        size 64, no matrix cores. Do not force
-#                        -mwavefrontsize32 or HSA_OVERRIDE. If HIP is
-#                        wave64, Skillfish-only (-mwavefrontsize64 or
-#                        leave wave32 off). Serve bind keys on arch + wave.
+#   gfx1013              BC-250 / Cyan Skillfish — RDNA2 (same generation
+#                        as gfx1030/Deck), portable/unoptimized, can run.
+#                        Different GFX than Navi21 / Van Gogh. Wave VERIFY:
+#                        RADV/llama.cpp report warp size 64, no matrix cores.
+#                        Do not force -mwavefrontsize32 or HSA_OVERRIDE.
+#                        If HIP is wave64, Skillfish-only (-mwavefrontsize64
+#                        or leave wave32 off). Serve bind keys on arch + wave.
 # Built non-DOT:
 #   gfx900               stub; mad_mix / pk_fma — does not load DOT tiles
 # Later (configure refused):
@@ -74,8 +75,8 @@ list(FIND HIPPIHX_LATER_ARCHES "${HIPPIHX_ARCH}" _hippihx_later_idx)
 if(NOT _hippihx_later_idx EQUAL -1)
   message(FATAL_ERROR
     "HIPPIHX_ARCH=gfx906 is Later non-DOT (real Vega20/MI50). "
-    "Not BC-250 — BC-250 is gfx1013 / Cyan Skillfish (built, portable; "
-    "wave VERIFY). Never load FA/EXL3 DOT objects. "
+    "Not BC-250 — BC-250 is gfx1013 / Cyan Skillfish (RDNA2, built, "
+    "portable; wave VERIFY). Never load FA/EXL3 DOT objects. "
     "Built slots: ${HIPPIHX_KNOWN_ARCHES}")
 endif()
 

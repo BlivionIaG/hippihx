@@ -30,7 +30,7 @@ else()
 endif()
 
 if(HIPPIHX_WAVE_UNVERIFIED)
-  message(STATUS "hippihx: fatbin slot ${HIPPIHX_ARCH} (wave unverified; not Deck wave32)")
+  message(STATUS "hippihx: fatbin slot ${HIPPIHX_ARCH} (RDNA2 Skillfish; wave unverified)")
 elseif(DEFINED HIPPIHX_WAVE_SIZE)
   message(STATUS "hippihx: fatbin slot ${HIPPIHX_ARCH} (wave${HIPPIHX_WAVE_SIZE})")
 else()

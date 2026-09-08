@@ -52,8 +52,9 @@ UNOPTIMIZED_DOT_ARCHES: tuple[str, ...] = (
     "gfx1036",
     "gfx1013",
 )
-# gfx1013 / Cyan Skillfish only — not Steam Deck. Deck gfx1033 is wave32.
-# Built and unoptimized; do not refuse. RADV reports warp 64 on Skillfish.
+# gfx1013 is RDNA2 Cyan Skillfish (same generation as gfx1030/Deck),
+# different GFX — not Steam Deck. Deck gfx1033 is wave32. Built and
+# unoptimized; do not refuse. RADV reports warp 64 on this SKU.
 # Do not default Caps.wave to 32. Do not force -mwavefrontsize32.
 VERIFY_WAVE_ARCHES: tuple[str, ...] = ("gfx1013",)
 GFX103X_WAVE = 32  # Steam Deck / mobile RDNA2, including gfx1033
@@ -62,8 +63,8 @@ LATER_ARCHES: tuple[str, ...] = LATER_NONDOT_ARCHES
 LATER_ARCH_NOTES: dict[str, str] = {
     "gfx906": (
         "Later non-DOT (real Vega20/MI50). Not BC-250 — BC-250 is gfx1013 "
-        "(built, portable Cyan Skillfish; wave VERIFY). Never load FA/EXL3 "
-        "DOT objects"
+        "(RDNA2 Cyan Skillfish, built portable; wave VERIFY). Never load "
+        "FA/EXL3 DOT objects"
     ),
 }
 DEFAULT_ARCH = "gfx1030"

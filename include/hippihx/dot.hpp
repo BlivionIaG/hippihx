@@ -8,7 +8,8 @@
 //
 // Built slots: gfx1030, gfx1100/1101/1102, gfx1151, gfx1031..1036, gfx1013.
 // gfx1151 / Deck gfx103x / gfx1013 are portable — can run, not dest-tuned.
-// gfx1013 wave is VERIFY (RADV reports 64). Never force -mwavefrontsize32.
+// gfx1013 is RDNA2 Skillfish (same generation as gfx1030/Deck). Wave is
+// VERIFY (RADV reports 64). Never force -mwavefrontsize32.
 //
 // Craft locks:
 //   * wave32 only

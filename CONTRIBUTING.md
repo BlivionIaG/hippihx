@@ -21,11 +21,12 @@ Do not copy CUDA, CuTe, CE, or NVFP4 objects from
   EXL3 / AWQ / `moe.shared` source. One `--offload-arch` per fatbin.
 - gfx900 is a Vega stub (`mad_mix` / `pk_fma`). It does **not** load DOT
   tiles.
-- **BC-250 is gfx1013** (Cyan Skillfish): built, portable/unoptimized.
-  Not Steam Deck. RADV/llama.cpp report Skillfish warp size 64 — do not
-  force `-mwavefrontsize32` or `HSA_OVERRIDE`. Serve bind keys on
-  **arch + wave size**. **gfx906 is Vega20/MI50**, Later non-DOT, **not**
-  BC-250.
+- **BC-250 is gfx1013** (Cyan Skillfish): **RDNA2**, same generation as
+  V620/Deck, built portable/unoptimized. Different GFX than Navi21 or
+  Van Gogh — not Steam Deck. RADV/llama.cpp report Skillfish warp size
+  64 — do not force `-mwavefrontsize32` or `HSA_OVERRIDE`. Serve bind
+  keys on **arch + wave size**. **gfx906 is Vega20/MI50**, Later non-DOT,
+  **not** BC-250.
 - gfx1151 and Deck gfx103x (including Steam Deck **gfx1033 / wave32**)
   are built portable DOT fatbins (same stubs, can run, not dest-tuned).
 - CMake must refuse multi-arch lists and gfx906, and never imply

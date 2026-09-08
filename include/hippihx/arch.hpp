@@ -8,10 +8,11 @@
 //   gfx1151           Strix Halo — portable/unoptimized, can run
 //   gfx1031..1036     Deck/mobile RDNA2 — portable/unoptimized, wave32
 //                     (Steam Deck gfx1033 is wave32, same class as gfx1030)
-//   gfx1013           BC-250 / Cyan Skillfish — portable/unoptimized,
-//                     can run. Wave VERIFY: RADV reports 64. Do not force
-//                     -mwavefrontsize32 / HSA_OVERRIDE. Serve bind keys
-//                     on arch + wave size.
+//   gfx1013           BC-250 / Cyan Skillfish — RDNA2 (same generation
+//                     as gfx1030/Deck), portable/unoptimized, can run.
+//                     Different GFX than Navi21 / Van Gogh. Wave VERIFY:
+//                     RADV reports 64. Do not force -mwavefrontsize32 /
+//                     HSA_OVERRIDE. Serve bind keys on arch + wave size.
 //
 // Built non-DOT:
 //   gfx900            mad_mix / pk_fma stub — do not load FA/EXL3 DOT
