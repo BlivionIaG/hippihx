@@ -10,11 +10,13 @@ GEMM family.
 
 | Lock | Status |
 |---|---|
-| LDS bytes | A-tile `[M][BLOCK_K + LDS_PAD]`; **`LDS_PAD=8`** (extras `q_gemm_rdna2*.cu`, `d71721c79547`) |
-| High-M AWQ prefill | extras `q_gemm_rdna2_awq_prefill.cu`: `BLOCK_M=16`, `BLOCK_N=64`, `BLOCK_K=32`, `THREADS=128`, `LDS_PAD=8`. Same GEMM family as decode; AWQ is zeros-mode, not a second tile |
+| LDS bytes | A-tile `[M][BLOCK_K + LDS_PAD]`; **`LDS_PAD=8`** (extras `q_gemm_rdna2.cu`, add `fabf51493` BlivionIaG) |
+| High-M AWQ prefill | extras `q_gemm_rdna2_awq_prefill.cu` add `feb7b457e` **BlivionIaG**: `BLOCK_M=16`, `BLOCK_N=64`, `BLOCK_K=32`, `THREADS=128`, `LDS_PAD=8`. Same GEMM family as decode; AWQ is zeros-mode, not a second tile |
 | `__launch_bounds__` | extras prefill uses `__launch_bounds__(THREADS)` (128). Not dest-locked here until migrate |
 | Wave | **32 only** |
 | Scratch | sized by `plan`; **zeroed** for page-commit; **no D2H under capture** |
 
 Do not take a17t `awq_gemm_rdna2.cu` / `qdq_awq_rdna2.cuh` as a second W4
-family. GPTQ vs AWQ is pack/zeros on this tile.
+family. GPTQ vs AWQ is pack/zeros on this tile. If dest ever locks that
+family, cherry-pick **their** commits (`d53572644` and follow-ups), do
+not rewrite them.

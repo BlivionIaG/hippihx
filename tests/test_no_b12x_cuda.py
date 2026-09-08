@@ -38,3 +38,15 @@ def test_tiles_are_torch_aten_free() -> None:
         if any(token in text for token in forbidden):
             hits.append(str(path.relative_to(ROOT)))
     assert hits == []
+
+
+def test_foreign_hip_attribution_policy() -> None:
+    text = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
+    assert "cherry-pick -x" in text
+    assert "GIT_COMMITTER_NAME" in text
+    assert "--reset-author" in text
+    bp = (ROOT / "docs" / "BACKPORT.md").read_text(encoding="utf-8")
+    assert "kletorch" in bp
+    assert "leapdragon@gmail.com" in bp
+    assert "agent@opencode.local" in bp
+    assert "cursoragent@cursor.com" in bp

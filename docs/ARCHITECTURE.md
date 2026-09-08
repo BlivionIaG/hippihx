@@ -159,3 +159,5 @@ host-side and torch-free.
 - Editing `opengfx1030/vllm-rdna` from this tree
 - Dumping extras `csrc/rocm/*.cu` here before extras can consume hippihx
   (see [`BACKPORT.md`](BACKPORT.md))
+- Re-authoring foreign HIP as Cursor / Blivion commits (cherry-pick `-x`,
+  keep source Author **and** Committer)

@@ -17,9 +17,11 @@ overlay, optional, never required.
 
 ## FA LDS pins (before migrate from extras)
 
-Observed on extras `d71721c79547` (`csrc/rocm/fa_rdna2.cu`). Not dest-locked
-(FA occupancy pin stays closed). Do not invent tok/s. Do not copy the
-`.cu` body yet ([`docs/BACKPORT.md`](../../docs/BACKPORT.md)).
+Observed on extras `d71721c79547` (`csrc/rocm/fa_rdna2.cu`). File added
+`b1b3fa938` **BlivionIaG** `<kev29lt@gmail.com>`. Not dest-locked (FA
+occupancy pin stays closed). Do not invent tok/s. Do not copy the `.cu`
+body yet — when you do, cherry-pick BlivionIaG, do not re-author
+([`docs/BACKPORT.md`](../../docs/BACKPORT.md)).
 
 | Pin | Notes | Number |
 |---|---|---|

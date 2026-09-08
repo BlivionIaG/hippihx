@@ -8,7 +8,7 @@ Decode is `3inst` → `half2` → `fdot2`.
 
 | Lock | Status |
 |---|---|
-| LDS bytes | extras `exl3_dot2_dense.cu`: A-staging `[M_PER][BLOCK_K + LDS_PAD]`, `BLOCK_K=256`, **`LDS_PAD=8`**. Small vs FA; occupancy is VGPR (`w0[4][16]+w1[4][16]` halves on dest) |
+| LDS bytes | extras `exl3_dot2_dense.cu` (add `40850e6c5` **kletorch**): A-staging `[M_PER][BLOCK_K + LDS_PAD]`, `BLOCK_K=256`, **`LDS_PAD=8`**. Small vs FA; occupancy is VGPR |
 | `__launch_bounds__` | **unset on DOT kernels** (UNC-26). Hadamard wrappers use `__launch_bounds__(32)` — not the K-dot |
 | Wave | **32 only** |
 | Geometry | extras: `THREADS_X=256`, `BLOCK_N=1024`, `BLOCK_K=256`, 4 N-cols/thread, 16×16 window → `decode_3inst` → `half2` → `fdot2` |
@@ -17,4 +17,7 @@ Decode is `3inst` → `half2` → `fdot2`.
 
 `mcg` / `mul1` codebooks are compile slots, not extra zoo roots. UNC-26 is
 still In Progress on extras — do not copy bodies until produce/consume
-and capture buffers stop moving.
+and capture buffers stop moving. Port commits stay **kletorch**
+`<kletorch@users.noreply.github.com>` as Author **and** Committer; later
+BlivionIaG perf commits stay BlivionIaG. Do not squash them into a
+Cursor rewrite.

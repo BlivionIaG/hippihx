@@ -5,7 +5,7 @@ from `kda_scan`.
 
 | Lock | Status |
 |---|---|
-| Decode LDS | extras `gdn_decode_rdna2.cu`: **0**. State is 16 fp32 VGPR/thread. `GDN_THREADS=256`, `GDN_BV=32`, `GDN_K=128` |
+| Decode LDS | extras `gdn_decode_rdna2.cu` add `55527010c` **BlivionIaG**: **0**. State is 16 fp32 VGPR/thread. `GDN_THREADS=256`, `GDN_BV=32`, `GDN_K=128` |
 | Prefill `o` LDS | extras `gdn_prefill_o_rdna2.cu`: **45312 B** (`s_q`/`s_k` 16 KiB each, `s_h` 8 KiB, `s_v` 4 KiB, `s_g` 256 B; `s_bA` reuses `s_q`) |
 | `__launch_bounds__` | extras decode: `__launch_bounds__(256)` + `amdgpu_waves_per_eu(2, 4)` |
 | Wave | 32 on gfx1030 |
