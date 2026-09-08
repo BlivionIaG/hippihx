@@ -7,12 +7,20 @@
 | Tile contract, HIP ISA, LDS / `__launch_bounds__` lock | **this repo** (`tiles/…`) |
 | `plan` / `bind` / `run`, scratch specs | **this repo** (`hippihx/`) |
 | Fatbin / CMake / ROCm pin | **this repo** |
-| vLLM registration, flags, model hooks | `opengfx1030/vllm-rdna` `rdna_extras` (not from this tree) |
+| Observed extras LDS / launch numbers (no body dump) | **this repo** (tile READMEs) |
+| extras HIP body migrate | **this repo**, only after extras can consume one V1 op |
+| vLLM registration, flags, capture, model hooks | `opengfx1030/vllm-rdna` `rdna_extras` (not from this tree) |
 | AWQ / `3inst` produce | packer tools — **not** a hippihx directory |
 | Upstream vLLM | **do not open PRs** |
 
 Do not copy CUDA, CuTe, CE, or NVFP4 objects from
 `local-inference-lab/b12x`. Copy the **plan / bind / run** verbs only.
+
+Do not dump `opengfx1030/vllm-rdna` `csrc/rocm/*.cu` into `tiles/` until
+the extras consume path exists. Those files are ATen wrappers + paged
+layouts + capture probes. ISA migrate is extract-then-rewire in extras
+(see [`docs/BACKPORT.md`](docs/BACKPORT.md)). Until then, extras
+observations belong in the tile README locks — not a second kernel body.
 
 ## ROCm / arch
 

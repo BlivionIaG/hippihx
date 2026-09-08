@@ -8,8 +8,13 @@ do not retarget one onto the other. This stub is the conv contract only.
 
 | Lock | Status |
 |---|---|
-| LDS bytes | TBD — lock here before the production kernel |
-| `__launch_bounds__` | TBD — lock here before the production kernel |
-| Wave | 32 on gfx1030 / gfx1100 |
-| Math | scalar FMA — not `fdot2`, not `fdot2.bf16`, not WMMA |
+| LDS bytes | extras `causal_conv1d_rdna2.cu` (`d71721c79547`): **0** — register-only, no global scratch |
+| `__launch_bounds__` | unset in extras (one warp per dim-block) |
+| Wave | 32 on gfx1030 / gfx1100; extras: 32 threads / dim-block, dim multiple of 32 |
+| Math | scalar FMA, fp16 in/out, fp32 acc — not `fdot2`, not `fdot2.bf16`, not WMMA |
+| State | `state_len = width-1`, typically **3 or 4** for GDN |
 | Graph | scratch sized by `plan`, **zeroed** for page-commit; **no D2H under capture** |
+
+extras decode kernel is cudagraph-safe *as ISA* (no device alloc). Dest
+still captures it on a per-step tensor in GDN hybrid piecewise graphs —
+that stays extras. Do not copy the ATen wrapper.

@@ -24,3 +24,17 @@ def test_no_b12x_or_cuda_imports() -> None:
         if IMPORT_RE.search(text):
             hits.append(str(path.relative_to(ROOT)))
     assert hits == []
+
+
+def test_tiles_are_torch_aten_free() -> None:
+    """extras HIP is ATen-wrapped. A body dump is not a migrate."""
+    tiles = ROOT / "tiles"
+    hits: list[str] = []
+    forbidden = ("torch/all.h", "ATen/", "c10/cuda/")
+    for path in tiles.rglob("*"):
+        if path.suffix not in {".hip", ".cu", ".cuh", ".hpp", ".h", ".cpp"}:
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if any(token in text for token in forbidden):
+            hits.append(str(path.relative_to(ROOT)))
+    assert hits == []

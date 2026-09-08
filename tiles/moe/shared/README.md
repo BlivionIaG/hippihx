@@ -8,7 +8,7 @@ pack matches; different launch and occupancy.
 
 | Lock | Status |
 |---|---|
-| LDS bytes | TBD — lock here before the production kernel |
+| LDS bytes | TBD — same DOT consume as `gemm/w4a16_fdot2` / `exl3_3inst` when the pack matches; lock at migrate |
 | `__launch_bounds__` | TBD — lock here before the production kernel |
 | Wave | **32 only** |
 | Graph | scratch **zeroed**; **no D2H under capture** |

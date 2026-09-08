@@ -186,4 +186,6 @@ consume layout and ships HIP that reads it.
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — fatbin policy, DOT
   source, bind rules, zoo vs serve.
+- [`docs/BACKPORT.md`](docs/BACKPORT.md) — extras review: what is zoo vs
+  serve, why bodies are not copied yet.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — ROCm pin, how to land a tile.

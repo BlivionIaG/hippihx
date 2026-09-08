@@ -12,3 +12,6 @@ sparse MLA, not the same launch as a V4 FP8 Lightning tile.
 
 Indexer work for DSA lives in `qsa_indexer` or a later sibling — do not
 collapse classes to save a directory.
+
+extras `sparse_mla_rdna2.cu` is the dest sparse-MLA relative. PR #2
+`glm5_dsa_mla_decode_rdna2.cu` is Later — same rename rule as `kda_scan`.

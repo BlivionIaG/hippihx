@@ -15,3 +15,8 @@ PCIe (`hipDeviceMallocUncached`).
 Wire codec (INT8 / Q8) is a class, not a product name. RCCL remains the
 fallback above the byte gate. Not a DOT tile — Vega may carry this stub;
 do not load FA/EXL3/AWQ objects into a gfx900 fatbin just to ship AR.
+
+extras PR #1 (`cursor/leapdragon-cherry-d2a4`) is a **review-only**
+cherry-pick of leapdragon `rdna_ar` (Uncached+push, boot self-test).
+Authorship is Aron Hsiao. **AR default stays off.** Occupancy pin stays
+closed. Do not merge that ISA into this stub until extras dest-locks it.

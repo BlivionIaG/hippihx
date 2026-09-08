@@ -5,6 +5,8 @@ this directory owns the MoE launch, dispatch, and scratch around them.
 
 | Lock | Status |
 |---|---|
-| LDS bytes | TBD — lock here before the production kernel |
+| LDS bytes | extras `moe_q_gemm_rdna2.cu`: A-tile `[BLOCK_SIZE_M][BLOCK_KN_SIZE + LDS_PAD]`, **`LDS_PAD=8`** (same W4 pad as `gemm/w4a16_fdot2`) |
 | `__launch_bounds__` | TBD — lock here before the production kernel |
 | Wave | 32 on gfx1030 |
+
+Do not take a17t `moe_awq_gemm_rdna2.cu` as a second routed family.
