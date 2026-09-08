@@ -96,28 +96,29 @@ Until then: observe, lock numbers, keep stubs.
 
 ## Attribution (do not re-author)
 
-Imported HIP keeps the **source Author and Committer**. If it is not
-new hippihx work, do not rewrite it as a Cursor / Blivion commit.
-Cherry-pick `-x`, force Committer = source Author, keep their trailers,
-add none of ours. Recipe: [`CONTRIBUTING.md`](../CONTRIBUTING.md)
-(Attribution). Same bar as extras PR #1.
+**Dest extras HIP** (FA, EXL3, W4A16, GDN, causal_conv, sparse MLA,
+indexer, GLM Later KDA/DSA) is **BlivionIaG** `<kev29lt@gmail.com>`.
+Author **and** Committer on every picked dest commit. Do not use Cursor
+or `cursoragent`.
+
+**Foreign HIP** (leapdragon, a17t) keeps **their** Author **and**
+Committer. Cherry-pick `-x`, force Committer = source Author, keep their
+trailers, add none of ours. Recipe: [`CONTRIBUTING.md`](../CONTRIBUTING.md).
+Same bar as extras PR #1.
 
 This hippihx review commit is **new documentation**. It is not a
 kernel migrate and must not be used as a template for body imports.
 
-| extras / PR path | Introduced (Author) | Keep as |
+| extras / PR path | Introduced | Keep as |
 |---|---|---|
-| `fa_rdna2.cu` | `b1b3fa938` BlivionIaG `<kev29lt@gmail.com>` | BlivionIaG commits; later `agent@opencode.local` FA zeros stay extras (serve) |
+| `fa_rdna2.cu` | `b1b3fa938` BlivionIaG `<kev29lt@gmail.com>` | BlivionIaG. Later FA `torch::zeros` is extras serve — leave it there |
 | `q_gemm_rdna2.cu` | `fabf51493` BlivionIaG | BlivionIaG |
-| `q_gemm_rdna2_awq_prefill.cu` | `feb7b457e` BlivionIaG | BlivionIaG; later `agent@opencode.local` bundling stays extras |
+| `q_gemm_rdna2_awq_prefill.cu` | `feb7b457e` BlivionIaG | BlivionIaG |
 | `moe_q_gemm_rdna2.cu` | `b1b3fa938` BlivionIaG | BlivionIaG |
-| `gdn_decode_rdna2.cu` | `55527010c` BlivionIaG | BlivionIaG; `3326f03d7` `agent@opencode.local` NULL_BLOCK_ID stays extras until dest-locked |
-| `exl3_dot2_*.cu` | `40850e6c5` **kletorch** `<kletorch@users.noreply.github.com>` (Committer was BlivionIaG) | **kletorch as Author and Committer** on the port commits. Do not collapse to Blivion/Cursor |
-| `causal_conv1d_rdna2.cu` | `5eb84b4fa` `agent@opencode.local` | Keep `agent@opencode.local` if that commit is picked. Do not re-author as Cursor Agent |
+| `gdn_decode_rdna2.cu` | `55527010c` BlivionIaG | BlivionIaG. NULL_BLOCK_ID sentinel is extras serve until dest-locked |
+| `exl3_dot2_*.cu` | `40850e6c5` BlivionIaG | BlivionIaG (Author **and** Committer), including the port and later perf commits |
+| `causal_conv1d_rdna2.cu` | `5eb84b4fa` BlivionIaG | BlivionIaG |
 | `sparse_mla_rdna2.cu` / `indexer_paged_mqa_rdna2.cu` | BlivionIaG | BlivionIaG |
 | PR #1 `rdna_ar` | **Aron Hsiao** `<leapdragon@gmail.com>` | Aron Hsiao Author **and** Committer. Keep `Co-Authored-By: Claude Fable 5`. No Blivion/Cursor trailers |
 | PR #2 `glm5_kda_*` / `glm5_dsa_*` | BlivionIaG | BlivionIaG; rename off `glm5_` in a **follow-up hippihx** commit, not by rewriting their HIP |
-| PR #3 a17t unique W4 (`d53572644` `root@tr3960x-1.home.a17t.dev`, later Simon Siebert) | **Not taken** | If dest ever locks that family, pick **their** commits, not a rewrite |
-
-`agent@opencode.local` on extras is a different agent identity than
-Cursor Agent. Do not launder those commits into `cursoragent@cursor.com`.
+| PR #3 a17t unique W4 (`d53572644`, later Simon Siebert) | **Not taken** | If dest ever locks that family, pick **their** commits, not a rewrite |

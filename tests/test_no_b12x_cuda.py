@@ -44,9 +44,22 @@ def test_foreign_hip_attribution_policy() -> None:
     text = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
     assert "cherry-pick -x" in text
     assert "GIT_COMMITTER_NAME" in text
-    assert "--reset-author" in text
+    assert "kev29lt@gmail.com" in text
     bp = (ROOT / "docs" / "BACKPORT.md").read_text(encoding="utf-8")
-    assert "kletorch" in bp
+    assert "BlivionIaG" in bp
     assert "leapdragon@gmail.com" in bp
-    assert "agent@opencode.local" in bp
-    assert "cursoragent@cursor.com" in bp
+
+
+def test_no_mistaken_dest_author_identities() -> None:
+    forbidden = ("kletorch", "opencode.local")
+    hits: list[str] = []
+    scan = [ROOT / "CONTRIBUTING.md", ROOT / "README.md"]
+    scan.extend((ROOT / "docs").rglob("*.md"))
+    scan.extend((ROOT / "tiles").rglob("*.md"))
+    for path in scan:
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if any(token in text for token in forbidden):
+            hits.append(str(path.relative_to(ROOT)))
+    assert hits == []

@@ -9,7 +9,8 @@
 | Fatbin / CMake / ROCm pin | **this repo** |
 | Observed extras LDS / launch numbers (no body dump) | **this repo** (tile READMEs) |
 | extras HIP body migrate | **this repo**, only after extras can consume one V1 op |
-| Foreign HIP (leapdragon / kletorch / a17t / extras agent) | cherry-pick `-x`, **their** Author **and** Committer — never a Cursor rewrite |
+| Dest extras HIP (this lab) | **BlivionIaG** `<kev29lt@gmail.com>` — Author **and** Committer |
+| Foreign HIP (leapdragon / a17t) | cherry-pick `-x`, **their** Author **and** Committer — never a Cursor rewrite |
 | vLLM registration, flags, capture, model hooks | `opengfx1030/vllm-rdna` `rdna_extras` (not from this tree) |
 | AWQ / `3inst` produce | packer tools — **not** a hippihx directory |
 | Upstream vLLM | **do not open PRs** |
@@ -23,35 +24,44 @@ layouts + capture probes. ISA migrate is extract-then-rewire in extras
 (see [`docs/BACKPORT.md`](docs/BACKPORT.md)). Until then, extras
 observations belong in the tile README locks — not a second kernel body.
 
-## Attribution (foreign HIP)
+## Attribution
 
-If the HIP / commit is **not** new hippihx work, **do not rewrite it**.
-Keep only the original authors' commits. Same rule as extras
+**Dest extras HIP is BlivionIaG** `<kev29lt@gmail.com>`. Author **and**
+Committer on picked dest commits. Do not leave Cursor / `cursoragent` on
+those commits.
+
+**Foreign HIP** (leapdragon, a17t, anyone who is not this lab) keeps
+**their** Author **and** Committer. Same rule as extras
 [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1) (leapdragon
-`rdna_ar`).
+`rdna_ar`). Do not rewrite those as Blivion or Cursor.
 
 | Rule | Meaning |
 |---|---|
 | Cherry-pick `-x` | One source commit → one hippihx commit. Not a squash. Not a re-authored file dump. |
-| Author **and** Committer | Copy both from the source commit (`GIT_COMMITTER_NAME` / `EMAIL` = source Author). Do not leave Committer as Cursor / Blivion / `cursoragent`. |
-| Trailers | Keep the source `Co-authored-by` / `Signed-off-by`. **Do not add** Cursor, Cursor Agent, or BlivionIaG trailers to *their* commits. |
+| Dest extras | Author **and** Committer = BlivionIaG `<kev29lt@gmail.com>` |
+| Foreign | Copy both from the source commit (`GIT_COMMITTER_NAME` / `EMAIL` = source Author). Do not leave Committer as Cursor / Blivion / `cursoragent`. |
+| Trailers | Foreign: keep their `Co-authored-by` / `Signed-off-by`. **Do not add** Cursor or Cursor Agent trailers to *their* commits. Dest extras: BlivionIaG only. |
 | Mixed commits | Skip. Do not take a commit that mixes their kernel with serve wiring, PLE, tok/s docs, or a second op family. |
-| Wiring after pick | Conflict resolution and plan/bind wrappers are **new** hippihx commits (agent/Blivion). They must not rewrite kernel bodies. |
-| Verify | `git log --format='%an <%ae> | %cn <%ce> | %s'` on unique imported commits matches the source. |
+| Wiring after pick | Conflict resolution and plan/bind wrappers are **new** hippihx commits. They must not rewrite kernel bodies. |
+| Verify dest | unique dest-HIP commits show `BlivionIaG <kev29lt@gmail.com>` for Author and Committer |
+| Verify foreign | `git log --format='%an <%ae> | %cn <%ce> | %s'` matches the source |
 
 ```bash
-# Example: leapdragon commit onto a hippihx side branch (not dest).
-# Author is preserved by cherry-pick; Committer must be forced or it
-# becomes whoever ran the pick.
-src=<sha>
-name=$(git -C "$EXTRAS" log -1 --format='%an' "$src")
-email=$(git -C "$EXTRAS" log -1 --format='%ae' "$src")
+# Dest extras HIP → BlivionIaG (even if the source Author field is wrong).
+GIT_AUTHOR_NAME='BlivionIaG' GIT_AUTHOR_EMAIL='kev29lt@gmail.com' \
+GIT_COMMITTER_NAME='BlivionIaG' GIT_COMMITTER_EMAIL='kev29lt@gmail.com' \
+  git cherry-pick -x "$src"
+
+# Foreign (leapdragon / a17t): Author is preserved by cherry-pick;
+# Committer must be forced or it becomes whoever ran the pick.
+name=$(git -C "$FOREIGN" log -1 --format='%an' "$src")
+email=$(git -C "$FOREIGN" log -1 --format='%ae' "$src")
 GIT_COMMITTER_NAME="$name" GIT_COMMITTER_EMAIL="$email" \
   git cherry-pick -x "$src"
 ```
 
-Do not `git commit --amend --reset-author`. That replaces Author with
-the picker.
+Do not `git commit --amend --reset-author` on **foreign** picks. That
+replaces Author with the picker.
 
 ## ROCm / arch
 
