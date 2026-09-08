@@ -182,14 +182,29 @@ consume layout and ships HIP that reads it.
   gfx1013 builds unoptimized; do not force `-mwavefrontsize32`. Serve
   bind keys on **arch + wave size**.
 
+## Attribution
+
+**leapdragon and a17t keep their Author and Committer.** extras PR **#1**
+(`rdna_ar`) is **Aron Hsiao** `<leapdragon@gmail.com>`. a17t unique HIP
+(extras PR **#3**) keeps **their** names (Simon Siebert
+`<Mail@simonsiebert.de>` / Author on those commits). Being on dest extras
+does **not** make those commits this lab. Do **not** rewrite them to
+BlivionIaG. Do **not** `--reset-author`. Do **not**
+`GIT_AUTHOR_NAME=BlivionIaG` on those picks.
+
+Dest HIP **this lab wrote** (FA, EXL3, W4A16, GDN, causal_conv, …) is
+**BlivionIaG** `<kev29lt@gmail.com>` — Author **and** Committer. Recipe:
+[`CONTRIBUTING.md`](CONTRIBUTING.md) (foreign first).
+
 ## Docs
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — fatbin policy, DOT
   source, bind rules, zoo vs serve.
 - [`docs/BACKPORT.md`](docs/BACKPORT.md) — extras review: what is zoo vs
   serve, why bodies are not copied yet.
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — ROCm pin, how to land a tile.
-  Kernel / mode / env / AR tracker: **unvalidated** list below.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — ROCm pin, how to land a tile,
+  foreign-first cherry-pick. Kernel / mode / env / AR tracker:
+  **unvalidated** list below.
 
 ## Unvalidated extras inventory
 
@@ -227,8 +242,8 @@ Status key: **extras** = live on dest tip (unvalidated here) ·
 | RMSNorm HIP AOT | `layernorm.cu` | — | Serve fused-norm; no tile. **unvalidated** |
 | GLM-5.3 KDA decode + prefill | `glm5_kda_*.cu` (PR **#2**) | `attn/kda_scan` | Later. Drop `glm5_` name. **unvalidated** |
 | GLM-5.3 DSA indexer + MLA-NoPE | `glm5_dsa_*.cu` (PR **#2**) | `attn/dsa_nope`, `qsa_indexer` | Later. **unvalidated** |
-| leapdragon push AR | `rdna_ar` (PR **#1**) | `comm/pcie` | Uncached+push. Default **off**. Aron Hsiao. **unvalidated** |
-| a17t extra AWQ GEMM / GEMV | `awq_gemm_rdna2.cu`, `moe_awq_gemm_rdna2.cu`, `gemv_w4_kpack_rdna2.cu` (PR **#3**) | — | **skip** — second W4 family |
+| leapdragon push AR | `rdna_ar` (PR **#1**) | `comm/pcie` | Uncached+push. Default **off**. **Keep Aron Hsiao** `<leapdragon@gmail.com>` Author **and** Committer. Do **not** rewrite to BlivionIaG. **unvalidated** |
+| a17t extra AWQ GEMM / GEMV | `awq_gemm_rdna2.cu`, `moe_awq_gemm_rdna2.cu`, `gemv_w4_kpack_rdna2.cu` (PR **#3**) | — | **skip** — second W4 family. If dest ever locks it, pick **their** commits; keep **their** Author **and** Committer |
 
 ### Modes / dispatch
 
@@ -297,13 +312,13 @@ Serve knobs. hippihx does not read these. **Unvalidated.** Debug probes stay ext
 | AITER custom AR | `VLLM_ROCM_USE_AITER_CUSTOM_AR` | on in envs, AITER itself off | CDNA, not gfx1030 dest |
 | Quick-reduce | `VLLM_ROCM_QUICK_REDUCE_*` | unset | serve |
 | Symm-mem AR | `VLLM_ALLREDUCE_USE_SYMM_MEM` | on | serve |
-| leapdragon `rdna_ar` Uncached+push | extras PR **#1** | **off** | `comm/pcie` Later. Author Aron Hsiao. Occupancy pin closed. Boot self-test. INT8/Q8 wire preferred; no Finegrained; no E4M3 without FP8 HW |
+| leapdragon `rdna_ar` Uncached+push | extras PR **#1** | **off** | `comm/pcie` Later. **Keep Aron Hsiao** `<leapdragon@gmail.com>` Author **and** Committer. Do **not** rewrite to BlivionIaG. Occupancy pin closed. Boot self-test. INT8/Q8 wire preferred; no Finegrained; no E4M3 without FP8 HW |
 
 ### Not taken / leave in extras
 
 | Item | Why |
 |---|---|
-| a17t PR **#3** second AWQ GEMM + `qwen4_exp` | duplicate W4 family + serve |
+| a17t PR **#3** second AWQ GEMM + `qwen4_exp` | duplicate W4 family + serve. Attribution stays **theirs** if dest ever locks the unique HIP |
 | leapdragon `gemv_f16` / `moe_skinny_int4_decode` | dropped at extras PR #1 conflict resolution |
 | Produce / pack (`-cb 3inst`, AWQ produce) | outside hippihx |
 | Cudagraph `torch.zeros`, `eager_break_during_capture`, GDN probes | serve page-commit / dispatcher |

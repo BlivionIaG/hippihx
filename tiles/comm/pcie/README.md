@@ -18,8 +18,10 @@ do not load FA/EXL3/AWQ objects into a gfx900 fatbin just to ship AR.
 
 extras PR #1 (`cursor/leapdragon-cherry-d2a4`) is a **review-only**
 cherry-pick of leapdragon `rdna_ar` (Uncached+push, boot self-test).
-**Authorship is Aron Hsiao** `<leapdragon@gmail.com>` — Author **and**
-Committer on every unique commit. Keep `Co-Authored-By: Claude Fable 5`.
-Do not add Blivion/Cursor trailers. **AR default stays off.** Occupancy
-pin stays closed. Do not merge that ISA into this stub until extras
-dest-locks it.
+**Authorship is inviolable: Aron Hsiao** `<leapdragon@gmail.com>` —
+Author **and** Committer on every unique commit. Keep
+`Co-Authored-By: Claude Fable 5`. Do **not** `GIT_AUTHOR_NAME=BlivionIaG`.
+Do **not** `--reset-author`. Being on dest extras does **not** make this
+this lab. Do not add Blivion/Cursor trailers. **AR default stays off.**
+Occupancy pin stays closed. Do not merge that ISA into this stub until
+extras dest-locks it.

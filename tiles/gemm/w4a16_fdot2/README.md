@@ -18,5 +18,8 @@ GEMM family.
 
 Do not take a17t `awq_gemm_rdna2.cu` / `qdq_awq_rdna2.cuh` as a second W4
 family. GPTQ vs AWQ is pack/zeros on this tile. If dest ever locks that
-family, cherry-pick **their** commits (`d53572644` and follow-ups), do
-not rewrite them.
+family, cherry-pick **their** commits (`d53572644` and follow-ups).
+Keep **their** Author **and** Committer (Simon Siebert
+`<Mail@simonsiebert.de>` / Author on the unique HIP commits). Do **not**
+rewrite to BlivionIaG. Do **not** `--reset-author`. Do **not**
+`GIT_AUTHOR_NAME=BlivionIaG`.

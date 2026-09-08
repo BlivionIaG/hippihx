@@ -41,13 +41,47 @@ def test_tiles_are_torch_aten_free() -> None:
 
 
 def test_foreign_hip_attribution_policy() -> None:
-    text = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
-    assert "cherry-pick -x" in text
-    assert "GIT_COMMITTER_NAME" in text
-    assert "kev29lt@gmail.com" in text
+    """leapdragon / a17t keep Author+Committer. Never steal via dest rewrite."""
+    contrib = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
     bp = (ROOT / "docs" / "BACKPORT.md").read_text(encoding="utf-8")
+    arch = (ROOT / "docs" / "ARCHITECTURE.md").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    pcie = (ROOT / "tiles" / "comm" / "pcie" / "README.md").read_text(
+        encoding="utf-8"
+    )
+    w4 = (ROOT / "tiles" / "gemm" / "w4a16_fdot2" / "README.md").read_text(
+        encoding="utf-8"
+    )
+
+    sneaky = "even if the source Author field is wrong"
+    for text in (contrib, bp, arch, readme, pcie, w4):
+        assert sneaky not in text
+    assert "cherry-pick -x" in contrib
+    assert "GIT_COMMITTER_NAME" in contrib
+
+    # Foreign recipe (classify / keep their Author) before this-lab rewrite.
+    foreign_idx = contrib.find("Foreign FIRST")
+    blivion_force = contrib.find("GIT_AUTHOR_NAME='BlivionIaG'")
+    assert foreign_idx != -1
+    assert blivion_force != -1
+    assert foreign_idx < blivion_force
+    assert "leapdragon@gmail.com" in contrib
+    assert "Mail@simonsiebert.de" in contrib
+    assert "NEVER GIT_AUTHOR_NAME=BlivionIaG" in contrib
+    assert "foreign=1" in contrib
+    assert "kev29lt@gmail.com" in contrib
+
     assert "BlivionIaG" in bp
     assert "leapdragon@gmail.com" in bp
+    assert "Never `GIT_AUTHOR_NAME=BlivionIaG`" in bp
+    assert "leapdragon and a17t keep their Author and Committer" in bp
+
+    assert "even if the commit lives on dest extras" in arch
+    assert "leapdragon@gmail.com" in pcie
+    assert "GIT_AUTHOR_NAME=BlivionIaG" in pcie
+    assert "GIT_AUTHOR_NAME=BlivionIaG" in w4
+    assert "leapdragon@gmail.com" in readme
+    assert "GIT_AUTHOR_NAME=BlivionIaG" in readme
 
 
 def test_readme_unvalidated_inventory() -> None:

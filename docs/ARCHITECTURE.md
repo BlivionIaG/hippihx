@@ -159,7 +159,7 @@ host-side and torch-free.
 - Editing `opengfx1030/vllm-rdna` from this tree
 - Dumping extras `csrc/rocm/*.cu` here before extras can consume hippihx
   (see [`BACKPORT.md`](BACKPORT.md))
-- Re-authoring dest extras HIP as Cursor commits (dest Author **and**
+- Re-authoring dest extras HIP as Cursor commits (this lab: Author **and**
   Committer is BlivionIaG). Re-authoring foreign HIP (leapdragon / a17t)
-  as Cursor **or** Blivion (cherry-pick `-x`, keep **their** Author and
-  Committer)
+  as Cursor **or** Blivion — cherry-pick `-x`, keep **their** Author and
+  Committer even if the commit lives on dest extras

@@ -9,4 +9,6 @@ this directory owns the MoE launch, dispatch, and scratch around them.
 | `__launch_bounds__` | TBD — lock here before the production kernel |
 | Wave | 32 on gfx1030 |
 
-Do not take a17t `moe_awq_gemm_rdna2.cu` as a second routed family.
+Do not take a17t `moe_awq_gemm_rdna2.cu` as a second routed family. If dest
+ever locks unique a17t HIP, pick **their** commits; keep **their** Author
+**and** Committer. Do **not** rewrite to BlivionIaG.

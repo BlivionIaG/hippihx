@@ -97,15 +97,19 @@ tracker (all **unvalidated**): [`README.md`](../README.md#unvalidated-extras-inv
 
 ## Attribution (do not re-author)
 
-**Dest extras HIP** (FA, EXL3, W4A16, GDN, causal_conv, sparse MLA,
-indexer, GLM Later KDA/DSA) is **BlivionIaG** `<kev29lt@gmail.com>`.
-Author **and** Committer on every picked dest commit. Do not use Cursor
-or `cursoragent`.
+**leapdragon and a17t keep their Author and Committer.** Being on dest
+extras does not make their commits this lab. Never `GIT_AUTHOR_NAME=BlivionIaG`
+on those picks. Never Cursor. Keep their trailers. Add none of ours.
 
-**Foreign HIP** (leapdragon, a17t) keeps **their** Author **and**
-Committer. Cherry-pick `-x`, force Committer = source Author, keep their
-trailers, add none of ours. Recipe: [`CONTRIBUTING.md`](../CONTRIBUTING.md).
-Same bar as extras PR #1.
+| Who | Keep as |
+|---|---|
+| leapdragon `rdna_ar` (extras PR #1) | **Aron Hsiao** `<leapdragon@gmail.com>` Author **and** Committer. Keep `Co-Authored-By: Claude Fable 5` |
+| a17t unique HIP (extras PR #3) | **their** source Author **and** Committer (Simon Siebert `<Mail@simonsiebert.de>` / Author on the unique HIP commits). If dest ever locks that family, pick **their** commits, not a rewrite |
+
+**This lab's dest HIP** (FA, EXL3, W4A16, GDN, causal_conv, sparse MLA,
+indexer, GLM Later KDA/DSA) is **BlivionIaG** `<kev29lt@gmail.com>`.
+Author **and** Committer. Do not use Cursor. Recipe:
+[`CONTRIBUTING.md`](../CONTRIBUTING.md). Foreign first.
 
 This hippihx review commit is **new documentation**. It is not a
 kernel migrate and must not be used as a template for body imports.
@@ -120,6 +124,6 @@ kernel migrate and must not be used as a template for body imports.
 | `exl3_dot2_*.cu` | `40850e6c5` BlivionIaG | BlivionIaG (Author **and** Committer), including the port and later perf commits |
 | `causal_conv1d_rdna2.cu` | `5eb84b4fa` BlivionIaG | BlivionIaG |
 | `sparse_mla_rdna2.cu` / `indexer_paged_mqa_rdna2.cu` | BlivionIaG | BlivionIaG |
-| PR #1 `rdna_ar` | **Aron Hsiao** `<leapdragon@gmail.com>` | Aron Hsiao Author **and** Committer. Keep `Co-Authored-By: Claude Fable 5`. No Blivion/Cursor trailers |
+| PR #1 `rdna_ar` | **Aron Hsiao** `<leapdragon@gmail.com>` | Aron Hsiao Author **and** Committer. Keep `Co-Authored-By: Claude Fable 5`. **No** Blivion/Cursor Author, Committer, or trailers |
 | PR #2 `glm5_kda_*` / `glm5_dsa_*` | BlivionIaG | BlivionIaG; rename off `glm5_` in a **follow-up hippihx** commit, not by rewriting their HIP |
-| PR #3 a17t unique W4 (`d53572644`, later Simon Siebert) | **Not taken** | If dest ever locks that family, pick **their** commits, not a rewrite |
+| PR #3 a17t unique W4 (`d53572644`) | **Not taken** | If dest ever locks that family, pick **their** commits with **their** Author **and** Committer, not a rewrite |
