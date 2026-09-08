@@ -1,0 +1,11 @@
+# sequence
+
+Short-window / recurrent **helpers**, not scan tiles.
+
+| Directory | Class |
+|---|---|
+| `causal_conv` | Scalar-FMA causal conv, `state_len≈4` |
+
+GDN and KDA **scans** live under `attn/gdn_scan` and `attn/kda_scan`. Do not
+put this conv under `gdn_scan`. GDN vs KDA state layouts differ — do not
+retarget a GDN 16/48 window onto KDA 64×128.

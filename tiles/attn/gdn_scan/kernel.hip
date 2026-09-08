@@ -1,0 +1,5 @@
+#include "hippihx/tile_stub.hpp"
+
+// Contract: attn/gdn_scan — GDN / hybrid-state scan class (not product-named).
+// LDS / __launch_bounds__ locked in README.md when the real tile lands.
+__global__ void hippihx_attn_gdn_scan_stub() {}
