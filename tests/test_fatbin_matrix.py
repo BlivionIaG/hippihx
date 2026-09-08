@@ -31,7 +31,7 @@ def test_docs_forbid_hsa_override() -> None:
     assert "HSA_OVERRIDE" in text
 
 
-def test_later_slots_named() -> None:
+def test_fatbin_slots_named() -> None:
     text = _docs()
     for token in (
         "gfx1151",
@@ -43,3 +43,5 @@ def test_later_slots_named() -> None:
         "gfx1102",
     ):
         assert token in text, token
+    assert "portable" in text.lower()
+    assert "unoptimized" in text.lower() or "not dest-tuned" in text.lower()

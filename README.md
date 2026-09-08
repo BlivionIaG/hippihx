@@ -2,8 +2,10 @@
 
 HIP kernel / op zoo. **gfx1030** (Radeon Pro **V620**, RDNA2, wave32, ROCm
 7.14) and **gfx1100/1101/1102** are first-class **DOT** consumers of the
-**same tile source**. **gfx900** is a Vega stub (`mad_mix` / `pk_fma` — not
-DOT). **BC-250 is gfx1013** (Cyan Skillfish), not Vega20/`gfx906`.
+**same tile source**. **gfx1151**, Deck **gfx103x**, and **gfx1013** (BC-250
+/ Cyan Skillfish) build the same DOT stubs — they can run, not dest-tuned.
+**gfx900** is a Vega stub (`mad_mix` / `pk_fma` — not DOT). **gfx906** is
+Later Vega20/MI50, not BC-250.
 
 hippihx is the place tile contracts live so Blivion’s
 [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
@@ -65,9 +67,9 @@ fa_fdot2.run(binding)  # stub: no device work yet
 |---|---|---|---|
 | **gfx1030** | yes (primary) | — | V620 dest. ROCm 7.14. wave32. |
 | **gfx1100/1101/1102** | yes | **yes** (same `dot.hpp` source, no WMMA gate) | separate fatbin each |
-| **gfx1151** Strix Halo | Later DOT fatbin | VERIFY then likely yes if wave32 DOT path | not WMMA-gated |
-| **gfx1031/1032/1033/1035/1036** Deck/mobile | Later DOT fatbin | yes (RDNA2 DOT class) | separate objects |
-| **gfx1013** BC-250 | Later fatbin | **VERIFY before sharing** `dot.hpp` | Cyan Skillfish ≠ Navi21. `--offload-arch=gfx1013` only |
+| **gfx1151** Strix Halo | yes (portable) | **yes** (same `dot.hpp`) | can run, not dest-tuned; not WMMA-gated |
+| **gfx1031/1032/1033/1035/1036** Deck/mobile | yes (portable) | **yes** (RDNA2 DOT class) | can run, not dest-tuned; separate objects |
+| **gfx1013** BC-250 | yes (portable) | **yes** (same stubs; not Navi21-tuned) | Cyan Skillfish. `--offload-arch=gfx1013` only |
 | **gfx900** | yes stub / Later mad_mix | **no** | never load FA/EXL3 DOT |
 | **gfx906** (real Vega20/MI50) | Later non-DOT if ever | **no** | **not** BC-250 |
 
@@ -81,13 +83,13 @@ run gfx1030 objects on gfx1013).
 
 FA (`attn/fa_fdot2`), EXL3 (`gemm/exl3_3inst`), AWQ/W4A16
 (`gemm/w4a16_fdot2`), and `moe/shared` are **one source tree** compiled
-twice:
+once per `--offload-arch`:
 
 ```bash
 # same tiles/*.hip, one --offload-arch per tree
 cmake -S . -B build-gfx1030 -DHIPPIHX_ARCH=gfx1030
 cmake -S . -B build-gfx1100 -DHIPPIHX_ARCH=gfx1100
-# gfx1101 / gfx1102 are the same DOT source, separate fatbins
+# gfx1101 / gfx1102 first-class; gfx1151 / gfx103x / gfx1013 portable
 ```
 
 Craft locks: **wave32 only**, **no `fdot2.bf16`**, **never `#ifdef WMMA`**.
@@ -100,12 +102,14 @@ configures a **host compile stub** when `hipcc` is missing so the layout
 stays buildable.
 
 ```bash
-# DOT slots — same source, two trees
+# DOT slots — same source, one tree per arch
 cmake -S . -B build -DHIPPIHX_ARCH=gfx1030
 cmake --build build
 # archive: build/fatbin/gfx1030/libhippihx_gfx1030.a
 
 cmake -S . -B build-gfx1100 -DHIPPIHX_ARCH=gfx1100
+cmake -S . -B build-gfx1151 -DHIPPIHX_ARCH=gfx1151  # portable / unoptimized
+cmake -S . -B build-gfx1013 -DHIPPIHX_ARCH=gfx1013  # BC-250; never HSA_OVERRIDE
 cmake -S . -B build-gfx900  -DHIPPIHX_ARCH=gfx900   # no DOT objects
 ```
 

@@ -8,21 +8,13 @@ ARCH="${HIPPIHX_ARCH:-gfx1030}"
 BUILD="${BUILD_DIR:-$ROOT/build-$ARCH}"
 
 case "$ARCH" in
-  gfx1030|gfx1100|gfx1101|gfx1102|gfx900) ;;
-  gfx1013)
-    echo "gfx1013 is Later (BC-250 / Cyan Skillfish) — VERIFY before sharing dot.hpp; not gfx906" >&2
-    exit 1
-    ;;
+  gfx1030|gfx1100|gfx1101|gfx1102|gfx1151|gfx1031|gfx1032|gfx1033|gfx1035|gfx1036|gfx1013|gfx900) ;;
   gfx906)
     echo "gfx906 is Later non-DOT (real Vega20/MI50), not BC-250 — not built yet" >&2
     exit 1
     ;;
-  gfx1151|gfx1031|gfx1032|gfx1033|gfx1035|gfx1036)
-    echo "$ARCH is a Later DOT fatbin — not built yet (separate object when opened)" >&2
-    exit 1
-    ;;
   *)
-    echo "HIPPIHX_ARCH must be a built slot gfx1030|gfx1100|gfx1101|gfx1102|gfx900 (got '$ARCH')" >&2
+    echo "unknown HIPPIHX_ARCH='$ARCH' (built DOT + gfx900; Later: gfx906)" >&2
     exit 1
     ;;
 esac

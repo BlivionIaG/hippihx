@@ -32,7 +32,7 @@ gfx1100/1101/1102 are **first-class DOT consumers**, not a later port.
 | Rule | Meaning |
 |---|---|
 | One source | `tiles/attn/fa_fdot2`, `tiles/gemm/w4a16_fdot2`, `tiles/gemm/exl3_3inst`, `tiles/moe/shared` |
-| Separate fatbins | one `--offload-arch` per CMake tree (`gfx1030`, `gfx1100`, `gfx1101`, `gfx1102`) |
+| Separate fatbins | one `--offload-arch` per CMake tree (every built DOT slot) |
 | No multi-arch object | Never `--offload-arch=gfx1030,gfx1100` in one `.a` / `.so` |
 | No foreign ISA load | **Never** `HSA_OVERRIDE_GFX_VERSION` or load gfx1030 objects on another GFX |
 | No WMMA gate | **Never** `#ifdef WMMA` (or WMMA-only paths) in those files |
@@ -49,15 +49,15 @@ list from the gfx900 archive.
 |---|---|---|---|
 | **gfx1030** | yes (primary) | — | V620 dest |
 | **gfx1100/1101/1102** | yes | **yes** (same `dot.hpp`, no WMMA gate) | separate fatbin |
-| **gfx1151** Strix Halo | Later DOT fatbin | VERIFY then likely yes if wave32 DOT path | not WMMA-gated |
-| **gfx1031/1032/1033/1035/1036** Deck/mobile | Later DOT fatbin | yes (RDNA2 DOT class) | separate objects |
-| **gfx1013** BC-250 | Later fatbin | **VERIFY before sharing** `dot.hpp` | Cyan Skillfish ≠ Navi21. akandr uses RDNA1-macro paths for 1010/1012/1013. `--offload-arch=gfx1013` only |
+| **gfx1151** Strix Halo | yes (portable) | **yes** (same `dot.hpp`) | can run, not dest-tuned; not WMMA-gated |
+| **gfx1031/1032/1033/1035/1036** Deck/mobile | yes (portable) | **yes** (RDNA2 DOT class) | can run, not dest-tuned; separate objects |
+| **gfx1013** BC-250 | yes (portable) | **yes** (same stubs; not Navi21-tuned) | Cyan Skillfish ≠ Navi21. `--offload-arch=gfx1013` only |
 | **gfx900** | yes stub / Later mad_mix | **no** | never load FA/EXL3 DOT |
 | **gfx906** (real Vega20/MI50) | Later non-DOT if ever | **no** | **not** BC-250 |
 
 One configure tree → one `libhippihx_<arch>.a` in `build/fatbin/<arch>/`.
-CMake rejects multi-arch lists and refuses Later slots (`gfx1013`,
-`gfx906`, `gfx1151`, Deck `gfx103x`) until they are opened.
+CMake rejects multi-arch lists and refuses **gfx906** only. Portable DOT
+slots (1151 / 103x / 1013) configure and compile the same stubs.
 
 **BC-250 is not Vega20.** Real dumps: Cyan Skillfish **`gfx1013`** (Oberon
 cut-down APU). `gfx906` is MI50/Vega20 only.
@@ -126,9 +126,9 @@ Do not add `produce/`, `awq/`, or `3inst/` packer trees to hippihx.
 
 `hippihx.list_ops()` enumerates contracts. Each op is
 `hippihx.<group>.<op>` with `Caps`, `plan`, `bind`, `run`, `is_supported`.
-DOT ops report `META.dot is True` and `is_supported` only on built DOT
-slots (gfx1030 + gfx1100/1101/1102). The skeleton is host-side and
-torch-free.
+DOT ops report `META.dot is True` and `is_supported` on every built DOT
+slot (gfx1030, gfx110x, gfx1151, gfx103x, gfx1013). The skeleton is
+host-side and torch-free.
 
 ## Non-goals (room lock)
 

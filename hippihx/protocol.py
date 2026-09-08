@@ -20,35 +20,44 @@ KNOWN_ARCHES: tuple[str, ...] = (
     "gfx1100",
     "gfx1101",
     "gfx1102",
-    "gfx900",
-)
-DOT_ARCHES: tuple[str, ...] = ("gfx1030", "gfx1100", "gfx1101", "gfx1102")
-LATER_DOT_ARCHES: tuple[str, ...] = (
     "gfx1151",
     "gfx1031",
     "gfx1032",
     "gfx1033",
     "gfx1035",
     "gfx1036",
+    "gfx1013",
+    "gfx900",
 )
-LATER_VERIFY_DOT_ARCHES: tuple[str, ...] = ("gfx1013",)
+DOT_ARCHES: tuple[str, ...] = (
+    "gfx1030",
+    "gfx1100",
+    "gfx1101",
+    "gfx1102",
+    "gfx1151",
+    "gfx1031",
+    "gfx1032",
+    "gfx1033",
+    "gfx1035",
+    "gfx1036",
+    "gfx1013",
+)
+# Portable DOT: can run, not dest-tuned. Own --offload-arch; no HSA_OVERRIDE.
+UNOPTIMIZED_DOT_ARCHES: tuple[str, ...] = (
+    "gfx1151",
+    "gfx1031",
+    "gfx1032",
+    "gfx1033",
+    "gfx1035",
+    "gfx1036",
+    "gfx1013",
+)
 LATER_NONDOT_ARCHES: tuple[str, ...] = ("gfx906",)
-LATER_ARCHES: tuple[str, ...] = (
-    LATER_DOT_ARCHES + LATER_VERIFY_DOT_ARCHES + LATER_NONDOT_ARCHES
-)
+LATER_ARCHES: tuple[str, ...] = LATER_NONDOT_ARCHES
 LATER_ARCH_NOTES: dict[str, str] = {
-    "gfx1013": (
-        "Later (BC-250 / Cyan Skillfish, not Vega20/gfx906). "
-        "VERIFY before sharing dot.hpp — ≠ Navi21. "
-        "--offload-arch=gfx1013 only; never HSA_OVERRIDE / foreign ISA load"
-    ),
     "gfx906": (
-        "Later non-DOT (real Vega20/MI50). Not BC-250 — BC-250 is gfx1013. "
-        "Never load FA/EXL3 DOT objects"
-    ),
-    "gfx1151": (
-        "Later DOT fatbin (Strix Halo). VERIFY then likely share dot.hpp "
-        "if wave32; not WMMA-gated. Separate object; never HSA_OVERRIDE"
+        "Later non-DOT (real Vega20/MI50). Not BC-250 — BC-250 is gfx1013 "
+        "(built, unoptimized Cyan Skillfish). Never load FA/EXL3 DOT objects"
     ),
 }
 DEFAULT_ARCH = "gfx1030"
@@ -88,11 +97,7 @@ class Caps:
 
     def __post_init__(self) -> None:
         if self.arch in LATER_ARCHES:
-            note = LATER_ARCH_NOTES.get(
-                self.arch,
-                "Later Deck/mobile RDNA2 DOT fatbin — same class as gfx1030, "
-                "separate objects when opened; never HSA_OVERRIDE",
-            )
+            note = LATER_ARCH_NOTES.get(self.arch, "Later fatbin slot — not built")
             raise ValueError(f"{self.arch} is a Later fatbin slot: {note}")
         if self.arch not in KNOWN_ARCHES:
             raise ValueError(
@@ -174,18 +179,7 @@ def stub_run(binding: Binding) -> None:
 
 
 def later_note(arch: str) -> str:
-    if arch == "gfx1013":
-        return LATER_ARCH_NOTES["gfx1013"]
-    if arch == "gfx906":
-        return LATER_ARCH_NOTES["gfx906"]
-    if arch in LATER_ARCH_NOTES:
-        return LATER_ARCH_NOTES[arch]
-    if arch in LATER_DOT_ARCHES:
-        return (
-            "Later Deck/mobile RDNA2 DOT fatbin — same class as gfx1030, "
-            "separate objects when opened; never HSA_OVERRIDE"
-        )
-    return "Later fatbin slot — not built yet"
+    return LATER_ARCH_NOTES.get(arch, "Later fatbin slot — not built yet")
 
 
 def require_single_arch(arch: str) -> str:
@@ -199,5 +193,5 @@ def require_single_arch(arch: str) -> str:
 
 
 def supported_arches(dot: bool) -> tuple[str, ...]:
-    """DOT tiles: built gfx1030 + gfx110x only. Vega / Later slots do not."""
+    """DOT tiles: every built DOT slot, including portable/unoptimized ones."""
     return DOT_ARCHES if dot else KNOWN_ARCHES
