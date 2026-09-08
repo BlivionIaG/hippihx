@@ -6,9 +6,11 @@
 // one --offload-arch per fatbin. Never one multi-arch object.
 // Never HSA_OVERRIDE / foreign ISA load.
 //
-// Built slots: gfx1030, gfx1100/1101/1102, gfx1151, gfx1031..1036, gfx1013.
-// gfx1151 / Deck gfx103x / gfx1013 are portable — can run, not dest-tuned.
-// gfx1013 is BC-250 / Cyan Skillfish (≠ Navi21); still its own object.
+// Built slots: gfx1030, gfx1100/1101/1102, gfx1151, gfx1031..1036.
+// gfx1151 / Deck gfx103x are portable — can run, not dest-tuned.
+// gfx1013 (BC-250 / Cyan Skillfish) is Later VERIFY: RADV reports warp 64.
+// Do not share this header until hipDeviceProp.warpSize is measured.
+// If HIP is wave64, Skillfish-only — never force -mwavefrontsize32.
 //
 // Craft locks:
 //   * wave32 only
@@ -20,6 +22,10 @@
 
 #if defined(HIPPIHX_GFX900) || defined(HIPPIHX_GFX906)
 #error "hippihx DOT tiles are not for Vega (gfx900/gfx906); never load FA/EXL3 DOT"
+#endif
+
+#if defined(HIPPIHX_GFX1013)
+#error "gfx1013 Later VERIFY: do not share wave32 DOT/FA until warpSize measured; never HSA_OVERRIDE"
 #endif
 
 #if defined(HIPPIHX_WAVE_SIZE) && (HIPPIHX_WAVE_SIZE != 32)

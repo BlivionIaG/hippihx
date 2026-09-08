@@ -8,13 +8,18 @@ ARCH="${HIPPIHX_ARCH:-gfx1030}"
 BUILD="${BUILD_DIR:-$ROOT/build-$ARCH}"
 
 case "$ARCH" in
-  gfx1030|gfx1100|gfx1101|gfx1102|gfx1151|gfx1031|gfx1032|gfx1033|gfx1035|gfx1036|gfx1013|gfx900) ;;
+  gfx1030|gfx1100|gfx1101|gfx1102|gfx1151|gfx1031|gfx1032|gfx1033|gfx1035|gfx1036|gfx900) ;;
+  gfx1013)
+    echo "gfx1013 is Later VERIFY (BC-250 / Cyan Skillfish): RADV reports warp 64." >&2
+    echo "Measure hipDeviceProp.warpSize before sharing wave32 DOT/FA. Never HSA_OVERRIDE." >&2
+    exit 1
+    ;;
   gfx906)
     echo "gfx906 is Later non-DOT (real Vega20/MI50), not BC-250 — not built yet" >&2
     exit 1
     ;;
   *)
-    echo "unknown HIPPIHX_ARCH='$ARCH' (built DOT + gfx900; Later: gfx906)" >&2
+    echo "unknown HIPPIHX_ARCH='$ARCH' (built DOT + gfx900; Later: gfx1013 VERIFY, gfx906)" >&2
     exit 1
     ;;
 esac

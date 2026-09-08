@@ -45,3 +45,14 @@ def test_fatbin_slots_named() -> None:
         assert token in text, token
     assert "portable" in text.lower()
     assert "unoptimized" in text.lower() or "not dest-tuned" in text.lower()
+
+
+def test_gfx1013_verify_gate_documented() -> None:
+    text = _docs()
+    low = text.lower()
+    assert "later verify" in low
+    assert "warpsize" in low or "warp size" in low
+    assert "hipdeviceprop.warpsize" in low
+    assert "-mwavefrontsize64" in low
+    assert "-mwavefrontsize32" in low
+    assert "arch + wave" in low

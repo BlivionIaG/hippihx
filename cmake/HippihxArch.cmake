@@ -7,11 +7,17 @@
 #   gfx1100/1101/1102    first-class DOT, no WMMA gate
 #   gfx1151              Strix Halo — portable/unoptimized, can run
 #   gfx1031..1036        Deck/mobile RDNA2 — portable/unoptimized, can run
-#   gfx1013              BC-250 / Cyan Skillfish — portable/unoptimized
-#                        (≠ Navi21). Own object only; never load gfx1030.
 # Built non-DOT:
 #   gfx900               stub; mad_mix / pk_fma — does not load DOT tiles
 # Later (configure refused):
+#   gfx1013              BC-250 / Cyan Skillfish — Later VERIFY.
+#                        RADV/llama.cpp report warp size 64, no matrix cores.
+#                        Do not share wave32 dot.hpp / FA until hipDeviceProp.warpSize
+#                        and hipcc --offload-arch=gfx1013 ISA are measured.
+#                        If HIP is wave64: Skillfish-only (-mwavefrontsize64
+#                        or leave wave32 off). Never force -mwavefrontsize32
+#                        or HSA_OVERRIDE to fake Navi21.
+#                        Serve bind keys on arch + wave size.
 #   gfx906               real Vega20/MI50 — not BC-250, not DOT
 
 set(HIPPIHX_KNOWN_ARCHES
@@ -19,7 +25,6 @@ set(HIPPIHX_KNOWN_ARCHES
   gfx1100 gfx1101 gfx1102
   gfx1151
   gfx1031 gfx1032 gfx1033 gfx1035 gfx1036
-  gfx1013
   gfx900
 )
 set(HIPPIHX_DOT_ARCHES
@@ -27,15 +32,14 @@ set(HIPPIHX_DOT_ARCHES
   gfx1100 gfx1101 gfx1102
   gfx1151
   gfx1031 gfx1032 gfx1033 gfx1035 gfx1036
-  gfx1013
 )
 set(HIPPIHX_DOT_UNOPTIMIZED_ARCHES
   gfx1151
   gfx1031 gfx1032 gfx1033 gfx1035 gfx1036
-  gfx1013
 )
+set(HIPPIHX_LATER_VERIFY_DOT_ARCHES gfx1013)
 set(HIPPIHX_LATER_NONDOT_ARCHES gfx906)
-set(HIPPIHX_LATER_ARCHES ${HIPPIHX_LATER_NONDOT_ARCHES})
+set(HIPPIHX_LATER_ARCHES ${HIPPIHX_LATER_VERIFY_DOT_ARCHES} ${HIPPIHX_LATER_NONDOT_ARCHES})
 set(HIPPIHX_DEFAULT_ARCH gfx1030)
 
 if(NOT DEFINED HIPPIHX_ARCH)
@@ -66,10 +70,22 @@ endif()
 
 list(FIND HIPPIHX_LATER_ARCHES "${HIPPIHX_ARCH}" _hippihx_later_idx)
 if(NOT _hippihx_later_idx EQUAL -1)
-  message(FATAL_ERROR
-    "HIPPIHX_ARCH=gfx906 is Later non-DOT (real Vega20/MI50). "
-    "Not BC-250 — BC-250 is gfx1013 / Cyan Skillfish (built, unoptimized). "
-    "Never load FA/EXL3 DOT objects. Built slots: ${HIPPIHX_KNOWN_ARCHES}")
+  if(HIPPIHX_ARCH STREQUAL "gfx1013")
+    message(FATAL_ERROR
+      "HIPPIHX_ARCH=gfx1013 is Later VERIFY (BC-250 / Cyan Skillfish). "
+      "RADV/llama.cpp report warp size 64 and no matrix cores. "
+      "Do not share wave32 dot.hpp / FA tiles with gfx1030 until "
+      "hipDeviceProp.warpSize and hipcc --offload-arch=gfx1013 ISA are "
+      "measured on real silicon. If HIP is wave64, keep a Skillfish-only "
+      "path (-mwavefrontsize64 or leave wave32 off). Never force "
+      "-mwavefrontsize32 or HSA_OVERRIDE to fake Navi21. "
+      "Serve bind keys on arch + wave size, not arch name alone.")
+  else()
+    message(FATAL_ERROR
+      "HIPPIHX_ARCH=gfx906 is Later non-DOT (real Vega20/MI50). "
+      "Not BC-250 — BC-250 is gfx1013 / Cyan Skillfish (Later VERIFY). "
+      "Never load FA/EXL3 DOT objects. Built slots: ${HIPPIHX_KNOWN_ARCHES}")
+  endif()
 endif()
 
 list(FIND HIPPIHX_KNOWN_ARCHES "${HIPPIHX_ARCH}" _hippihx_arch_idx)

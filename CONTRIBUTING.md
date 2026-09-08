@@ -21,13 +21,18 @@ Do not copy CUDA, CuTe, CE, or NVFP4 objects from
   EXL3 / AWQ / `moe.shared` source. One `--offload-arch` per fatbin.
 - gfx900 is a Vega stub (`mad_mix` / `pk_fma`). It does **not** load DOT
   tiles.
-- **BC-250 is gfx1013** (Cyan Skillfish): built, portable/unoptimized,
-  own `--offload-arch`. **gfx906 is Vega20/MI50**, Later non-DOT, **not**
-  BC-250.
+- **BC-250 is gfx1013** (Cyan Skillfish): Later VERIFY. RADV/llama.cpp
+  report warp size 64 and no matrix cores. Do not share wave32 `dot.hpp`
+  / FA with gfx1030 until `hipDeviceProp.warpSize` and
+  `hipcc --offload-arch=gfx1013` ISA are measured. If HIP is wave64, use
+  a Skillfish-only path (`-mwavefrontsize64` or leave wave32 off). Never
+  force `-mwavefrontsize32` or `HSA_OVERRIDE` to fake Navi21. Serve bind
+  keys on **arch + wave size**. **gfx906 is Vega20/MI50**, Later non-DOT,
+  **not** BC-250.
 - gfx1151 and Deck gfx103x are built portable DOT fatbins (same stubs,
   can run, not dest-tuned).
-- CMake must refuse multi-arch lists and gfx906, and never imply
-  `HSA_OVERRIDE` / foreign ISA load.
+- CMake must refuse multi-arch lists, gfx906, and gfx1013 (until VERIFY),
+  and never imply `HSA_OVERRIDE` / foreign ISA load.
 - Shared DOT tiles: **wave32 only**, **no `fdot2.bf16`**, **never
   `#ifdef WMMA`**. WMMA is a gfx110x-only Later overlay.
 
@@ -44,8 +49,10 @@ Do not copy CUDA, CuTe, CE, or NVFP4 objects from
 5. Host tests for the protocol stay torch-free until a HIP extension exists.
 6. If the tile is DOT, include `hippihx/dot.hpp` (not a WMMA header) and
    mark `make_op(..., dot=True)`. Do not add a per-SKU copy of the file.
-   gfx1013 / gfx1151 / gfx103x compile the same header (portable, not
-   dest-tuned). Never HSA_OVERRIDE a dest object onto those chips.
+   gfx1151 / gfx103x compile the same header (portable, not dest-tuned).
+   gfx1013 is Later VERIFY — do not compile this header for it until
+   wave size is measured. Never HSA_OVERRIDE a dest object onto those
+   chips.
 
 ## Build checks
 

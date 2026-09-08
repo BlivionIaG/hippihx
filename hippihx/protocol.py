@@ -26,7 +26,6 @@ KNOWN_ARCHES: tuple[str, ...] = (
     "gfx1033",
     "gfx1035",
     "gfx1036",
-    "gfx1013",
     "gfx900",
 )
 DOT_ARCHES: tuple[str, ...] = (
@@ -40,9 +39,9 @@ DOT_ARCHES: tuple[str, ...] = (
     "gfx1033",
     "gfx1035",
     "gfx1036",
-    "gfx1013",
 )
 # Portable DOT: can run, not dest-tuned. Own --offload-arch; no HSA_OVERRIDE.
+# gfx1013 is not here — Later VERIFY (warp size unconfirmed).
 UNOPTIMIZED_DOT_ARCHES: tuple[str, ...] = (
     "gfx1151",
     "gfx1031",
@@ -50,14 +49,23 @@ UNOPTIMIZED_DOT_ARCHES: tuple[str, ...] = (
     "gfx1033",
     "gfx1035",
     "gfx1036",
-    "gfx1013",
 )
+LATER_VERIFY_DOT_ARCHES: tuple[str, ...] = ("gfx1013",)
 LATER_NONDOT_ARCHES: tuple[str, ...] = ("gfx906",)
-LATER_ARCHES: tuple[str, ...] = LATER_NONDOT_ARCHES
+LATER_ARCHES: tuple[str, ...] = LATER_VERIFY_DOT_ARCHES + LATER_NONDOT_ARCHES
 LATER_ARCH_NOTES: dict[str, str] = {
+    "gfx1013": (
+        "Later VERIFY (BC-250 / Cyan Skillfish). RADV/llama.cpp report "
+        "warp size 64 and no matrix cores. Measure hipDeviceProp.warpSize "
+        "and hipcc --offload-arch=gfx1013 ISA on real silicon before any "
+        "share of wave32 dot.hpp / FA with gfx1030. If HIP is wave64, keep "
+        "a Skillfish-only path (-mwavefrontsize64 or leave wave32 off). "
+        "Never force -mwavefrontsize32 or HSA_OVERRIDE to fake Navi21. "
+        "Serve bind keys on arch + wave size, not arch name alone"
+    ),
     "gfx906": (
         "Later non-DOT (real Vega20/MI50). Not BC-250 — BC-250 is gfx1013 "
-        "(built, unoptimized Cyan Skillfish). Never load FA/EXL3 DOT objects"
+        "(Later VERIFY Cyan Skillfish). Never load FA/EXL3 DOT objects"
     ),
 }
 DEFAULT_ARCH = "gfx1030"
@@ -68,6 +76,8 @@ NO_FDOT2_BF16 = True
 NO_WMMA_ON_SHARED_DOT = True
 NO_HSA_OVERRIDE = True
 NO_FOREIGN_ISA_LOAD = True
+# Serve must select fatbins by (arch, wave), not GFX name alone.
+BIND_KEYS_ON_ARCH_AND_WAVE = True
 
 # Engine bind rules (room-locked). Serve wiring in rdna_extras must honor these.
 ONE_TORCH_OP_PER_KERNEL = True
@@ -89,7 +99,10 @@ class ScratchSpec:
 
 @dataclass(frozen=True, slots=True)
 class Caps:
-    """Host-side capabilities handed to ``plan``. No device work."""
+    """Host-side capabilities handed to ``plan``. No device work.
+
+    Serve bind keys on ``arch`` **and** ``wave`` — not the arch name alone.
+    """
 
     arch: str = DEFAULT_ARCH
     wave: int | None = None
@@ -193,5 +206,8 @@ def require_single_arch(arch: str) -> str:
 
 
 def supported_arches(dot: bool) -> tuple[str, ...]:
-    """DOT tiles: every built DOT slot, including portable/unoptimized ones."""
+    """DOT tiles: every built DOT slot, including portable/unoptimized ones.
+
+    gfx1013 is Later VERIFY and is not in ``DOT_ARCHES``.
+    """
     return DOT_ARCHES if dot else KNOWN_ARCHES

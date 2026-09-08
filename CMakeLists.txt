@@ -55,7 +55,8 @@ target_include_directories(hippihx PUBLIC
 )
 
 # Shared DOT source: FA / EXL3 / AWQ-W4A16 / moe.shared.
-# Same .hip for every DOT slot (gfx1030, gfx110x, gfx1151, gfx103x, gfx1013).
+# Same .hip for every DOT slot (gfx1030, gfx110x, gfx1151, gfx103x).
+# gfx1013 is Later VERIFY — not in this list until warpSize is measured.
 # gfx900 does not load these. Never #ifdef WMMA. Never HSA_OVERRIDE.
 set(HIPPIHX_DOT_SOURCES
   tiles/attn/fa_fdot2/kernel.hip
@@ -114,5 +115,5 @@ set_target_properties(hippihx_smoke_host PROPERTIES
 # Convenience: document slots without mixing them into this .a.
 add_custom_target(hippihx_list_fatbin_slots
   COMMAND ${CMAKE_COMMAND} -E echo
-          "DOT: gfx1030 gfx110x gfx1151 gfx103x gfx1013(BC-250); stub gfx900; Later gfx906(Vega20)"
+          "DOT: gfx1030 gfx110x gfx1151 gfx103x; stub gfx900; Later gfx1013(VERIFY) gfx906(Vega20)"
 )

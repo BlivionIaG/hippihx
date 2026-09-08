@@ -4,12 +4,14 @@ import pytest
 
 from hippihx.attn import fa_fdot2
 from hippihx.protocol import (
+    BIND_KEYS_ON_ARCH_AND_WAVE,
     DEFAULT_ARCH,
     DOT_ARCHES,
     DOT_WAVE,
     GFX1030_WAVE,
     LATER_ARCHES,
     LATER_NONDOT_ARCHES,
+    LATER_VERIFY_DOT_ARCHES,
     NO_D2H_UNDER_CAPTURE,
     NO_FDOT2_BF16,
     NO_FOREIGN_ISA_LOAD,
@@ -37,11 +39,12 @@ def test_engine_bind_rules_are_on() -> None:
     assert NO_WMMA_ON_SHARED_DOT
     assert NO_HSA_OVERRIDE
     assert NO_FOREIGN_ISA_LOAD
+    assert BIND_KEYS_ON_ARCH_AND_WAVE
     assert DEFAULT_ARCH == "gfx1030"
     assert GFX1030_WAVE == 32
     assert DOT_WAVE == 32
     assert "gfx1151" in DOT_ARCHES
-    assert "gfx1013" in DOT_ARCHES
+    assert "gfx1013" not in DOT_ARCHES
     assert "gfx1035" in DOT_ARCHES
     assert UNOPTIMIZED_DOT_ARCHES == (
         "gfx1151",
@@ -50,10 +53,10 @@ def test_engine_bind_rules_are_on() -> None:
         "gfx1033",
         "gfx1035",
         "gfx1036",
-        "gfx1013",
     )
+    assert LATER_VERIFY_DOT_ARCHES == ("gfx1013",)
     assert LATER_NONDOT_ARCHES == ("gfx906",)
-    assert LATER_ARCHES == ("gfx906",)
+    assert LATER_ARCHES == ("gfx1013", "gfx906")
     assert ROCM_PIN == "7.14"
 
 
@@ -69,7 +72,6 @@ def test_plan_bind_run_stub() -> None:
     assert fa_fdot2.is_supported(Caps(arch="gfx1102"))
     assert fa_fdot2.is_supported(Caps(arch="gfx1151"))
     assert fa_fdot2.is_supported(Caps(arch="gfx1035"))
-    assert fa_fdot2.is_supported(Caps(arch="gfx1013"))
     assert not fa_fdot2.is_supported(Caps(arch="gfx900"))
 
 
@@ -80,7 +82,6 @@ def test_causal_conv_protocol() -> None:
     assert plan.scratch_specs()[0].zeroed is True
     assert causal_conv.run(causal_conv.bind(plan)) is None
     assert causal_conv.is_supported(Caps(arch="gfx900"))
-    assert causal_conv.is_supported(Caps(arch="gfx1013"))
 
 
 def test_bind_rejects_foreign_plan() -> None:
@@ -99,13 +100,19 @@ def test_caps_rejects_unknown_and_later() -> None:
     assert "not BC-250" in str(gfx906.value).lower() or "Not BC-250" in str(
         gfx906.value
     )
+    with pytest.raises(ValueError, match="Later VERIFY") as gfx1013:
+        Caps(arch="gfx1013")
+    note = str(gfx1013.value).lower()
+    assert "warp size 64" in note
+    assert "arch + wave" in note or "arch + wave size" in note
 
 
 def test_require_single_arch() -> None:
     assert require_single_arch("gfx1101") == "gfx1101"
-    assert require_single_arch("gfx1013") == "gfx1013"
     assert require_single_arch("gfx1151") == "gfx1151"
     with pytest.raises(ValueError, match="one fatbin"):
         require_single_arch("gfx1030,gfx1100")
     with pytest.raises(ValueError, match="Later"):
         require_single_arch("gfx906")
+    with pytest.raises(ValueError, match="Later VERIFY"):
+        require_single_arch("gfx1013")
