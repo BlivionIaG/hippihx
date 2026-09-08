@@ -89,10 +89,14 @@ cmake -S . -B build-gfx900  -DHIPPIHX_ARCH=gfx900
 Without ROCm (layout check only):
 
 ```bash
-cmake -S . -B build -DHIPPIHX_FORCE_HOST_STUB=ON -DHIPPIHX_ARCH=gfx1030
+cmake -S . -B build -DHIPPIHX_FORCE_HOST_STUB=ON -DHIPPIHX_ARCH=gfx1030 \
+  -DCMAKE_CXX_COMPILER=g++
 cmake --build build
 ./build/fatbin/gfx1030/hippihx_smoke_host
 ```
+
+Use `g++` for the host stub if the default `c++` is clang without a
+working `-lstdc++` (common on slim images). V620 builds use `hipcc`.
 
 Raw `hipcc` (same policy: one arch per invocation):
 

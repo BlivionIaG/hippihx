@@ -37,8 +37,8 @@ Do not copy CUDA, CuTe, CE, or NVFP4 objects from
 ## Build checks
 
 ```bash
-# Layout / host stub (no ROCm)
-cmake -S . -B build -DHIPPIHX_FORCE_HOST_STUB=ON
+# Layout / host stub (no ROCm). Prefer g++ if clang cannot find libstdc++.
+cmake -S . -B build -DHIPPIHX_FORCE_HOST_STUB=ON -DCMAKE_CXX_COMPILER=g++
 cmake --build build
 ./build/fatbin/gfx1030/hippihx_smoke_host
 

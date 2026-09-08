@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.21)
 
+# Validate the fatbin slot before enabling languages so a broken host
+# compiler cannot mask a multi-arch misconfigure.
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/HippihxArch.cmake")
+
 # Languages are decided after we know whether hipcc is present. CXX is
 # always enabled so this tree stays configure-able in CI without ROCm.
 project(hippihx VERSION 0.0.0 LANGUAGES CXX)
-
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/HippihxArch.cmake")
 
 include(CheckLanguage)
 check_language(HIP)
