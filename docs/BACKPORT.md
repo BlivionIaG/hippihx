@@ -92,7 +92,8 @@ All of:
 4. extras is rewired to call it (that edit happens **in extras**, not from
    this tree). The extras copy is then deleted.
 
-Until then: observe, lock numbers, keep stubs.
+Until then: observe, lock numbers, keep stubs. Kernel / mode / env / AR
+tracker (all **unvalidated**): [`README.md`](../README.md#unvalidated-extras-inventory).
 
 ## Attribution (do not re-author)
 

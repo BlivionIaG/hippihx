@@ -50,6 +50,14 @@ def test_foreign_hip_attribution_policy() -> None:
     assert "leapdragon@gmail.com" in bp
 
 
+def test_readme_unvalidated_inventory() -> None:
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "Unvalidated extras inventory" in text
+    assert "**Unvalidated.**" in text
+    assert "VLLM_RDNA_AR" in text
+    assert "fa_rdna2" in text
+
+
 def test_no_mistaken_dest_author_identities() -> None:
     forbidden = ("kletorch", "opencode.local")
     hits: list[str] = []
