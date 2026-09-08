@@ -189,3 +189,121 @@ consume layout and ships HIP that reads it.
 - [`docs/BACKPORT.md`](docs/BACKPORT.md) — extras review: what is zoo vs
   serve, why bodies are not copied yet.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — ROCm pin, how to land a tile.
+  Kernel / mode / env / AR tracker: **unvalidated** list below.
+
+## Unvalidated extras inventory
+
+Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
+`rdna_extras` @ `d71721c79547` (2026-09-08) plus open extras PRs **#1–#3**.
+
+**Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
+ships stubs; bodies stay in extras until a consume bind exists. This
+list is a tracker, not a claim that any row works.
+
+Status key: **extras** = live on dest tip (unvalidated here) ·
+**Later** = side branch / review-only · **skip** = do not take ·
+**stub** = hippihx contract only.
+
+### Kernels (HIP)
+
+| Kernel / op | extras | hippihx tile | Notes |
+|---|---|---|---|
+| FA paged decode / prefill / split-K / short | `fa_rdna2.cu` | `attn/fa_fdot2` | `fdot2`. Occupancy pin closed. **unvalidated** |
+| FA INT8 KV writer | `reshape_and_cache_int8_rdna2` | `attn/fa_fdot2` | INT8 cache layout for RDNA_ATTN. **unvalidated** |
+| W4A16 dense decode | `q_gemm_rdna2.cu` | `gemm/w4a16_fdot2` | GPTQ + AWQ = pack/zeros, one GEMM. **unvalidated** |
+| W4A16 prefill | `q_gemm_rdna2_prefill.cu` | `gemm/w4a16_fdot2` | Multi-config. **unvalidated** |
+| W4A16 AWQ high-M prefill | `q_gemm_rdna2_awq_prefill.cu` | `gemm/w4a16_fdot2` | Exllama-clone tile, AWQ zeros (no GPTQ +1). **unvalidated** |
+| W4A16 MoE | `moe_q_gemm_rdna2.cu` | `moe/routed` | **unvalidated** |
+| EXL3 dense / MoE / dequant / Hadamard / trellis decode | `exl3_dot2_*.cu` | `gemm/exl3_3inst` | Consume `-cb 3inst`. Produce outside. UNC-26. **unvalidated** |
+| GDN packed decode | `gdn_decode_rdna2.cu` | `attn/gdn_scan` | Register-resident. Capture still garbage on dest hybrid. **unvalidated** |
+| GDN prefill chain (prep / kkt / solve_wy / delta_h / o) | `gdn_prefill_*_rdna2.cu` | `attn/gdn_scan` | Default-off (`VLLM_GDN_HIP_PREFILL=0`). Chunk-boundary corruption. **unvalidated** |
+| causal_conv1d update + fwd | `causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA, `state_len≈3–4`. **unvalidated** |
+| Paged MQA indexer | `indexer_paged_mqa_rdna2.cu` | `attn/qsa_indexer` | DeepSeek V4 Lightning class. **unvalidated** |
+| Sparse MLA decode / prefill | `sparse_mla_rdna2.cu` | `attn/dsa_nope` | **unvalidated** |
+| W8A16 / W8A16-FP8 / W8A8-FP8 dense+MoE | `moe_w8a16*.cu`, `gemm_w8a8_fp8_dense_rdna2.cu`, `q_gemm_w8a16_fp8_rdna2.cu` | — | No hippihx tile yet. **unvalidated** |
+| MXFP4 dense + MoE | `mxfp4_dot2_*.cu` | — | No hippihx tile yet. **unvalidated** |
+| gfx1100 W4 WMMA | `q_gemm_rdna3_wmma.cu` | — | WMMA Later overlay, not shared DOT. **unvalidated** |
+| Skinny GEMM / INT4 skinny | `skinny_gemms*.cu` | — | `VLLM_ROCM_USE_SKINNY_GEMM`. **unvalidated** |
+| RMSNorm HIP AOT | `layernorm.cu` | — | Serve fused-norm; no tile. **unvalidated** |
+| GLM-5.3 KDA decode + prefill | `glm5_kda_*.cu` (PR **#2**) | `attn/kda_scan` | Later. Drop `glm5_` name. **unvalidated** |
+| GLM-5.3 DSA indexer + MLA-NoPE | `glm5_dsa_*.cu` (PR **#2**) | `attn/dsa_nope`, `qsa_indexer` | Later. **unvalidated** |
+| leapdragon push AR | `rdna_ar` (PR **#1**) | `comm/pcie` | Uncached+push. Default **off**. Aron Hsiao. **unvalidated** |
+| a17t extra AWQ GEMM / GEMV | `awq_gemm_rdna2.cu`, `moe_awq_gemm_rdna2.cu`, `gemv_w4_kpack_rdna2.cu` (PR **#3**) | — | **skip** — second W4 family |
+
+### Modes / dispatch
+
+| Mode | What extras does | Default (extras) | hippihx |
+|---|---|---|---|
+| W4 decode vs prefill vs AWQ-prefill vs Exllama | M/K/N buckets in `rdna2_w4a16.py` | decode `M≤32` & `K≥4096`; AWQ high-M → `awq_prefill`; `M>256` Exllama (GPTQ) | one `w4a16_fdot2` tile |
+| W4 pack | GPTQ `uint4b8` (+1 zeros) vs AWQ `uint4` (literal zeros) | same kernel, `use_v2_format` | pack/zeros, not a second GEMM |
+| EXL3 codebook | `cb==0` 3inst produce, `cb==1` mcg compile, `cb==2` mul1 not produced | 3inst dest | consume only |
+| EXL3 memory | `full` int16 trellis vs `packed` stub | `full` | — |
+| EXL3 prefill | decode-trellis prefill vs fused GEMM | `VLLM_EXL3_PREFILL_DECODE=1` | — |
+| GDN decode HIP | packed HIP vs Triton/FLA | on unless `VLLM_GDN_DECODE_RDNA2=0` | `gdn_scan` |
+| GDN prefill HIP | 5-kernel chain | **off** | `gdn_scan` |
+| FA backend | `RDNA_ATTN` when gfx10x | `VLLM_USE_RDNA2_FA` (envs.py default false; backend reads `"1"`) | `fa_fdot2` |
+| FA spec/MTP gate | opt-in abort on verify-shaped batches | **off** | serve, not a tile |
+| MLA sparse HIP | indexer + sparse MLA | `VLLM_USE_RDNA2_MLA=1` | indexer / `dsa_nope` |
+| causal conv HIP | update (decode) + fwd (prefill) | on unless set `0` | `causal_conv` |
+| Custom AR (dest) | force custom all-reduce on PCIe-only | **off** | serve |
+| leapdragon `rdna_ar` | size-gated Uncached+push | **off** (`VLLM_RDNA_AR=0`) | `comm/pcie` Later |
+
+### Env (extras-added / extras-used)
+
+Serve knobs. hippihx does not read these. **Unvalidated.** Debug probes stay extras (no D2H under capture in the zoo).
+
+| Env | Default (as read in extras) | Role |
+|---|---|---|
+| `VLLM_USE_RDNA2_FA` | envs.py `False`; `rdna_attn` treats missing as `"1"` | FA-RDNA2 / `RDNA_ATTN` |
+| `VLLM_USE_RDNA2_MLA` | off unless `"1"` | sparse MLA + paged MQA HIP |
+| `VLLM_FARDNA2_ENABLE_SPEC_GATE` | `"0"` | MTP-verify abort (opt-in) |
+| `VLLM_FARDNA2_SPEC_VERIFY_Q_LEN` | `"3"` | spec-gate q len |
+| `VLLM_GDN_DECODE_RDNA2` | on (`!= "0"`) | GDN decode HIP |
+| `VLLM_GDN_HIP_PREFILL` | off if `"0"` (dest default-off) | GDN prefill HIP chain |
+| `VLLM_GDN_HIP_KERNELS` | recipe `1` | recipe umbrella; confirm vs the two gates above |
+| `VLLM_GDN_DECODE_KERNEL` | `"cuda"` | FLA packed-decode path name (`cuda`/`triton`) |
+| `VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE` | `1` | FLA packed decode |
+| `VLLM_CAUSAL_CONV1D_RDNA2_UPDATE` | `"1"` | conv update HIP |
+| `VLLM_CAUSAL_CONV1D_RDNA2_FWD` | `"1"` | conv fwd HIP |
+| `VLLM_RDNA_FORCE_FP16` | recipe `1` | force fp16 (no BF16 emu) |
+| `VLLM_EXL3_MEMORY_MODE` | `full` | `full` / `packed` |
+| `VLLM_EXL3_PREFILL_DECODE` | `"1"` | trellis-decode prefill |
+| `VLLM_EXL3_M_MAX` | `64` (`0` = no CG-PATH) | EXL3 capture cap |
+| `VLLM_EXL3_DEQUANT_ALL` | off | dequant leftover / mul1 |
+| `VLLM_EXL3_FOLDED_CACHE` | unset | folded-weight cache dir |
+| `VLLM_ROCM_USE_SKINNY_GEMM` | `True` | skinny GEMM |
+| `VLLM_ROCM_USE_AITER` | `False` | AITER (CDNA; not dest gfx1030) |
+| `VLLM_ROCM_USE_AITER_CUSTOM_AR` | `True` | AITER AR (CDNA) |
+| `VLLM_FORCE_CUSTOM_ALL_REDUCE` | `False` | force custom AR without full P2P |
+| `VLLM_CUSTOM_ALLREDUCE_ALGO` | unset | `1stage` / `2stage` |
+| `VLLM_ROCM_QUICK_REDUCE_*` | unset | ROCm quick-reduce size/quant knobs |
+| `VLLM_ALLREDUCE_USE_SYMM_MEM` | `1` | symmetric-memory AR |
+| `VLLM_RDNA_AR` | `"0"` (PR **#1**, not dest) | leapdragon push AR |
+| `VLLM_RDNA_AR_BLOCKS` | auto (PR **#1**) | AR block cap |
+| `VLLM_RDNA_AR_PACE` | `0` (PR **#1**) | AR store pace |
+| `VLLM_USE_BREAKABLE_CUDAGRAPH` | `0` (auto-on in some configs) | capture dispatcher |
+| `VLLM_LOG_GDN_PTRS` | off | GDN pointer probe |
+| `VLLM_GDN_DBG` | off | GDN debug print |
+| `VLLM_EXL3_DEBUG` / `_HADAMARD_DBG` / `_APPLY_DBG` / `_MARKER_DBG` / `_INPUT_NAN_DBG` | off | EXL3 probes |
+| `VLLM_CONV1D_DEBUG` / `VLLM_MLP_DBG` / `VLLM_RDNA2_MOE_DEBUG_NAN` | off | probes |
+| `DBG_VLLM_STEP_TIMING` | off | per-step timing |
+
+### AR / collectives
+
+| Path | Where | Default | hippihx |
+|---|---|---|---|
+| RCCL | extras fallback | on when custom AR off | — |
+| Custom all-reduce (vLLM/ROCm) | `VLLM_FORCE_CUSTOM_ALL_REDUCE` | **off** | serve |
+| AITER custom AR | `VLLM_ROCM_USE_AITER_CUSTOM_AR` | on in envs, AITER itself off | CDNA, not gfx1030 dest |
+| Quick-reduce | `VLLM_ROCM_QUICK_REDUCE_*` | unset | serve |
+| Symm-mem AR | `VLLM_ALLREDUCE_USE_SYMM_MEM` | on | serve |
+| leapdragon `rdna_ar` Uncached+push | extras PR **#1** | **off** | `comm/pcie` Later. Author Aron Hsiao. Occupancy pin closed. Boot self-test. INT8/Q8 wire preferred; no Finegrained; no E4M3 without FP8 HW |
+
+### Not taken / leave in extras
+
+| Item | Why |
+|---|---|
+| a17t PR **#3** second AWQ GEMM + `qwen4_exp` | duplicate W4 family + serve |
+| leapdragon `gemv_f16` / `moe_skinny_int4_decode` | dropped at extras PR #1 conflict resolution |
+| Produce / pack (`-cb 3inst`, AWQ produce) | outside hippihx |
+| Cudagraph `torch.zeros`, `eager_break_during_capture`, GDN probes | serve page-commit / dispatcher |
