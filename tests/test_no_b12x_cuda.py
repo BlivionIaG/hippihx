@@ -55,7 +55,13 @@ def test_readme_unvalidated_inventory() -> None:
     assert "Unvalidated extras inventory" in text
     assert "**Unvalidated.**" in text
     assert "VLLM_RDNA_AR" in text
+    assert "VLLM_RDNA_AR_MAX_KB" in text
     assert "fa_rdna2" in text
+    assert "a4060647" in text
+    bp = (ROOT / "docs" / "BACKPORT.md").read_text(encoding="utf-8")
+    assert "a4060647" in bp
+    assert "**not** squash" in bp
+    assert "leapdragon@gmail.com" in bp
 
 
 def test_no_mistaken_dest_author_identities() -> None:

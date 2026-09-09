@@ -1,8 +1,26 @@
 # extras → hippihx backport review
 
-Reviewed `opengfx1030/vllm-rdna` `rdna_extras` @ `d71721c79547`
-(2026-09-08) plus open PRs #1–#3. **Do not copy kernel bodies into this
-tree yet.**
+Last checked `opengfx1030/vllm-rdna` `rdna_extras` @ `a4060647cfbb`
+(2026-09-08 21:57 UTC). Original review was `d71721c79547` plus PRs
+#1–#3. **Do not copy kernel bodies into this tree yet.**
+
+Delta since `d71721c79547`: dest extras is **one commit ahead**. GitHub
+squash-merged [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
+(`rdna_ar` Uncached+push). PRs **#2** (`later/glm53-flash-awq-glm5next`
+@ `4b31f2eede51`) and **#3** (a17t WIP, last unique HIP still
+`4b9badd0a97d`) did not move. `main` is unrelated upstream vLLM
+(`c00091e02670`). Issues are disabled.
+
+The PR title said review-only / not dest. Dest extras **did** land the
+sources (`csrc/rocm/rdna_allreduce.{cu,cuh}` + communicator hook). That
+is dest *presence*, not dest-on-by-default and not a hippihx migrate:
+`os.getenv("VLLM_RDNA_AR", "0") == "1"` stays opt-in; occupancy pin
+stays closed; `rdna_allreduce.cu` is still ATen/`torch/all.h`. The
+`.py` module docstring still says “enabled by default”; the
+communicator gate is the dest contract — do not treat the docstring as
+dest-on. Pick **Aron Hsiao** unique commits from
+`cursor/leapdragon-cherry-d2a4` (or leapdragon source), **not** squash
+`a4060647` (Author BlivionIaG, `Co-authored-by` Aron / Claude Fable 5).
 
 hippihx is the zoo. extras is serve wiring. Copying ATen-coupled
 `csrc/rocm/*.cu` here would freeze a second ISA copy while dest is still
@@ -15,7 +33,7 @@ does not exist). Dual copies are how serve bugs accrete.
 |---|---|---|
 | Dest tip ISA (`fa_rdna2`, EXL3, W4A16, GDN, causal_conv) | **Yes, later** — zoo class | Wait. Record observed locks. Migrate only when extras can *call* hippihx. |
 | Dest tip 2026-09-06…08 (cudagraph zeros, eager_break, spec/MTP gates, GDN probes, profiling) | **No** | Stay in extras. That is page-commit / capture / dispatcher work. |
-| PR #1 leapdragon `rdna_ar` | **Later** — `comm.pcie` | Review-only, AR default-off, occupancy pin closed. |
+| Dest tip leapdragon `rdna_ar` (merged PR #1 @ `a4060647`) | **Later** — `comm.pcie` | On dest extras, default **off**, occupancy pin closed. Do not dump the ATen wrapper. |
 | PR #2 GLM-5.3 KDA/DSA (`later/glm53-…`) | **Later** — `kda_scan` / `dsa_nope` / `qsa_indexer` | Product-named `glm5_*` files. Do not name tiles after GLM. |
 | PR #3 a17t `[WIP] Similar work, different fork` | **No** | WIP, untested, mixed Triton+HIP+qwen4_exp serve. Duplicate W4 family. |
 
@@ -37,8 +55,9 @@ does not exist). Dual copies are how serve bugs accrete.
 
 ## Dest file → tile (when migrate is allowed)
 
-Observed at `d71721c79547`. Numbers are extras *observations*, not dest
-locks. Fill tile READMEs; do not invent tok/s.
+Observed at `d71721c79547` (ISA files) plus dest `rdna_ar` @
+`a4060647cfbb`. Numbers are extras *observations*, not dest locks.
+Fill tile READMEs; do not invent tok/s.
 
 | extras path | hippihx tile | Notes |
 |---|---|---|
@@ -51,7 +70,7 @@ locks. Fill tile READMEs; do not invent tok/s.
 | `csrc/rocm/causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA, wave32, `state_len≈3–4`, dim multiple of 32, register-only (no LDS). |
 | `csrc/rocm/indexer_paged_mqa_rdna2.cu` | `attn/qsa_indexer` | Dest indexer; confirm class vs DSA later. |
 | `csrc/rocm/sparse_mla_rdna2.cu` | `attn/dsa_nope` | Sparse MLA class, not a product fuse. |
-| leapdragon `rdna_allreduce.cuh` (PR #1) | `comm/pcie` | Uncached+push Later. INT8/Q8 wire. Default off. |
+| `csrc/rocm/rdna_allreduce.{cu,cuh}` (merged PR #1) | `comm/pcie` | Uncached+push Later. Host-coherent flags. Boot self-test. Default off. Occupancy pin closed. INT8/Q8 wire preferred; no Finegrained. |
 | `later/glm53-…` `glm5_kda_*.cu` | `attn/kda_scan` | Later. Do not keep the `glm5_` prefix. Do not retarget GDN 16/48 onto KDA 64×128. |
 | `later/glm53-…` `glm5_dsa_*.cu` | `attn/dsa_nope` + `qsa_indexer` | Later. Same rename rule. |
 
@@ -65,6 +84,7 @@ locks. Fill tile READMEs; do not invent tok/s.
 | `VLLM_LOG_GDN_PTRS`, `VLLM_GDN_DBG`, step timing | Probes. No D2H under capture in the zoo. |
 | HIP AOT RMSNorm `forward_rocm` | No tile class. Leave fused norms in extras until a class exists. |
 | Platform gates, `_rocm_C` vs `load_inline` | Registration. |
+| dest `rdna_all_reduce.py` boot self-test + `CudaCommunicator` hook | Serve. Zoo is the Uncached+push tile only. |
 | `sync_remote_to_local.sh`, recipes, profiling docs | Serve / ops. |
 | gfx1100 WMMA W4 (`q_gemm_rdna3_wmma.cu`) | WMMA is a gfx110x-only Later overlay, never on shared DOT. |
 | MXFP4 / W8A16 FP8 / skinny GEMMs | Extra consume families. Add a tile only when dest locks one as dest. |
@@ -120,6 +140,6 @@ kernel migrate and must not be used as a template for body imports.
 | `exl3_dot2_*.cu` | `40850e6c5` BlivionIaG | BlivionIaG (Author **and** Committer), including the port and later perf commits |
 | `causal_conv1d_rdna2.cu` | `5eb84b4fa` BlivionIaG | BlivionIaG |
 | `sparse_mla_rdna2.cu` / `indexer_paged_mqa_rdna2.cu` | BlivionIaG | BlivionIaG |
-| PR #1 `rdna_ar` | **Aron Hsiao** `<leapdragon@gmail.com>` | Aron Hsiao Author **and** Committer. Keep `Co-Authored-By: Claude Fable 5`. No Blivion/Cursor trailers |
+| dest `rdna_ar` (merged PR #1) | Unique HIP: **Aron Hsiao** `<leapdragon@gmail.com>` | Pick unique commits (`af25c5329`…`ee6e48ea1`), Author **and** Committer Aron Hsiao. Keep `Co-Authored-By: Claude Fable 5`. **Do not pick squash `a4060647`.** No Blivion/Cursor trailers |
 | PR #2 `glm5_kda_*` / `glm5_dsa_*` | BlivionIaG | BlivionIaG; rename off `glm5_` in a **follow-up hippihx** commit, not by rewriting their HIP |
 | PR #3 a17t unique W4 (`d53572644`, later Simon Siebert) | **Not taken** | If dest ever locks that family, pick **their** commits, not a rewrite |
