@@ -16,10 +16,15 @@ Wire codec (INT8 / Q8) is a class, not a product name. RCCL remains the
 fallback above the byte gate. Not a DOT tile — Vega may carry this stub;
 do not load FA/EXL3/AWQ objects into a gfx900 fatbin just to ship AR.
 
-extras PR #1 (`cursor/leapdragon-cherry-d2a4`) is a **review-only**
-cherry-pick of leapdragon `rdna_ar` (Uncached+push, boot self-test).
-**Authorship is Aron Hsiao** `<leapdragon@gmail.com>` — Author **and**
-Committer on every unique commit. Keep `Co-Authored-By: Claude Fable 5`.
-Do not add Blivion/Cursor trailers. **AR default stays off.** Occupancy
-pin stays closed. Do not merge that ISA into this stub until extras
-dest-locks it.
+extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
+(`cursor/leapdragon-cherry-d2a4`) squash-merged onto dest `rdna_extras`
+@ `a4060647cfbb` (2026-09-08). Sources are now dest *presence*
+(`csrc/rocm/rdna_allreduce.{cu,cuh}`): Uncached+push, host-coherent
+flags, boot self-test, `VLLM_RDNA_AR_BLOCKS` / `_PACE` / `_MAX_KB`.
+**Authorship of unique HIP is Aron Hsiao** `<leapdragon@gmail.com>` —
+Author **and** Committer on every unique commit. Keep
+`Co-Authored-By: Claude Fable 5`. Do not add Blivion/Cursor trailers.
+Do **not** pick dest squash `a4060647` (Author BlivionIaG). **AR default
+stays off** (`getenv("VLLM_RDNA_AR", "0") == "1"`). Occupancy pin stays
+closed. Do not dump the ATen wrapper into this stub until extras can
+consume one hippihx V1 op.

@@ -194,7 +194,9 @@ consume layout and ships HIP that reads it.
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `d71721c79547` (2026-09-08) plus open extras PRs **#1–#3**.
+`rdna_extras` @ `a4060647cfbb` (2026-09-08 21:57 UTC; one commit past
+`d71721c79547`, which merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1))
+plus open extras PRs **#2–#3**.
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs; bodies stay in extras until a consume bind exists. This
@@ -227,7 +229,7 @@ Status key: **extras** = live on dest tip (unvalidated here) ·
 | RMSNorm HIP AOT | `layernorm.cu` | — | Serve fused-norm; no tile. **unvalidated** |
 | GLM-5.3 KDA decode + prefill | `glm5_kda_*.cu` (PR **#2**) | `attn/kda_scan` | Later. Drop `glm5_` name. **unvalidated** |
 | GLM-5.3 DSA indexer + MLA-NoPE | `glm5_dsa_*.cu` (PR **#2**) | `attn/dsa_nope`, `qsa_indexer` | Later. **unvalidated** |
-| leapdragon push AR | `rdna_ar` (PR **#1**) | `comm/pcie` | Uncached+push. Default **off**. Aron Hsiao. **unvalidated** |
+| leapdragon push AR | `rdna_allreduce.{cu,cuh}` (merged PR **#1**) | `comm/pcie` | Dest extras, default **off**. Uncached+push. Occupancy pin closed. Aron Hsiao unique commits. **unvalidated** |
 | a17t extra AWQ GEMM / GEMV | `awq_gemm_rdna2.cu`, `moe_awq_gemm_rdna2.cu`, `gemv_w4_kpack_rdna2.cu` (PR **#3**) | — | **skip** — second W4 family |
 
 ### Modes / dispatch
@@ -246,7 +248,7 @@ Status key: **extras** = live on dest tip (unvalidated here) ·
 | MLA sparse HIP | indexer + sparse MLA | `VLLM_USE_RDNA2_MLA=1` | indexer / `dsa_nope` |
 | causal conv HIP | update (decode) + fwd (prefill) | on unless set `0` | `causal_conv` |
 | Custom AR (dest) | force custom all-reduce on PCIe-only | **off** | serve |
-| leapdragon `rdna_ar` | size-gated Uncached+push | **off** (`VLLM_RDNA_AR=0`) | `comm/pcie` Later |
+| leapdragon `rdna_ar` | size-gated Uncached+push | **off** (`VLLM_RDNA_AR=0`; dest extras after merged #1) | `comm/pcie` Later |
 
 ### Env (extras-added / extras-used)
 
@@ -278,9 +280,10 @@ Serve knobs. hippihx does not read these. **Unvalidated.** Debug probes stay ext
 | `VLLM_CUSTOM_ALLREDUCE_ALGO` | unset | `1stage` / `2stage` |
 | `VLLM_ROCM_QUICK_REDUCE_*` | unset | ROCm quick-reduce size/quant knobs |
 | `VLLM_ALLREDUCE_USE_SYMM_MEM` | `1` | symmetric-memory AR |
-| `VLLM_RDNA_AR` | `"0"` (PR **#1**, not dest) | leapdragon push AR |
-| `VLLM_RDNA_AR_BLOCKS` | auto (PR **#1**) | AR block cap |
-| `VLLM_RDNA_AR_PACE` | `0` (PR **#1**) | AR store pace |
+| `VLLM_RDNA_AR` | `"0"` (dest extras; merged PR **#1**) | leapdragon push AR (opt-in; communicator gate, not the stale “enabled by default” docstring) |
+| `VLLM_RDNA_AR_BLOCKS` | auto (dest extras; merged PR **#1**) | AR block cap |
+| `VLLM_RDNA_AR_PACE` | `0` (dest extras; merged PR **#1**) | AR store pace |
+| `VLLM_RDNA_AR_MAX_KB` | `512` (dest extras; merged PR **#1**) | AR fast-path size cap |
 | `VLLM_USE_BREAKABLE_CUDAGRAPH` | `0` (auto-on in some configs) | capture dispatcher |
 | `VLLM_LOG_GDN_PTRS` | off | GDN pointer probe |
 | `VLLM_GDN_DBG` | off | GDN debug print |
@@ -297,7 +300,7 @@ Serve knobs. hippihx does not read these. **Unvalidated.** Debug probes stay ext
 | AITER custom AR | `VLLM_ROCM_USE_AITER_CUSTOM_AR` | on in envs, AITER itself off | CDNA, not gfx1030 dest |
 | Quick-reduce | `VLLM_ROCM_QUICK_REDUCE_*` | unset | serve |
 | Symm-mem AR | `VLLM_ALLREDUCE_USE_SYMM_MEM` | on | serve |
-| leapdragon `rdna_ar` Uncached+push | extras PR **#1** | **off** | `comm/pcie` Later. Author Aron Hsiao. Occupancy pin closed. Boot self-test. INT8/Q8 wire preferred; no Finegrained; no E4M3 without FP8 HW |
+| leapdragon `rdna_ar` Uncached+push | dest extras (merged PR **#1** @ `a4060647`) | **off** | `comm/pcie` Later. Unique HIP: Aron Hsiao. Occupancy pin closed. Boot self-test. INT8/Q8 wire preferred; no Finegrained; no E4M3 without FP8 HW. Pick unique commits, not the dest squash. |
 
 ### Not taken / leave in extras
 
