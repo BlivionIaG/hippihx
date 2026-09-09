@@ -26,5 +26,6 @@ Author **and** Committer on every unique commit. Keep
 `Co-Authored-By: Claude Fable 5`. Do not add Blivion/Cursor trailers.
 Do **not** pick dest squash `a4060647` (Author BlivionIaG). **AR default
 stays off** (`getenv("VLLM_RDNA_AR", "0") == "1"`). Occupancy pin stays
-closed. Do not dump the ATen wrapper into this stub until extras can
-consume one hippihx V1 op.
+closed. `VLLM_RDNA_AR_MAX_KB` default **512**. C consume id:
+`HIPPIHX_V1_OP_COMM_PCIE` (`include/hippihx/v1.h`) — stub only; do not
+dump the ATen wrapper until extras rewires onto this V1 entry.

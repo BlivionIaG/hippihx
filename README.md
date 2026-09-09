@@ -14,6 +14,10 @@ hippihx is the place tile contracts live so Blivion’s
 [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
 `rdna_extras` can stay a **thin serve wiring layer**.
 
+Consume surface (in progress): `include/hippihx/v1.h` —
+`hippihx_v1_plan` / `hippihx_v1_run`. Serve wraps one V1 id as one
+`torch.ops.hippihx.*`. Bodies stay in extras until that rewire lands.
+
 This is the HIP/RDNA analogue of the
 [`local-inference-lab/b12x`](https://github.com/local-inference-lab/b12x)
 → serve split: **plan / bind / run** in the zoo, engine binds one `torch.ops`
