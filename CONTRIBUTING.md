@@ -6,6 +6,7 @@
 |---|---|
 | Tile contract, HIP ISA, LDS / `__launch_bounds__` lock | **this repo** (`tiles/…`) |
 | `plan` / `bind` / `run`, scratch specs | **this repo** (`hippihx/`) |
+| C V1 consume ABI (`hippihx_v1_*`) | **this repo** (`include/hippihx/v1.h`) |
 | Fatbin / CMake / ROCm pin | **this repo** |
 | Observed extras LDS / launch numbers (no body dump) | **this repo** (tile READMEs) |
 | extras HIP body migrate | **this repo**, only after extras can consume one V1 op |

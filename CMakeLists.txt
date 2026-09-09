@@ -72,8 +72,10 @@ set(HIPPIHX_DOT_SOURCES
 )
 
 # Non-DOT contracts compile for every built fatbin (stubs).
+# tiles/v1_abi.cpp is the torch-free C consume surface extras will bind.
 set(HIPPIHX_COMMON_SOURCES
   tiles/smoke.hip
+  tiles/v1_abi.cpp
   tiles/attn/gdn_scan/kernel.hip
   tiles/attn/kda_scan/kernel.hip
   tiles/attn/qsa_indexer/kernel.hip

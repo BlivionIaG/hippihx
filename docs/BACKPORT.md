@@ -1,8 +1,15 @@
 # extras → hippihx backport review
 
 Last checked `opengfx1030/vllm-rdna` `rdna_extras` @ `a4060647cfbb`
-(2026-09-08 21:57 UTC). Original review was `d71721c79547` plus PRs
-#1–#3. **Do not copy kernel bodies into this tree yet.**
+(2026-09-08 21:57 UTC; re-checked 2026-09-09). Tip **unchanged** since
+the tracker PR. Open extras PRs **#2** / **#3** did not move. **Do not
+copy kernel bodies into this tree yet.**
+
+**Consume ABI started.** `include/hippihx/v1.h` + `tiles/v1_abi.cpp` ship
+the torch-free C entry family (`hippihx_v1_plan` / `hippihx_v1_run`) that
+extras will wrap as one `torch.ops.hippihx.*` per op. `hippihx_v1_run`
+returns `HIPPIHX_V1_ERR_NOT_READY` until a body migrates. This is migrate
+criterion **#3** (one HIP entry extras can bind) — not a body dump.
 
 Delta since `d71721c79547`: dest extras is **one commit ahead**. GitHub
 squash-merged [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
@@ -107,13 +114,17 @@ All of:
 
 1. Dest GDN hybrid is capture-safe (or GDN HIP stays opt-in and documented).
 2. Tile README LDS / `__launch_bounds__` / wave / DOT unit are filled from
-   extras observations (this review started that).
+   extras observations (this review started that; EXL3 grain-v2 + FA
+   `__launch_bounds__` 128/256 recorded @ `a4060647`).
 3. hippihx ships one HIP entry that extras can bind as one V1 op.
+   **Started:** `include/hippihx/v1.h` (`hippihx_v1_plan` / `hippihx_v1_run`).
+   `run` is still `NOT_READY` (no body). Extras has not rewired yet.
 4. extras is rewired to call it (that edit happens **in extras**, not from
    this tree). The extras copy is then deleted.
 
-Until then: observe, lock numbers, keep stubs. Kernel / mode / env / AR
-tracker (all **unvalidated**): [`README.md`](../README.md#unvalidated-extras-inventory).
+Until then: observe, lock numbers, keep stubs, grow the V1 ABI. Kernel /
+mode / env / AR tracker (all **unvalidated**):
+[`README.md`](../README.md#unvalidated-extras-inventory).
 
 ## Attribution (do not re-author)
 

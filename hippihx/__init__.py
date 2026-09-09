@@ -27,6 +27,8 @@ from .protocol import (
     Plan,
     ScratchSpec,
 )
+from .v1 import ABI_REVISION as V1_ABI_REVISION
+from .v1 import V1_OP_NAMES, V1OpId, v1_op_is_dot, v1_op_name
 
 __version__ = "0.0.0"
 
@@ -75,7 +77,12 @@ __all__ = [
     "Plan",
     "ROCM_PIN",
     "ScratchSpec",
+    "V1OpId",
+    "V1_ABI_REVISION",
+    "V1_OP_NAMES",
     "__version__",
     "find_op",
     "list_ops",
+    "v1_op_is_dot",
+    "v1_op_name",
 ]

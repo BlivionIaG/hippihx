@@ -18,3 +18,7 @@ do not retarget one onto the other. This stub is the conv contract only.
 extras decode kernel is cudagraph-safe *as ISA* (no device alloc). Dest
 still captures it on a per-step tensor in GDN hybrid piecewise graphs —
 that stays extras. Do not copy the ATen wrapper.
+
+C consume id: `HIPPIHX_V1_OP_SEQUENCE_CAUSAL_CONV`. `hippihx_v1_plan`
+returns a **0-byte** zeroed workspace (register-only). `hippihx_v1_run`
+returns `HIPPIHX_V1_ERR_NOT_READY` until the body migrates.

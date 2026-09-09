@@ -151,6 +151,22 @@ DOT ops report `META.dot is True` and `is_supported` on every built DOT
 slot (gfx1030, gfx110x, gfx1151, gfx103x, gfx1013). The skeleton is
 host-side and torch-free.
 
+## C consume ABI (V1)
+
+`include/hippihx/v1.h` is the stable entry family extras will load from
+the fatbin:
+
+| Symbol | Role |
+|---|---|
+| `hippihx_v1_plan` | host-only scratch specs (always `zeroed=1`) |
+| `hippihx_v1_run` | capture-safe enqueue; stub returns `NOT_READY` until migrate |
+| `hippihx_v1_op_name` / `_is_dot` | id ↔ qualname / DOT flag |
+
+One V1 id per tile (`HIPPIHX_V1_OP_*`). Serve wraps as
+`torch.ops.hippihx.<op>` — never a second Triton path in this library.
+Python mirror: `hippihx.v1` (`V1OpId`, `ABI_REVISION`). Do not edit
+`opengfx1030/vllm-rdna` from this tree to rewire; that lands in extras.
+
 ## Non-goals (room lock)
 
 - Importing or forking b12x CUDA / CuTe / CE / NVFP4 / WMMA sources
