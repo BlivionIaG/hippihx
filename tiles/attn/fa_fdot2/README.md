@@ -31,7 +31,8 @@ body yet — when you do, cherry-pick BlivionIaG, do not re-author
 | TopK / LDS budget | ≤48 KiB working set + `attn_stages` guard | extras prefill ~48 KiB sits on this pin |
 | `LDS_PAD` | W4 A-tile pad lives on `gemm/w4a16_fdot2`, not FA | `8` (GEMM tile) |
 | `__launch_bounds__` | extras @ `a4060647`: decode D=128 `__launch_bounds__(128)`; decode D=256 + GQA-aware D=256 `__launch_bounds__(256)`; prefill `THREADS_PREFILL=128` | **not dest-locked** — occupancy pin closed |
-| GQA D=256 decode | extras: `GQA_MAX_G=8`, `GQA_BC=32`, `GQA_DSK=256+8`, one CTA per `(token, kv-head, split)` | observed; not dest-locked |
+| GQA D=256 decode | extras @ `6c5ff94`: idle waves still shuffle; skip online-softmax when `m_new == -inf` (NaN guard); zero `O_partial` on empty seq. `GQA_MAX_G=8`, `GQA_BC=32`, `GQA_DSK=256+8` | observed; not dest-locked |
+| fp16 flash KV writer | extras @ `6c5ff94`: `reshape_and_cache_flash_rdna2`, `__launch_bounds__(128, 4)`, stride-aware hybrid GDN pages, fp16 only | extras HIP; do not dump ATen wrapper. Persist workspaces stay extras. |
 
 Scratch is sized by `plan`. C consume id: `HIPPIHX_V1_OP_ATTN_FA_FDOT2`
 (`include/hippihx/v1.h`). Serve wraps as one `torch.ops.hippihx.*` — no

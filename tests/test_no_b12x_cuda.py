@@ -97,8 +97,12 @@ def test_readme_unvalidated_inventory() -> None:
     assert "VLLM_RDNA_AR_MAX_KB" in text
     assert "fa_rdna2" in text
     assert "a4060647" in text
+    assert "6c5ff94" in text
     bp = (ROOT / "docs" / "BACKPORT.md").read_text(encoding="utf-8")
     assert "a4060647" in bp
+    assert "6c5ff94" in bp
+    assert "i_t_local" in bp
+    assert "rdna2_graph_keepalive" in bp
     assert "**not** squash" in bp
     assert "leapdragon@gmail.com" in bp
     assert "Dest extras defects" in bp

@@ -170,7 +170,9 @@ the fatbin:
 One V1 id per tile (`HIPPIHX_V1_OP_*`). Serve wraps as
 `torch.ops.hippihx.<op>` — never a second Triton path in this library.
 Python mirror: `hippihx.v1` (`V1OpId`, `ABI_REVISION`). Caps include
-optional activation `dtype` (revision **2**). Do not edit
+optional activation `dtype` (revision **2**). Dest extras tip
+`6c5ff94efb8e` still has no `torch.ops.hippihx.*` rewire. Persist
+keepalive / GDN arenas stay extras. Do not edit
 `opengfx1030/vllm-rdna` from this tree to rewire; that lands in extras.
 
 ## Non-goals (room lock)
