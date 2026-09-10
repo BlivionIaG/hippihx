@@ -10,22 +10,25 @@ struct OpRow {
   // Observed extras scratch for the zoo stub. Real sizes land with migrate.
   // causal_conv: register-only (0). Others: placeholder workspace slab.
   size_t scratch_nbytes;
+  // 1 = fp16 activations only. Refuse bf16/fp32 (no fdot2.bf16; GDN HIP
+  // is fp16). Unset dtype still plans.
+  int fp16_act;
 };
 
 // Keep order identical to hippihx_v1_op_id and hippihx.list_ops().
 constexpr OpRow kOps[HIPPIHX_V1_OP_COUNT] = {
-    {"attn.fa_fdot2", 1, 0},
-    {"attn.gdn_scan", 0, 0},
-    {"attn.kda_scan", 0, 0},
-    {"attn.qsa_indexer", 0, 0},
-    {"attn.dsa_nope", 0, 0},
-    {"gemm.w4a16_fdot2", 1, 0},
-    {"gemm.exl3_3inst", 1, 0},
-    {"moe.routed", 0, 0},
-    {"moe.shared", 1, 0},
-    {"moe.leftover_bf16", 0, 0},
-    {"sequence.causal_conv", 0, 0},
-    {"comm.pcie", 0, 0},
+    {"attn.fa_fdot2", 1, 0, 1},
+    {"attn.gdn_scan", 0, 0, 1},
+    {"attn.kda_scan", 0, 0, 0},
+    {"attn.qsa_indexer", 0, 0, 0},
+    {"attn.dsa_nope", 0, 0, 0},
+    {"gemm.w4a16_fdot2", 1, 0, 1},
+    {"gemm.exl3_3inst", 1, 0, 1},
+    {"moe.routed", 0, 0, 0},
+    {"moe.shared", 1, 0, 1},
+    {"moe.leftover_bf16", 0, 0, 0},
+    {"sequence.causal_conv", 0, 0, 0},
+    {"comm.pcie", 0, 0, 0},
 };
 
 bool arch_ok(const char* arch, int is_dot) {
@@ -65,6 +68,18 @@ bool valid_op(hippihx_v1_op_id op) {
          static_cast<int>(op) < HIPPIHX_V1_OP_COUNT;
 }
 
+bool dtype_ok(hippihx_v1_op_id op, int dtype) {
+  if (dtype == HIPPIHX_V1_DTYPE_UNSET || dtype == HIPPIHX_V1_DTYPE_FP16) {
+    return true;
+  }
+  if (dtype != HIPPIHX_V1_DTYPE_BF16 && dtype != HIPPIHX_V1_DTYPE_FP32) {
+    return false;
+  }
+  // bf16 / fp32 activations: never DOT (that would be fdot2.bf16) and
+  // never dest GDN HIP (fp16-only; extras dispatch missed this guard).
+  return kOps[op].fp16_act == 0;
+}
+
 }  // namespace
 
 extern "C" int hippihx_v1_abi_revision(void) { return HIPPIHX_V1_ABI_REVISION; }
@@ -85,6 +100,13 @@ extern "C" int hippihx_v1_op_is_dot(hippihx_v1_op_id op) {
   return kOps[op].is_dot;
 }
 
+extern "C" int hippihx_v1_op_fp16_act(hippihx_v1_op_id op) {
+  if (!valid_op(op)) {
+    return 0;
+  }
+  return kOps[op].fp16_act;
+}
+
 extern "C" int hippihx_v1_plan(hippihx_v1_op_id op, const hippihx_v1_caps* caps,
                                hippihx_v1_scratch_spec* out_specs,
                                size_t* inout_nspecs) {
@@ -96,6 +118,9 @@ extern "C" int hippihx_v1_plan(hippihx_v1_op_id op, const hippihx_v1_caps* caps,
   }
   if (!arch_ok(caps->arch, kOps[op].is_dot)) {
     return HIPPIHX_V1_ERR_UNSUPPORTED_ARCH;
+  }
+  if (!dtype_ok(op, caps->dtype)) {
+    return HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE;
   }
   if (*inout_nspecs < 1 || out_specs == nullptr) {
     *inout_nspecs = 1;
@@ -118,6 +143,9 @@ extern "C" int hippihx_v1_run(hippihx_v1_op_id op, const hippihx_v1_caps* caps,
   }
   if (!arch_ok(caps->arch, kOps[op].is_dot)) {
     return HIPPIHX_V1_ERR_UNSUPPORTED_ARCH;
+  }
+  if (!dtype_ok(op, caps->dtype)) {
+    return HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE;
   }
   const size_t need = kOps[op].scratch_nbytes;
   if (scratch_nbytes < need) {

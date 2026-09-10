@@ -83,7 +83,10 @@ replaces Author with the picker.
 - CMake must refuse multi-arch lists and gfx906, and never imply
   `HSA_OVERRIDE` / foreign ISA load.
 - Shared DOT tiles: **wave32 only**, **no `fdot2.bf16`**, **never
-  `#ifdef WMMA`**. WMMA is a gfx110x-only Later overlay.
+  `#ifdef WMMA`**. WMMA is a gfx110x-only Later overlay. gfx1030 LLVM
+  aborts on `fdot2.bf16` — BF16 leftover/conv is scalar FMA, not DOT.
+  W4 consume: integer ZP then scale; prefill K-splits equal ×32. GDN HIP
+  and DOT `plan` refuse bf16 activations.
 
 ## Landing a tile
 

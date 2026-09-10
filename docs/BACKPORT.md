@@ -1,9 +1,17 @@
 # extras → hippihx backport review
 
 Last checked `opengfx1030/vllm-rdna` `rdna_extras` @ `a4060647cfbb`
-(2026-09-08 21:57 UTC; re-checked 2026-09-09). Tip **unchanged** since
-the tracker PR. Open extras PRs **#2** / **#3** did not move. **Do not
-copy kernel bodies into this tree yet.**
+(2026-09-08 21:57 UTC; re-checked **2026-09-10**). Tip **unchanged**.
+Open extras PRs **#2** / **#3** did not move. **Do not copy kernel bodies
+into this tree yet.**
+
+Dest extras **rolled back** several serve/kernel defaults (GDN HIP
+prefill default-off, spec/MTP gate churn, capture experiments). A
+Flash-Next V620 integration fork of that tip then had to roll back
+**more**: `fdot2.bf16` ISel aborts, unaligned W4 K-splits, scale-baked
+W4 zero-points, GDN HIP selected on BF16. hippihx locks the *proper*
+consume contracts so a later migrate does not copy those defects.
+See [Dest extras defects](#dest-extras-defects-do-not-copy).
 
 **Consume ABI started.** `include/hippihx/v1.h` + `tiles/v1_abi.cpp` ship
 the torch-free C entry family (`hippihx_v1_plan` / `hippihx_v1_run`) that
@@ -38,7 +46,7 @@ does not exist). Dual copies are how serve bugs accrete.
 
 | Source | Pertinent to hippihx? | Action |
 |---|---|---|
-| Dest tip ISA (`fa_rdna2`, EXL3, W4A16, GDN, causal_conv) | **Yes, later** — zoo class | Wait. Record observed locks. Migrate only when extras can *call* hippihx. |
+| Dest tip ISA (`fa_rdna2`, EXL3, W4A16, GDN, causal_conv) | **Yes, later** — zoo class | Wait. Record observed locks. **Do not copy dest W4 ZP / K-split / bf16 DOT.** Migrate only when extras can *call* hippihx. |
 | Dest tip 2026-09-06…08 (cudagraph zeros, eager_break, spec/MTP gates, GDN probes, profiling) | **No** | Stay in extras. That is page-commit / capture / dispatcher work. |
 | Dest tip leapdragon `rdna_ar` (merged PR #1 @ `a4060647`) | **Later** — `comm.pcie` | On dest extras, default **off**, occupancy pin closed. Do not dump the ATen wrapper. |
 | PR #2 GLM-5.3 KDA/DSA (`later/glm53-…`) | **Later** — `kda_scan` / `dsa_nope` / `qsa_indexer` | Product-named `glm5_*` files. Do not name tiles after GLM. |
@@ -125,6 +133,34 @@ All of:
 Until then: observe, lock numbers, keep stubs, grow the V1 ABI. Kernel /
 mode / env / AR tracker (all **unvalidated**):
 [`README.md`](../README.md#unvalidated-extras-inventory).
+
+## Dest extras defects (do not copy)
+
+Dest tip is still `a4060647`. These are **live dest bugs / rolled-back
+paths**, not tok/s. hippihx contracts must not reproduce them.
+
+| Defect | Where on dest extras | Proper zoo lock | hippihx |
+|---|---|---|---|
+| `llvm.amdgcn.fdot2.bf16.bf16` ISel abort | Triton/fusion on BF16 vision interp, `triton_mrope`, BF16 causal conv. Dest HIP conv is fp16-oriented. Integration rolled BF16 back to **fp32-promoted scalar FMA** / PyTorch ref. | Never `fdot2.bf16`. DOT + GDN HIP are **fp16 activations**. BF16 leftover / conv = scalar FMA, fp32 mul. | `dot.hpp`, V1 `HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE`, `sequence/causal_conv`, `moe/leftover_bf16` |
+| Scale-baked W4 zero-point | `qdq_4_rdna2.cuh` `prep_zero_scale_fp16`: `0xE400 \| zero` then `scale * (-1024 - zero)` in `half`. All-zero weights were not exact zero. | Integer `q - zero`, then `* scale`. GPTQ `uint4b8` (+1) vs AWQ literal is pack/zeros, not a second GEMM. | `gemm/w4a16_fdot2` |
+| Unaligned prefill K-split | `q_gemm_rdna2_prefill.cu` `compute_split_k`: K=640 can pick 16 splits of 40. Kernel reads **32-value** tiles (`K_STEP=32`). | Equal `k_per_split`, multiple of 32, inside LDS budget. Refuse the 40-wide split. | `gemm/w4a16_fdot2` |
+| GDN HIP selected on BF16 | `_gdn_prefill_dispatch_available()` checked GPU + symbols, **not dtype**. Kernel correctly rejected `mixed_qkv must be fp16`. | `plan` / V1 refuse bf16 on `attn.gdn_scan`. Prefill HIP stays default-off (chunk-boundary). Capture still unsafe. | `attn/gdn_scan`, V1 dtype |
+| Global EXL3 FP16 clip | Serve `Qwen2MoeMLP` clipped every model to FP16. Rolled back to EXL3-only on the integration fork. | Not a tile. Stay in extras. | — |
+| QSA 2-warp BF16 prefill spill | gfx1030 6h×256 BF16 prefill: 2 warps exhaust VGPRs. | **4 warps** (128 threads) for that shape. | `attn/qsa_indexer` |
+| `rdna_ar` flags not beside receiver staging | Dest squash of PR #1. Donor `3cfe000` excluded (mixed PLE). | Later: flags beside each rank’s uncached staging. Opt-in. Do not pick the mixed commit. | `comm/pcie` |
+
+Serve rollbacks already on dest tip (keep as serve, not zoo):
+
+- GDN HIP prefill **default-off** (`VLLM_GDN_HIP_PREFILL=0`) — chunk-boundary corruption; HIP chain still exists.
+- RDNA_ATTN spec/MTP verify **default-off** (opt-in env). Auto-skip when spec is off was **reverted**.
+- `eager_break_during_capture` on `do_kv_cache_update` was reverted then **reapplied**.
+- FA `kv_splits` 16: reverted to 0.27.1 form then that revert was reverted (16 stays).
+- GDN piecewise-capture experiments documented as **disproven**; eager is the correct control. Do not copy probe-driven ISA.
+
+Skinny GEMM (`skinny_gemms.cu`) exists on dest extras and was used for
+gfx1030 BF16 decode on the Flash-Next fork. **No hippihx tile** until
+dest extras locks that family as dest. Do not reintroduce leapdragon
+`gemv_f16` dropped at extras PR #1.
 
 ## Attribution (do not re-author)
 

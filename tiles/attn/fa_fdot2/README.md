@@ -12,7 +12,7 @@ overlay, optional, never required.
 | LDS bytes | extras decode ~33 KiB / prefill ~48 KiB — see below. Occupancy pin closed |
 | `__launch_bounds__` | extras 128 / 256 variants — **not dest-locked** |
 | Wave | **32 only** (gfx1030 and gfx1100) |
-| ISA | `fdot2` / `v_dot2c` only. **No `fdot2.bf16`.** No WMMA/MFMA/FP8 HW |
+| ISA | `fdot2` / `v_dot2c` only. **No `fdot2.bf16`.** No WMMA/MFMA/FP8 HW. Activations **fp16**; V1 refuses bf16 |
 | Graph | scratch sized by `plan`, **zeroed** for page-commit; **no D2H under capture** |
 
 ## FA LDS pins (before migrate from extras)

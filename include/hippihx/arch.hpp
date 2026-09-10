@@ -92,3 +92,7 @@
 #define HIPPIHX_HAS_FP8_HW 0
 #define HIPPIHX_HAS_FDOT2_BF16 0
 #endif
+
+// gfx1030 LLVM ISel aborts on llvm.amdgcn.fdot2.bf16.bf16 (vision interp,
+// mrope, BF16 causal conv). Never emit that ISA from this zoo. BF16
+// leftover / conv uses scalar FMA with fp32 mul, not fdot2.bf16.

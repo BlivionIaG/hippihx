@@ -107,6 +107,11 @@ These are room-locked for future Python / `torch.ops` and for anyone wiring
    GFX name alone. All of gfx1030 / Deck gfx1033 / gfx1013 are RDNA2;
    Deck is wave32; gfx1013 wave is unverified (RADV reports 64) — still
    a separate object.
+7. **Activations: fp16 for DOT and GDN HIP.** Never `fdot2.bf16`
+   (`llvm.amdgcn.fdot2.bf16.bf16` aborts on gfx1030). V1 returns
+   `HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE`. BF16 leftover / causal conv use
+   scalar FMA with fp32 mul. W4 consume is integer ZP then scale; prefill
+   K-splits are equal multiples of 32.
 
 ## Tile classes
 
@@ -160,11 +165,12 @@ the fatbin:
 |---|---|
 | `hippihx_v1_plan` | host-only scratch specs (always `zeroed=1`) |
 | `hippihx_v1_run` | capture-safe enqueue; stub returns `NOT_READY` until migrate |
-| `hippihx_v1_op_name` / `_is_dot` | id ↔ qualname / DOT flag |
+| `hippihx_v1_op_name` / `_is_dot` / `_fp16_act` | id ↔ qualname / DOT / fp16-act flags |
 
 One V1 id per tile (`HIPPIHX_V1_OP_*`). Serve wraps as
 `torch.ops.hippihx.<op>` — never a second Triton path in this library.
-Python mirror: `hippihx.v1` (`V1OpId`, `ABI_REVISION`). Do not edit
+Python mirror: `hippihx.v1` (`V1OpId`, `ABI_REVISION`). Caps include
+optional activation `dtype` (revision **2**). Do not edit
 `opengfx1030/vllm-rdna` from this tree to rewire; that lands in extras.
 
 ## Non-goals (room lock)

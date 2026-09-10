@@ -20,3 +20,9 @@ HIP is default-off on extras (chunk-boundary corruption). 2026-09-08 dest
 profiling still attributes piecewise-graph garbage to the GDN hybrid
 state path, with `causal_conv1d_update` captured as a non-splitting op.
 That is extras wiring. See [`docs/BACKPORT.md`](../../docs/BACKPORT.md).
+
+**fp16 activations only.** extras HIP (`gdn_prefill_*_rdna2`) rejects
+`mixed_qkv` that is not fp16. Dest dispatch selected the HIP prefill
+chain on BF16 and only failed inside the kernel — zoo `plan` / V1
+must refuse bf16 (`HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE`). Do not emit
+`fdot2.bf16` for a “BF16 GDN” shortcut.

@@ -29,3 +29,9 @@ stays off** (`getenv("VLLM_RDNA_AR", "0") == "1"`). Occupancy pin stays
 closed. `VLLM_RDNA_AR_MAX_KB` default **512**. C consume id:
 `HIPPIHX_V1_OP_COMM_PCIE` (`include/hippihx/v1.h`) — stub only; do not
 dump the ATen wrapper until extras rewires onto this V1 entry.
+
+**Later (not in dest squash):** leapdragon `3cfe000` moves host-coherent
+flags **beside each receiving GPU’s uncached staging** (PCIe ordering /
+poll traffic). PR #1 excluded it because it mixed PLE work. Port the AR
+layout separately; keep dest opt-in until TP4 eager + graph-replay are
+measured. Do not pick the mixed PLE commit.

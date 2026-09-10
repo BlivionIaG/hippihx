@@ -11,14 +11,17 @@ do not retarget one onto the other. This stub is the conv contract only.
 | LDS bytes | extras `causal_conv1d_rdna2.cu` add `5eb84b4fa` **BlivionIaG**: **0** — register-only, no global scratch |
 | `__launch_bounds__` | unset in extras (one warp per dim-block) |
 | Wave | 32 on gfx1030 / gfx1100; extras: 32 threads / dim-block, dim multiple of 32 |
-| Math | scalar FMA, fp16 in/out, fp32 acc — not `fdot2`, not `fdot2.bf16`, not WMMA |
+| Math | scalar FMA, fp16 or bf16 in/out, **fp32 acc / mul**. **Not** `fdot2`. **Not** `fdot2.bf16`. gfx1030 LLVM aborts on `llvm.amdgcn.fdot2.bf16.bf16` — BF16 must promote the multiply, not retarget DOT. |
 | State | `state_len = width-1`, typically **3 or 4** for GDN |
 | Graph | scratch sized by `plan`, **zeroed** for page-commit; **no D2H under capture** |
 
-extras decode kernel is cudagraph-safe *as ISA* (no device alloc). Dest
-still captures it on a per-step tensor in GDN hybrid piecewise graphs —
-that stays extras. Do not copy the ATen wrapper.
+extras decode kernel is cudagraph-safe *as ISA* for **fp16**. Dest still
+captures it on a per-step tensor in GDN hybrid piecewise graphs — that
+stays extras. BF16 was rolled back off the Triton/`fdot2.bf16` path on
+the Flash-Next V620 integration (fp32-promoted scalar FMA). Do not copy
+the ATen wrapper.
 
 C consume id: `HIPPIHX_V1_OP_SEQUENCE_CAUSAL_CONV`. `hippihx_v1_plan`
 returns a **0-byte** zeroed workspace (register-only). `hippihx_v1_run`
-returns `HIPPIHX_V1_ERR_NOT_READY` until the body migrates.
+returns `HIPPIHX_V1_ERR_NOT_READY` until the body migrates. bf16 caps are
+accepted; FA/GDN/DOT are not.

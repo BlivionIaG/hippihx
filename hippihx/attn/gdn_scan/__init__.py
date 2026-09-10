@@ -1,6 +1,6 @@
 from hippihx._ops import make_op
 
-_op = make_op("attn.gdn_scan", "GDN / hybrid-state scan")
+_op = make_op("attn.gdn_scan", "GDN / hybrid-state scan", fp16_act=True)
 META = _op.META
 Caps = _op.Caps
 plan = _op.plan

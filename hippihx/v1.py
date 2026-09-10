@@ -10,7 +10,7 @@ from __future__ import annotations
 from enum import IntEnum
 
 # Keep in lockstep with HIPPIHX_V1_ABI_REVISION in include/hippihx/v1.h.
-ABI_REVISION = 1
+ABI_REVISION = 2
 
 
 class V1OpId(IntEnum):
@@ -53,6 +53,9 @@ _DOT_OPS: frozenset[str] = frozenset(
     }
 )
 
+# fp16 activations only — refuse bf16 (no fdot2.bf16) and fp32.
+_FP16_ACT_OPS: frozenset[str] = _DOT_OPS | frozenset({"attn.gdn_scan"})
+
 
 def v1_op_name(op: V1OpId | int) -> str:
     return V1_OP_NAMES[int(op)]
@@ -62,10 +65,15 @@ def v1_op_is_dot(op: V1OpId | int) -> bool:
     return V1_OP_NAMES[int(op)] in _DOT_OPS
 
 
+def v1_op_fp16_act(op: V1OpId | int) -> bool:
+    return V1_OP_NAMES[int(op)] in _FP16_ACT_OPS
+
+
 __all__ = [
     "ABI_REVISION",
     "V1OpId",
     "V1_OP_NAMES",
+    "v1_op_fp16_act",
     "v1_op_is_dot",
     "v1_op_name",
 ]

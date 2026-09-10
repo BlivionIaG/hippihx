@@ -9,6 +9,7 @@ from .protocol import (
     Caps,
     OpMeta,
     Plan,
+    dtype_supported,
     stub_bind,
     stub_plan,
     stub_run,
@@ -26,7 +27,13 @@ class StubOp:
         self.Caps = Caps
 
     def plan(self, caps: Caps | None = None) -> Plan:
-        return stub_plan(self.META.qualname, caps or Caps())
+        caps = caps or Caps()
+        if not self.is_supported(caps):
+            raise ValueError(
+                f"{self.META.qualname} unsupported for "
+                f"arch={caps.arch!r} dtype={caps.dtype!r}"
+            )
+        return stub_plan(self.META.qualname, caps)
 
     def bind(self, plan: Plan, scratch: Any = None, **tensors: Any) -> Binding:
         if plan.qualname != self.META.qualname:
@@ -42,11 +49,30 @@ class StubOp:
 
     def is_supported(self, caps: Caps | None = None) -> bool:
         caps = caps or Caps()
-        return caps.arch in supported_arches(self.META.dot)
+        if caps.arch not in supported_arches(self.META.dot):
+            return False
+        return dtype_supported(
+            dot=self.META.dot, fp16_act=self.META.fp16_act, dtype=caps.dtype
+        )
 
 
-def make_op(qualname: str, summary: str, *, dot: bool = False) -> StubOp:
+def make_op(
+    qualname: str,
+    summary: str,
+    *,
+    dot: bool = False,
+    fp16_act: bool | None = None,
+) -> StubOp:
     group, name = qualname.split(".", 1)
+    if fp16_act is None:
+        fp16_act = dot
     return StubOp(
-        OpMeta(qualname=qualname, group=group, name=name, summary=summary, dot=dot)
+        OpMeta(
+            qualname=qualname,
+            group=group,
+            name=name,
+            summary=summary,
+            dot=dot,
+            fp16_act=fp16_act,
+        )
     )

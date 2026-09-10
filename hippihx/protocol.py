@@ -84,6 +84,25 @@ NO_TRITON_DOUBLE_FIRE = True
 SCRATCH_FROM_PLAN = True
 SCRATCH_ZEROED_FOR_PAGE_COMMIT = True
 NO_D2H_UNDER_CAPTURE = True
+# gfx1030 LLVM ISel aborts on fdot2.bf16. DOT + GDN HIP are fp16 activations.
+FP16_ACT_ONLY_ON_DOT = True
+FP16_ACT_ONLY_ON_GDN = True
+
+KNOWN_DTYPES: tuple[str, ...] = ("fp16", "bf16", "fp32")
+# V1 C enum hippihx_v1_dtype. Keep lockstep with include/hippihx/v1.h.
+DTYPE_UNSET = 0
+DTYPE_FP16 = 1
+DTYPE_BF16 = 2
+DTYPE_FP32 = 3
+
+
+def dtype_to_v1(dtype: str | None) -> int:
+    if dtype is None:
+        return DTYPE_UNSET
+    mapping = {"fp16": DTYPE_FP16, "bf16": DTYPE_BF16, "fp32": DTYPE_FP32}
+    if dtype not in mapping:
+        raise ValueError(f"unknown dtype {dtype!r}; known {KNOWN_DTYPES}")
+    return mapping[dtype]
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,6 +125,7 @@ class Caps:
     arch: str = DEFAULT_ARCH
     wave: int | None = None
     device: str = "hip"
+    dtype: str | None = None  # "fp16" / "bf16" / "fp32"; None = unset
 
     def __post_init__(self) -> None:
         if self.arch in LATER_ARCHES:
@@ -115,6 +135,10 @@ class Caps:
             raise ValueError(
                 f"unknown arch {self.arch!r}; built slots {KNOWN_ARCHES}; "
                 f"Later slots {LATER_ARCHES}"
+            )
+        if self.dtype is not None and self.dtype not in KNOWN_DTYPES:
+            raise ValueError(
+                f"unknown dtype {self.dtype!r}; known {KNOWN_DTYPES}"
             )
         if self.wave is None:
             if self.arch == "gfx900":
@@ -156,6 +180,8 @@ class OpMeta:
     summary: str
     planned: bool = True
     dot: bool = False
+    # True: activations are fp16. Refuse bf16 (no fdot2.bf16) and fp32.
+    fp16_act: bool = False
 
 
 @runtime_checkable
@@ -213,3 +239,14 @@ def require_single_arch(arch: str) -> str:
 def supported_arches(dot: bool) -> tuple[str, ...]:
     """DOT tiles: every built DOT slot, including portable/unoptimized ones."""
     return DOT_ARCHES if dot else KNOWN_ARCHES
+
+
+def dtype_supported(*, dot: bool, fp16_act: bool, dtype: str | None) -> bool:
+    """Unset/fp16 always. bf16/fp32 refused on DOT and GDN HIP."""
+    if dtype is None or dtype == "fp16":
+        return True
+    if dtype not in KNOWN_DTYPES:
+        return False
+    if fp16_act or dot:
+        return False
+    return True

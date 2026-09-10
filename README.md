@@ -180,7 +180,8 @@ consume layout and ships HIP that reads it.
 - No production GEMM or attention ISA in this skeleton (stubs exist so
   CMake is real).
 - No multi-arch `.so`. No `#ifdef WMMA` on shared DOT tiles. No
-  `fdot2.bf16`. No DOT objects on gfx900 / gfx906. No HSA_OVERRIDE.
+  `fdot2.bf16` (gfx1030 LLVM abort). No DOT objects on gfx900 / gfx906.
+  No HSA_OVERRIDE. DOT/GDN HIP refuse bf16 activations.
 - BC-250 is **gfx1013** (Cyan Skillfish), **RDNA2** — same generation as
   V620/Deck, not gfx906 and not Steam Deck. Deck gfx1033 is wave32.
   gfx1013 builds unoptimized; do not force `-mwavefrontsize32`. Serve
@@ -191,7 +192,7 @@ consume layout and ships HIP that reads it.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — fatbin policy, DOT
   source, bind rules, zoo vs serve.
 - [`docs/BACKPORT.md`](docs/BACKPORT.md) — extras review: what is zoo vs
-  serve, why bodies are not copied yet.
+  serve, dest defects not to copy, why bodies are not copied yet.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — ROCm pin, how to land a tile.
   Kernel / mode / env / AR tracker: **unvalidated** list below.
 
@@ -200,11 +201,17 @@ consume layout and ships HIP that reads it.
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
 `rdna_extras` @ `a4060647cfbb` (2026-09-08 21:57 UTC; one commit past
 `d71721c79547`, which merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1))
-plus open extras PRs **#2–#3**.
+plus open extras PRs **#2–#3**. Re-checked 2026-09-10: **tip unchanged**.
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs; bodies stay in extras until a consume bind exists. This
 list is a tracker, not a claim that any row works.
+
+Dest extras **rolled back** GDN HIP prefill (default-off), spec/MTP
+gates, and several capture experiments. Do **not** copy dest W4
+scale-baked ZP, unaligned prefill K-splits, or `fdot2.bf16`. V1
+refuses bf16 on DOT and GDN HIP. Details:
+[`docs/BACKPORT.md`](docs/BACKPORT.md#dest-extras-defects-do-not-copy).
 
 Status key: **extras** = live on dest tip (unvalidated here) ·
 **Later** = side branch / review-only · **skip** = do not take ·
@@ -216,20 +223,20 @@ Status key: **extras** = live on dest tip (unvalidated here) ·
 |---|---|---|---|
 | FA paged decode / prefill / split-K / short | `fa_rdna2.cu` | `attn/fa_fdot2` | `fdot2`. Occupancy pin closed. **unvalidated** |
 | FA INT8 KV writer | `reshape_and_cache_int8_rdna2` | `attn/fa_fdot2` | INT8 cache layout for RDNA_ATTN. **unvalidated** |
-| W4A16 dense decode | `q_gemm_rdna2.cu` | `gemm/w4a16_fdot2` | GPTQ + AWQ = pack/zeros, one GEMM. **unvalidated** |
-| W4A16 prefill | `q_gemm_rdna2_prefill.cu` | `gemm/w4a16_fdot2` | Multi-config. **unvalidated** |
+| W4A16 dense decode | `q_gemm_rdna2.cu` | `gemm/w4a16_fdot2` | GPTQ + AWQ = pack/zeros, one GEMM. Dest ZP is scale-baked `half` — zoo uses integer `q-zero` then scale. **unvalidated** |
+| W4A16 prefill | `q_gemm_rdna2_prefill.cu` | `gemm/w4a16_fdot2` | Multi-config. Dest `compute_split_k` can pick K=640→16×40; zoo requires equal ×32. **unvalidated** |
 | W4A16 AWQ high-M prefill | `q_gemm_rdna2_awq_prefill.cu` | `gemm/w4a16_fdot2` | Exllama-clone tile, AWQ zeros (no GPTQ +1). **unvalidated** |
 | W4A16 MoE | `moe_q_gemm_rdna2.cu` | `moe/routed` | **unvalidated** |
 | EXL3 dense / MoE / dequant / Hadamard / trellis decode | `exl3_dot2_*.cu` | `gemm/exl3_3inst` | Consume `-cb 3inst`. Produce outside. UNC-26. **unvalidated** |
-| GDN packed decode | `gdn_decode_rdna2.cu` | `attn/gdn_scan` | Register-resident. Capture still garbage on dest hybrid. **unvalidated** |
-| GDN prefill chain (prep / kkt / solve_wy / delta_h / o) | `gdn_prefill_*_rdna2.cu` | `attn/gdn_scan` | Default-off (`VLLM_GDN_HIP_PREFILL=0`). Chunk-boundary corruption. **unvalidated** |
-| causal_conv1d update + fwd | `causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA, `state_len≈3–4`. **unvalidated** |
-| Paged MQA indexer | `indexer_paged_mqa_rdna2.cu` | `attn/qsa_indexer` | DeepSeek V4 Lightning class. **unvalidated** |
+| GDN packed decode | `gdn_decode_rdna2.cu` | `attn/gdn_scan` | Register-resident. Capture still garbage on dest hybrid. **fp16 act only.** **unvalidated** |
+| GDN prefill chain (prep / kkt / solve_wy / delta_h / o) | `gdn_prefill_*_rdna2.cu` | `attn/gdn_scan` | Default-off (`VLLM_GDN_HIP_PREFILL=0`). Chunk-boundary corruption. Dest dispatch missed dtype (BF16 selected HIP). **unvalidated** |
+| causal_conv1d update + fwd | `causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA, `state_len≈3–4`. BF16: fp32-promoted mul, **not** `fdot2.bf16`. **unvalidated** |
+| Paged MQA indexer | `indexer_paged_mqa_rdna2.cu` | `attn/qsa_indexer` | DeepSeek V4 Lightning class. gfx1030 BF16 6h×256 QSA prefill: **4 warps**. **unvalidated** |
 | Sparse MLA decode / prefill | `sparse_mla_rdna2.cu` | `attn/dsa_nope` | **unvalidated** |
 | W8A16 / W8A16-FP8 / W8A8-FP8 dense+MoE | `moe_w8a16*.cu`, `gemm_w8a8_fp8_dense_rdna2.cu`, `q_gemm_w8a16_fp8_rdna2.cu` | — | No hippihx tile yet. **unvalidated** |
 | MXFP4 dense + MoE | `mxfp4_dot2_*.cu` | — | No hippihx tile yet. **unvalidated** |
 | gfx1100 W4 WMMA | `q_gemm_rdna3_wmma.cu` | — | WMMA Later overlay, not shared DOT. **unvalidated** |
-| Skinny GEMM / INT4 skinny | `skinny_gemms*.cu` | — | `VLLM_ROCM_USE_SKINNY_GEMM`. **unvalidated** |
+| Skinny GEMM / INT4 skinny | `skinny_gemms*.cu` | — | `VLLM_ROCM_USE_SKINNY_GEMM`. Dest extras has it; Flash-Next fork used BF16 decode. **No tile** until dest locks the family. Do not reintroduce leapdragon `gemv_f16`. **unvalidated** |
 | RMSNorm HIP AOT | `layernorm.cu` | — | Serve fused-norm; no tile. **unvalidated** |
 | GLM-5.3 KDA decode + prefill | `glm5_kda_*.cu` (PR **#2**) | `attn/kda_scan` | Later. Drop `glm5_` name. **unvalidated** |
 | GLM-5.3 DSA indexer + MLA-NoPE | `glm5_dsa_*.cu` (PR **#2**) | `attn/dsa_nope`, `qsa_indexer` | Later. **unvalidated** |
