@@ -199,7 +199,7 @@ consume layout and ships HIP that reads it.
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `6c5ff94efb8e` (2026-09-10 19:24 UTC; seven commits past
+`rdna_extras` @ `1046782fb8c4` (2026-09-10 23:59 UTC; nine commits past
 `a4060647cfbb`, which merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1))
 plus open extras PRs **#2–#3**. Dest default branch is **`rdna_extras`**.
 `main` is still upstream vLLM `c00091e02670` — no dest HIP there.
@@ -209,9 +209,10 @@ ships stubs; bodies stay in extras until a consume bind exists. This
 list is a tracker, not a claim that any row works.
 
 Dest extras journals GDN FPP13 16k c=8 capture **green** via serve
-arenas. Do **not** copy dest W4 scale-baked ZP, unaligned prefill
-K-splits, `fdot2.bf16`, persist keepalive, or GDN HIP-on-BF16 dispatch.
-V1 refuses bf16 on DOT and GDN HIP. Details:
+arenas and **deleted** the separate AWQ prefill `.cu` (one W4 family).
+Do **not** copy dest W4 scale-baked ZP, unaligned prefill K-splits,
+`fdot2.bf16`, persist keepalive, or GDN HIP-on-BF16 dispatch. V1
+refuses bf16 on DOT and GDN HIP. Details:
 [`docs/BACKPORT.md`](docs/BACKPORT.md#dest-extras-defects-do-not-copy).
 
 Status key: **extras** = live on dest tip (unvalidated here) ·
@@ -226,8 +227,8 @@ Status key: **extras** = live on dest tip (unvalidated here) ·
 | FA INT8 KV writer | `reshape_and_cache_int8_rdna2` | `attn/fa_fdot2` | INT8 cache layout for RDNA_ATTN. **unvalidated** |
 | FA fp16 flash KV writer | `reshape_and_cache_flash_rdna2` | `attn/fa_fdot2` | Stride-aware hybrid GDN pages. `__launch_bounds__(128, 4)`. fp16 only. **unvalidated** |
 | W4A16 dense decode | `q_gemm_rdna2.cu` | `gemm/w4a16_fdot2` | GPTQ + AWQ = pack/zeros, one GEMM. Dest ZP is scale-baked `half` — zoo uses integer `q-zero` then scale. **unvalidated** |
-| W4A16 prefill | `q_gemm_rdna2_prefill.cu` | `gemm/w4a16_fdot2` | Multi-config. Dest `compute_split_k` can pick K=640→16×40; zoo requires equal ×32. **unvalidated** |
-| W4A16 AWQ high-M prefill | `q_gemm_rdna2_awq_prefill.cu` | `gemm/w4a16_fdot2` | Exllama-clone tile, AWQ zeros (no GPTQ +1). **unvalidated** |
+| W4A16 prefill | `q_gemm_rdna2_prefill.cu` | `gemm/w4a16_fdot2` | Unified GPTQ+AWQ. ConfigA for `M>256`. Dest `compute_split_k` can pick K=640→16×40; zoo requires equal ×32. **unvalidated** |
+| W4A16 AWQ high-M prefill | ~~`q_gemm_rdna2_awq_prefill.cu`~~ | `gemm/w4a16_fdot2` | **Dest-deleted** @ `1046782`. Do not reintroduce. |
 | W4A16 MoE | `moe_q_gemm_rdna2.cu` | `moe/routed` | **unvalidated** |
 | EXL3 dense / MoE / dequant / Hadamard / trellis decode | `exl3_dot2_*.cu` | `gemm/exl3_3inst` | Consume `-cb 3inst`. Produce outside. UNC-26. **unvalidated** |
 | GDN packed decode | `gdn_decode_rdna2.cu` | `attn/gdn_scan` | Register-resident. Dest journals FPP13 16k c=8 green via **serve arenas**. **fp16 act only.** **unvalidated** |
@@ -249,7 +250,7 @@ Status key: **extras** = live on dest tip (unvalidated here) ·
 
 | Mode | What extras does | Default (extras) | hippihx |
 |---|---|---|---|
-| W4 decode vs prefill vs AWQ-prefill vs Exllama | M/K/N buckets in `rdna2_w4a16.py` | decode `M≤32` & `K≥4096`; AWQ high-M → `awq_prefill`; `M>256` Exllama (GPTQ) | one `w4a16_fdot2` tile |
+| W4 decode vs prefill vs Exllama | M/K/N buckets in `rdna2_w4a16.py` | decode `M≤32` & `K≥4096`; AWQ `M>32` → GPTQ prefill (ConfigA if `M>256`); GPTQ `M>256` still Exllama | one `w4a16_fdot2` tile |
 | W4 pack | GPTQ `uint4b8` (+1 zeros) vs AWQ `uint4` (literal zeros) | same kernel, `use_v2_format` | pack/zeros, not a second GEMM |
 | EXL3 codebook | `cb==0` 3inst produce, `cb==1` mcg compile, `cb==2` mul1 not produced | 3inst dest | consume only |
 | EXL3 memory | `full` int16 trellis vs `packed` stub | `full` | — |

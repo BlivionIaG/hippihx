@@ -97,10 +97,10 @@ def test_readme_unvalidated_inventory() -> None:
     assert "VLLM_RDNA_AR_MAX_KB" in text
     assert "fa_rdna2" in text
     assert "a4060647" in text
-    assert "6c5ff94" in text
+    assert "1046782" in text
     bp = (ROOT / "docs" / "BACKPORT.md").read_text(encoding="utf-8")
     assert "a4060647" in bp
-    assert "6c5ff94" in bp
+    assert "1046782" in bp
     assert "i_t_local" in bp
     assert "rdna2_graph_keepalive" in bp
     assert "**not** squash" in bp
@@ -109,10 +109,12 @@ def test_readme_unvalidated_inventory() -> None:
     assert "prep_zero_scale_fp16" in bp
     assert "k_per_split" in bp
     assert "fdot2.bf16" in bp
+    assert "q_gemm_rdna2_awq_prefill" in bp
     w4 = (ROOT / "tiles" / "gemm" / "w4a16_fdot2" / "README.md").read_text(
         encoding="utf-8"
     )
     assert "K_STEP=32" in w4
+    assert "ConfigA" in w4
     assert "integer" in text.lower() or "Integer" in w4
 
 

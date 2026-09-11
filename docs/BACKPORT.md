@@ -1,21 +1,21 @@
 # extras → hippihx backport review
 
-Last checked `opengfx1030/vllm-rdna` `rdna_extras` @ `6c5ff94efb8e`
-(2026-09-10 19:24 UTC). Dest **default branch is `rdna_extras`**, not
+Last checked `opengfx1030/vllm-rdna` `rdna_extras` @ `1046782fb8c4`
+(2026-09-10 23:59 UTC). Dest **default branch is `rdna_extras`**, not
 `main`. `main` is still unrelated upstream vLLM (`c00091e02670`,
 2026-09-02) — **no dest HIP landed there**. Open extras PRs **#2** /
 **#3** did not move. Draft extras PR **#5** (Flash-Next V620) is a
 mixed other-fork; **skip**. **Do not copy kernel bodies into this tree
 yet.**
 
-Dest extras is **seven commits** past `a4060647cfbb` (merged PR #1
-squash). 2026-09-10 journals GDN hybrid **16k c=8 FPP13 green** via
-permanent conv/ssm state arenas (closed extras [PR #4](https://github.com/opengfx1030/vllm-rdna/pull/4)
-cherry-picked, then `register_buffer` → direct assign). That is **serve**.
-HIP ISA that did move: GDN prefill `o` varlen local-chunk (`i_t_local`),
-causal_conv FIR compute-then-shift, FA GQA-256 NaN/idle-wave hygiene,
-fp16 flash KV writer. Persist keepalive (`rdna2_graph_keepalive.cuh`)
-is ATen capture plumbing — not a tile.
+Dest extras is **nine commits** past `a4060647cfbb`. 2026-09-10 journals
+GDN hybrid **16k c=8 FPP13 green** via serve arenas. Findings
+(`docs/profiling/2026-09-10-awq-vs-gptq-prefill-{review,microbench}.md`):
+the separate AWQ prefill tile was slower and unused; dest **deleted**
+`q_gemm_rdna2_awq_prefill.cu` and routes AWQ through
+`gptq_gemm_rdna2_prefill` (`use_v2_format` / `zero_offset`, ConfigA for
+`M>256`). That **matches** the zoo lock (one W4 family, pack/zeros).
+Do not reintroduce a second W4 GEMM (a17t or dest's old high-M tile).
 
 W4 scale-baked ZP, unaligned prefill K-splits, `fdot2.bf16`, and GDN
 HIP selected on BF16 are **still live dest defects**. hippihx V1 still
@@ -27,10 +27,10 @@ extras will wrap as one `torch.ops.hippihx.*` per op. `hippihx_v1_run`
 returns `HIPPIHX_V1_ERR_NOT_READY` until a body migrates. This is migrate
 criterion **#3** (one HIP entry extras can bind) — not a body dump.
 
-Delta since `a4060647cfbb`: dest extras is **seven commits ahead**
-(`cafe95ef8` FPP13 capture, `c091c420b` persist/KV-writer/ISA, three
-PR #4 GDN-arena commits, `74f47b6af` arena assign, `6c5ff94ef`
-journal). GitHub squash-merged [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
+Delta since `a4060647cfbb`: dest extras is **nine commits ahead**
+(seven through `6c5ff94ef` GDN arenas/journal, then `aaaae85be` ConfigA
+for large-M AWQ prefill + findings, `1046782fb` delete AWQ prefill
+`.cu`). GitHub squash-merged [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
 (`rdna_ar` Uncached+push) at `a4060647`. PRs **#2** (`later/glm53-flash-awq-glm5next`
 @ `4b31f2eede51`) and **#3** (a17t WIP) did not move. PR **#4** closed
 review-only after landing on dest. PR **#5** draft is not dest.
@@ -59,7 +59,7 @@ copy. Dual copies are how serve bugs accrete.
 
 | Source | Pertinent to hippihx? | Action |
 |---|---|---|
-| Dest tip ISA (`fa_rdna2`, EXL3, W4A16, GDN, causal_conv) | **Yes, later** — zoo class | Wait. Record observed locks (incl. `o` `i_t_local`, conv FIR order, FA GQA-256 hygiene, flash KV writer). **Do not copy dest W4 ZP / K-split / bf16 DOT / persist keepalive.** Migrate only when extras can *call* hippihx. |
+| Dest tip ISA (`fa_rdna2`, EXL3, W4A16, GDN, causal_conv) | **Yes, later** — zoo class | Wait. Record observed locks. Dest now **one** W4 prefill (`gptq_gemm_rdna2_prefill` + `use_v2_format`; ConfigA for `M>256`). **Do not copy dest W4 ZP / K-split / bf16 DOT / persist keepalive.** Migrate only when extras can *call* hippihx. |
 | Dest tip 2026-09-10 GDN state arenas + persist keepalive | **No** | Stay in extras. Arenas / `rdna2_graph_keepalive.cuh` / immortal `hipMalloc` are capture page-commit, not tiles. |
 | Dest tip 2026-09-06…08 (cudagraph zeros, eager_break, spec/MTP gates, GDN probes) | **No** | Stay in extras. |
 | Dest tip leapdragon `rdna_ar` (merged PR #1 @ `a4060647`) | **Later** — `comm.pcie` | Communicator gate still opt-in (`VLLM_RDNA_AR=1`). Occupancy pin closed. Do not dump the ATen wrapper. A recipe may export `=1`; that is not dest-on. |
@@ -87,7 +87,7 @@ copy. Dual copies are how serve bugs accrete.
 
 ## Dest file → tile (when migrate is allowed)
 
-Observed at dest tip `6c5ff94efb8e` (ISA files + PR #1 AR @
+Observed at dest tip `1046782fb8c4` (ISA files + PR #1 AR @
 `a4060647cfbb`). Numbers are extras *observations*, not dest locks.
 Fill tile READMEs; do not invent tok/s.
 
@@ -96,7 +96,7 @@ Fill tile READMEs; do not invent tok/s.
 | `csrc/rocm/fa_rdna2.cu` | `attn/fa_fdot2` | ~33 KiB decode / ~48 KiB prefill smem. Occupancy pin closed. @ `6c5ff94`: GQA-256 idle-wave shuffle + NaN guard; fp16 flash KV writer (`reshape_and_cache_flash_rdna2`, `__launch_bounds__(128, 4)`). Persist workspaces stay extras. |
 | `csrc/rocm/gdn_decode_rdna2.cu` | `attn/gdn_scan` | Register-resident 16 VGPR/thread, no LDS. `NULL_BLOCK_ID=0` is a **vLLM sentinel** — zoo contract is “invalid slot → zero out, do not touch state”, not that constant. |
 | `csrc/rocm/gdn_prefill_*_rdna2.cu` | `attn/gdn_scan` | `o` kernel LDS ≈ 45312 B. @ `6c5ff94`: varlen uses **local** chunk `i_t_local`. Prefill HIP opt-out (`VLLM_GDN_HIP_PREFILL==0`). |
-| `csrc/rocm/q_gemm_rdna2.cu` + `q_gemm_rdna2_{prefill,awq_prefill}.cu` + `qdq_4_rdna2.cuh` | `gemm/w4a16_fdot2` | GPTQ and AWQ are pack/zeros modes, **one** GEMM family. `LDS_PAD=8`. High-M AWQ uses the exllama-clone prefill tile. Dest ZP still scale-baked. |
+| `csrc/rocm/q_gemm_rdna2.cu` + `q_gemm_rdna2_prefill.cu` + `qdq_4_rdna2.cuh` | `gemm/w4a16_fdot2` | GPTQ and AWQ are pack/zeros (`use_v2_format` → `zero_offset` 1/0), **one** GEMM family. `LDS_PAD=8` on decode. Prefill `select_config`: ConfigA for `M>256` & `N>=4096`, else ConfigC. Dest **deleted** `q_gemm_rdna2_awq_prefill.cu` @ `1046782`. Dest ZP still scale-baked. |
 | `csrc/rocm/moe_q_gemm_rdna2.cu` | `moe/routed` | Reuses W4 helpers. |
 | `csrc/rocm/exl3_dot2_{dense,moe,dequant,hadamard}.*` | `gemm/exl3_3inst` | `LDS_PAD=8` on A-staging. No `__launch_bounds__` on DOT kernels (VGPR is the occupancy lever). Produce stays `-cb 3inst` **outside**. |
 | `csrc/rocm/causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA, wave32, `state_len≈3–4`, dim multiple of 32, register-only (no LDS). @ `cafe95ef8`: FIR on **pre-shift** state, then shift (matches fwd). |
@@ -122,14 +122,16 @@ Fill tile READMEs; do not invent tok/s.
 | gfx1100 WMMA W4 (`q_gemm_rdna3_wmma.cu`) | WMMA is a gfx110x-only Later overlay, never on shared DOT. |
 | MXFP4 / W8A16 FP8 / skinny GEMMs | Extra consume families. Add a tile only when dest locks one as dest. |
 | extras PR **#5** Flash-Next draft / `rdna_extras_wip_20260910` | Mixed other-fork / pre-reset snapshot. Not dest. |
+| dest profiling findings (`2026-09-10-awq-vs-gptq-prefill-*.md`, decode-kernel-profile) | Serve / ops. Do not copy tok/s or µs tables into tile locks. |
 
 ## Do not take from a17t PR #3
 
 Unique vs dest: `awq_gemm_rdna2.cu`, `moe_awq_gemm_rdna2.cu`,
 `gemv_w4_kpack_rdna2.cu`, `qdq_awq_rdna2.cuh`. Dest already has AWQ as a
-**zeros mode** on `q_gemm_rdna2*` plus `q_gemm_rdna2_awq_prefill.cu`.
-hippihx must not grow a second W4 GEMM. `qwen4_exp`, Triton fallbacks,
-and serve recipes are extras (or another engine), not zoo.
+**zeros mode** on `q_gemm_rdna2*` (`use_v2_format`). Dest **deleted**
+`q_gemm_rdna2_awq_prefill.cu` @ `1046782` after findings showed it unused
+and slower. hippihx must not grow a second W4 GEMM. `qwen4_exp`, Triton
+fallbacks, and serve recipes are extras (or another engine), not zoo.
 
 Dest already dropped leapdragon `gemv_f16_rdna2` / `moe_skinny_int4_decode`
 at PR #1 conflict resolution. Do not reintroduce skinny GEMV as a tile
@@ -158,24 +160,24 @@ mode / env / AR tracker (all **unvalidated**):
 
 ## Dest extras defects (do not copy)
 
-Dest tip is `6c5ff94efb8e` (seven commits past `a4060647`). These are
+Dest tip is `1046782fb8c4` (nine commits past `a4060647`). These are
 **live dest bugs / rolled-back paths**, not tok/s. hippihx contracts
-must not reproduce them. 2026-09-10 **fixed on dest** (observe, still
-do not dump ATen): GDN state arenas, prefill `o` `i_t_local`, conv FIR
-order. Do not copy persist keepalive.
+must not reproduce them. Dest **fixed / dropped**: GDN state arenas,
+prefill `o` `i_t_local`, conv FIR order, **separate AWQ prefill `.cu`**.
+Do not copy persist keepalive.
 
-| Defect | Where on dest extras | Status @ `6c5ff94` | Proper zoo lock | hippihx |
+| Defect | Where on dest extras | Status @ `1046782` | Proper zoo lock | hippihx |
 |---|---|---|---|---|
 | `llvm.amdgcn.fdot2.bf16.bf16` ISel abort | Triton/fusion on BF16 vision interp, `triton_mrope`, BF16 causal conv. Dest HIP conv is fp16-oriented. | **Still live** (HIP conv stays scalar FMA) | Never `fdot2.bf16`. DOT + GDN HIP are **fp16 activations**. BF16 leftover / conv = scalar FMA, fp32 mul. | `dot.hpp`, V1 `HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE`, `sequence/causal_conv`, `moe/leftover_bf16` |
 | Scale-baked W4 zero-point | `qdq_4_rdna2.cuh` `prep_zero_scale_fp16`: `0xE400 \| zero` then `scale * (-1024 - zero)` in `half`. All-zero weights were not exact zero. | **Still live** | Integer `q - zero`, then `* scale`. GPTQ `uint4b8` (+1) vs AWQ literal is pack/zeros, not a second GEMM. | `gemm/w4a16_fdot2` |
-| Unaligned prefill K-split | `q_gemm_rdna2_prefill.cu` `compute_split_k`: K=640 can pick 16 splits of 40. Kernel `K_STEP=32`. Generic `gemm_dynamic_kernel` still launches 40-wide. | **Still live** | Equal `k_per_split`, multiple of 32, inside LDS budget. Refuse the 40-wide split. | `gemm/w4a16_fdot2` |
+| Unaligned prefill K-split | `q_gemm_rdna2_prefill.cu` `compute_split_k`: K=640 can pick 16 splits of 40. Kernel `K_STEP=32`. Generic `gemm_dynamic_kernel` still launches 40-wide. Findings proposed cap `split_k` at 8 and require `k_per_split % K_STEP == 0` — **not landed**. | **Still live** | Equal `k_per_split`, multiple of 32, inside LDS budget. Refuse the 40-wide split. | `gemm/w4a16_fdot2` |
 | GDN HIP selected on BF16 | `_gdn_prefill_dispatch_available()` checks GPU + symbols, **not dtype**. Kernel still `mixed_qkv` fp16. | **Still live** | `plan` / V1 refuse bf16 on `attn.gdn_scan`. Prefill HIP is opt-out (`== "0"`). | `attn/gdn_scan`, V1 dtype |
 | GDN prefill `o` varlen chunk index | `gdn_prefill_o_rdna2.cu` used global `i_t` so later sequences were OOB. | **Dest-fixed** (`i_t_local`) | Token offsets use per-sequence local chunk. | `attn/gdn_scan` |
 | GDN piecewise capture state poison | Pool-block conv/ssm pages; per-step `block_table` views. | **Dest-fixed (serve)** — permanent BS-sized arenas | Scratch/state from `plan`; no realloc under capture. Arenas stay extras. | extras, not a tile |
 | causal_conv update vs fwd FIR | Decode kernel shifted state **before** the FIR (mismatched fwd). | **Dest-fixed** (`cafe95ef8`) | FIR on pre-shift state, then shift. Scalar FMA. | `sequence/causal_conv` |
 | Global EXL3 FP16 clip | Serve `Qwen2MoeMLP` clipped every model to FP16. Rolled back to EXL3-only on the integration fork. | Serve | Not a tile. Stay in extras. | — |
 | QSA 2-warp BF16 prefill spill | gfx1030 6h×256 BF16 prefill: 2 warps exhaust VGPRs. Dest indexer decode is still 64-thread H=64 D=128. | **Still live** (Flash-Next observation) | **4 warps** (128 threads) for that shape. | `attn/qsa_indexer` |
-| `rdna_ar` flags not beside receiver staging | Dest squash of PR #1. Donor `3cfe000` excluded (mixed PLE). | Unchanged | Later: flags beside each rank’s uncached staging. Opt-in. Do not pick the mixed commit. | `comm/pcie` |
+| Separate AWQ prefill `.cu` | `q_gemm_rdna2_awq_prefill.cu` (exllama-clone, `BLOCK_M=16`) | **Dest-deleted** (`1046782`) after findings: unused + slower. AWQ uses `gptq_gemm_rdna2_prefill` + `use_v2_format`. | One W4 family. Pack/zeros only. Do not reintroduce. | `gemm/w4a16_fdot2` |
 
 Serve rollbacks / capture notes (keep as serve, not zoo):
 
@@ -213,7 +215,7 @@ kernel migrate and must not be used as a template for body imports.
 |---|---|---|
 | `fa_rdna2.cu` | `b1b3fa938` BlivionIaG `<kev29lt@gmail.com>` | BlivionIaG. Later FA `torch::zeros` is extras serve — leave it there |
 | `q_gemm_rdna2.cu` | `fabf51493` BlivionIaG | BlivionIaG |
-| `q_gemm_rdna2_awq_prefill.cu` | `feb7b457e` BlivionIaG | BlivionIaG |
+| `q_gemm_rdna2_awq_prefill.cu` | `feb7b457e` BlivionIaG | **Deleted** dest @ `1046782`. Do not reintroduce. |
 | `moe_q_gemm_rdna2.cu` | `b1b3fa938` BlivionIaG | BlivionIaG |
 | `gdn_decode_rdna2.cu` | `55527010c` BlivionIaG | BlivionIaG. NULL_BLOCK_ID sentinel is extras serve until dest-locked |
 | `exl3_dot2_*.cu` | `40850e6c5` BlivionIaG | BlivionIaG (Author **and** Committer), including the port and later perf commits |
