@@ -110,6 +110,9 @@ def test_readme_unvalidated_inventory() -> None:
     assert "k_per_split" in bp
     assert "fdot2.bf16" in bp
     assert "q_gemm_rdna2_awq_prefill" in bp
+    assert "_awq_prefill_available" in bp
+    contrib = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
+    assert "1046782" in contrib
     w4 = (ROOT / "tiles" / "gemm" / "w4a16_fdot2" / "README.md").read_text(
         encoding="utf-8"
     )

@@ -11,11 +11,20 @@ yet.**
 Dest extras is **nine commits** past `a4060647cfbb`. 2026-09-10 journals
 GDN hybrid **16k c=8 FPP13 green** via serve arenas. Findings
 (`docs/profiling/2026-09-10-awq-vs-gptq-prefill-{review,microbench}.md`):
-the separate AWQ prefill tile was slower and unused; dest **deleted**
-`q_gemm_rdna2_awq_prefill.cu` and routes AWQ through
-`gptq_gemm_rdna2_prefill` (`use_v2_format` / `zero_offset`, ConfigA for
-`M>256`). That **matches** the zoo lock (one W4 family, pack/zeros).
-Do not reintroduce a second W4 GEMM (a17t or dest's old high-M tile).
+the separate AWQ prefill tile was unused (no `_custom_ops` wrapper) and
+2–6× slower than GPTQ ConfigV1 on every microbench shape (no crossover).
+Dest **deleted** `q_gemm_rdna2_awq_prefill.cu` + HIP binding (`1046782`)
+and routes AWQ through `gptq_gemm_rdna2_prefill` (`use_v2_format` /
+`zero_offset`, ConfigA for `M>256` & `N>=4096`). That **matches** the
+zoo lock (one W4 family, pack/zeros). Do not reintroduce a second W4
+GEMM (a17t or dest's old high-M tile). Do **not** copy findings µs /
+tok/s tables into tile locks.
+
+Python leftover in `rdna2_w4a16.py` (`_awq_prefill_available`, dead
+`awq_prefill` apply branch) is extras dead code: `select_kernel` already
+returns `"prefill"` for AWQ. Stay extras. Findings also proposed capping
+`split_k` at 8 and `k_per_split % K_STEP == 0` — **not landed**; zoo
+already refuses the unaligned 40-wide split.
 
 W4 scale-baked ZP, unaligned prefill K-splits, `fdot2.bf16`, and GDN
 HIP selected on BF16 are **still live dest defects**. hippihx V1 still
@@ -123,6 +132,7 @@ Fill tile READMEs; do not invent tok/s.
 | MXFP4 / W8A16 FP8 / skinny GEMMs | Extra consume families. Add a tile only when dest locks one as dest. |
 | extras PR **#5** Flash-Next draft / `rdna_extras_wip_20260910` | Mixed other-fork / pre-reset snapshot. Not dest. |
 | dest profiling findings (`2026-09-10-awq-vs-gptq-prefill-*.md`, decode-kernel-profile) | Serve / ops. Do not copy tok/s or µs tables into tile locks. |
+| `rdna2_w4a16.py` `_awq_prefill_available` + dead `awq_prefill` apply branch | Extras dead code after HIP delete. `select_kernel` already returns `"prefill"` for AWQ. |
 
 ## Do not take from a17t PR #3
 
@@ -177,7 +187,7 @@ Do not copy persist keepalive.
 | causal_conv update vs fwd FIR | Decode kernel shifted state **before** the FIR (mismatched fwd). | **Dest-fixed** (`cafe95ef8`) | FIR on pre-shift state, then shift. Scalar FMA. | `sequence/causal_conv` |
 | Global EXL3 FP16 clip | Serve `Qwen2MoeMLP` clipped every model to FP16. Rolled back to EXL3-only on the integration fork. | Serve | Not a tile. Stay in extras. | — |
 | QSA 2-warp BF16 prefill spill | gfx1030 6h×256 BF16 prefill: 2 warps exhaust VGPRs. Dest indexer decode is still 64-thread H=64 D=128. | **Still live** (Flash-Next observation) | **4 warps** (128 threads) for that shape. | `attn/qsa_indexer` |
-| Separate AWQ prefill `.cu` | `q_gemm_rdna2_awq_prefill.cu` (exllama-clone, `BLOCK_M=16`) | **Dest-deleted** (`1046782`) after findings: unused + slower. AWQ uses `gptq_gemm_rdna2_prefill` + `use_v2_format`. | One W4 family. Pack/zeros only. Do not reintroduce. | `gemm/w4a16_fdot2` |
+| Separate AWQ prefill `.cu` | `q_gemm_rdna2_awq_prefill.cu` (exllama-clone, `BLOCK_M=16`) | **Dest-deleted** (`1046782`) after findings: unused + 2–6× slower (no crossover). HIP binding gone. Python leftover `_awq_prefill_available` / `awq_prefill` apply is extras dead code. AWQ uses `gptq_gemm_rdna2_prefill` + `use_v2_format`. | One W4 family. Pack/zeros only. Do not reintroduce. | `gemm/w4a16_fdot2` |
 
 Serve rollbacks / capture notes (keep as serve, not zoo):
 
