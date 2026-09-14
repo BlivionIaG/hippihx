@@ -12,7 +12,8 @@ do not retarget one onto the other. This stub is the conv contract only.
 | `__launch_bounds__` | unset in extras (one warp per dim-block) |
 | Wave | 32 on gfx1030 / gfx1100; extras: 32 threads / dim-block, dim multiple of 32 |
 | Math | scalar FMA, fp16 or bf16 in/out, **fp32 acc / mul**. **Not** `fdot2`. **Not** `fdot2.bf16`. gfx1030 LLVM aborts on `llvm.amdgcn.fdot2.bf16.bf16` — BF16 must promote the multiply, not retarget DOT. |
-| Decode FIR order | extras @ `cafe95ef8` / tip `1046782`: FIR on **pre-shift** state, then shift (matches fwd). Do not shift-first. |
+| Decode FIR order | extras @ `cafe95ef8` / tip `820465`: FIR on **pre-shift** state, then shift (matches fwd). Do not shift-first. |
+| Fwd out-stride / null-block | extras @ `82b6f183da2a`: write via `stride_o_token`; invalid slot (`null_block_id`) early-returns. |
 | State | `state_len = width-1`, typically **3 or 4** for GDN |
 | Graph | scratch sized by `plan`, **zeroed** for page-commit; **no D2H under capture** |
 

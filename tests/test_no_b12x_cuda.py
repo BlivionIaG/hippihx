@@ -97,9 +97,11 @@ def test_readme_unvalidated_inventory() -> None:
     assert "VLLM_RDNA_AR_MAX_KB" in text
     assert "fa_rdna2" in text
     assert "a4060647" in text
+    assert "820465" in text
     assert "1046782" in text
     bp = (ROOT / "docs" / "BACKPORT.md").read_text(encoding="utf-8")
     assert "a4060647" in bp
+    assert "820465" in bp
     assert "1046782" in bp
     assert "i_t_local" in bp
     assert "rdna2_graph_keepalive" in bp
@@ -111,13 +113,16 @@ def test_readme_unvalidated_inventory() -> None:
     assert "fdot2.bf16" in bp
     assert "q_gemm_rdna2_awq_prefill" in bp
     assert "_awq_prefill_available" in bp
+    assert "ConfigH" in bp
+    assert "VLLM_RDNA_QSA_HIP" in bp or "qsa_rdna2" in bp
     contrib = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
-    assert "1046782" in contrib
+    assert "820465" in contrib
     w4 = (ROOT / "tiles" / "gemm" / "w4a16_fdot2" / "README.md").read_text(
         encoding="utf-8"
     )
     assert "K_STEP=32" in w4
     assert "ConfigA" in w4
+    assert "ConfigH" in w4
     assert "integer" in text.lower() or "Integer" in w4
 
 

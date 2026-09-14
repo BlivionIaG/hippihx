@@ -13,7 +13,13 @@ selected set is a different launch (`fa_fdot2` or a later QSA-attn tile).
 
 One V1 entry. No Triton→HIP double-fire from this library.
 
-extras relatives: `indexer_paged_mqa_rdna2.cu` (dest) and PR #2
-`glm5_dsa_indexer_rdna2.cu` (Later). Confirm class before a body migrate.
-The 4-warp BF16 prefill lock is a gfx1030 observation from the
-Flash-Next V620 integration — not a dest extras migrate and not tok/s.
+extras relatives: dest `indexer_paged_mqa_rdna2.cu` (DeepSeek class) and
+opt-in `qsa_rdna2.cu` (Flash-Next store/compress/MQA; `VLLM_RDNA_QSA_HIP`
+default **off**). PR #2 `glm5_dsa_indexer_rdna2.cu` is Later. Confirm
+class before a body migrate.
+
+Dest @ `820465` records a Flash-Next **Triton** `forward_qsa` GPU trap
+(`SIGABRT`). `VLLM_RDNA_QSA_WARPS=2` did **not** fix it — do not treat
+the 2-warp prefill spill as that abort. HIP `qsa_rdna2.cu` is
+scaffolding, not dest-on. Do not dump Triton QSA. The 4-warp occupancy
+row is a gfx1030 observation, not a tok/s claim.
