@@ -34,7 +34,7 @@ those commits.
 **Foreign HIP** (leapdragon, a17t, anyone who is not this lab) keeps
 **their** Author **and** Committer. Same rule as extras
 [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1) (leapdragon
-`rdna_ar`, now dest extras @ `a4060647`; pick unique Aron Hsiao commits,
+`rdna_ar`, now dest extras @ `a4060647` squash / tip `820465`; pick unique Aron Hsiao commits,
 not the GitHub squash). Do not rewrite those as Blivion or Cursor.
 
 | Rule | Meaning |
@@ -83,7 +83,10 @@ replaces Author with the picker.
 - CMake must refuse multi-arch lists and gfx906, and never imply
   `HSA_OVERRIDE` / foreign ISA load.
 - Shared DOT tiles: **wave32 only**, **no `fdot2.bf16`**, **never
-  `#ifdef WMMA`**. WMMA is a gfx110x-only Later overlay.
+  `#ifdef WMMA`**. WMMA is a gfx110x-only Later overlay. gfx1030 LLVM
+  aborts on `fdot2.bf16` — BF16 leftover/conv is scalar FMA, not DOT.
+  W4 consume: integer ZP then scale; prefill K-splits equal ×32. GDN HIP
+  and DOT `plan` refuse bf16 activations.
 
 ## Landing a tile
 

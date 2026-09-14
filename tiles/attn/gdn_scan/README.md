@@ -11,12 +11,19 @@ from `kda_scan`.
 | Wave | 32 on gfx1030 |
 | Invalid slot | extras zeros output and skips state when the cache index is the vLLM `NULL_BLOCK_ID=0` sentinel. Zoo contract: **invalid slot → zero out, do not touch state**. Do not bake the vLLM constant name into hippihx |
 | Graph | allocate zeroed state once; never per-step D2H under capture |
+| Prefill `o` varlen | extras @ `6c5ff94`: token offsets use per-sequence local chunk `i_t_local` (global `i_t` skipped later sequences) |
 
 Not a product fuse. Not `gdn_decode_rdna2` by another name — this is the
 hippihx contract the serve layer will call.
 
-**Do not migrate bodies while dest GDN hybrid is capture-unsafe.** Prefill
-HIP is default-off on extras (chunk-boundary corruption). 2026-09-08 dest
-profiling still attributes piecewise-graph garbage to the GDN hybrid
-state path, with `causal_conv1d_update` captured as a non-splitting op.
-That is extras wiring. See [`docs/BACKPORT.md`](../../docs/BACKPORT.md).
+Dest journals GDN hybrid FPP13 16k c=8 capture **green** @ `6c5ff94`
+via **serve** conv/ssm arenas (extras PR #4 + `74f47b6af`). That is not
+a hippihx tile and not a body migrate. Prefill `o` varlen chunk-boundary
+is ISA-fixed. Prefill HIP is **opt-out** (`VLLM_GDN_HIP_PREFILL == "0"`).
+See [`docs/BACKPORT.md`](../../docs/BACKPORT.md).
+
+**fp16 activations only.** extras HIP (`gdn_prefill_*_rdna2`) rejects
+`mixed_qkv` that is not fp16. Dest dispatch selected the HIP prefill
+chain on BF16 and only failed inside the kernel — zoo `plan` / V1
+must refuse bf16 (`HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE`). Do not emit
+`fdot2.bf16` for a “BF16 GDN” shortcut.

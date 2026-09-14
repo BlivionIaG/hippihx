@@ -27,6 +27,8 @@ DOT_OPS = {
     "moe.shared",
 }
 
+FP16_ACT_OPS = DOT_OPS | {"attn.gdn_scan"}
+
 
 def test_list_ops_matches_contracts() -> None:
     names = tuple(meta.qualname for meta in hippihx.list_ops())
@@ -43,6 +45,7 @@ def test_find_op_roundtrip() -> None:
 def test_dot_flags() -> None:
     for meta in hippihx.list_ops():
         assert meta.dot is (meta.qualname in DOT_OPS)
+        assert meta.fp16_act is (meta.qualname in FP16_ACT_OPS)
 
 
 def test_tiles_dirs_exist() -> None:

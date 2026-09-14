@@ -28,7 +28,7 @@ from .protocol import (
     ScratchSpec,
 )
 from .v1 import ABI_REVISION as V1_ABI_REVISION
-from .v1 import V1_OP_NAMES, V1OpId, v1_op_is_dot, v1_op_name
+from .v1 import V1_OP_NAMES, V1OpId, v1_op_fp16_act, v1_op_is_dot, v1_op_name
 
 __version__ = "0.0.0"
 
@@ -83,6 +83,7 @@ __all__ = [
     "__version__",
     "find_op",
     "list_ops",
+    "v1_op_fp16_act",
     "v1_op_is_dot",
     "v1_op_name",
 ]

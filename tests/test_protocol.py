@@ -12,6 +12,9 @@ from hippihx.protocol import (
     GFX103X_WAVE,
     LATER_ARCHES,
     LATER_NONDOT_ARCHES,
+    FP16_ACT_ONLY_ON_DOT,
+    FP16_ACT_ONLY_ON_GDN,
+    KNOWN_DTYPES,
     NO_D2H_UNDER_CAPTURE,
     NO_FDOT2_BF16,
     NO_FOREIGN_ISA_LOAD,
@@ -37,6 +40,9 @@ def test_engine_bind_rules_are_on() -> None:
     assert SCRATCH_ZEROED_FOR_PAGE_COMMIT
     assert NO_D2H_UNDER_CAPTURE
     assert NO_FDOT2_BF16
+    assert FP16_ACT_ONLY_ON_DOT
+    assert FP16_ACT_ONLY_ON_GDN
+    assert KNOWN_DTYPES == ("fp16", "bf16", "fp32")
     assert NO_WMMA_ON_SHARED_DOT
     assert NO_HSA_OVERRIDE
     assert NO_FOREIGN_ISA_LOAD
@@ -127,3 +133,34 @@ def test_require_single_arch() -> None:
         require_single_arch("gfx1030,gfx1100")
     with pytest.raises(ValueError, match="Later"):
         require_single_arch("gfx906")
+
+
+def test_bf16_refused_on_dot_and_gdn() -> None:
+    from hippihx.attn import fa_fdot2, gdn_scan
+    from hippihx.gemm import w4a16_fdot2
+    from hippihx.moe import leftover_bf16
+
+    bf16 = Caps(arch="gfx1030", dtype="bf16")
+    fp16 = Caps(arch="gfx1030", dtype="fp16")
+    assert fa_fdot2.is_supported(fp16)
+    assert not fa_fdot2.is_supported(bf16)
+    assert not w4a16_fdot2.is_supported(bf16)
+    assert not gdn_scan.is_supported(bf16)
+    assert causal_conv.is_supported(bf16)
+    assert leftover_bf16.is_supported(bf16)
+    assert fa_fdot2.META.fp16_act is True
+    assert gdn_scan.META.fp16_act is True
+    assert causal_conv.META.fp16_act is False
+    assert leftover_bf16.META.fp16_act is False
+    leftover_bf16.plan(bf16)
+    causal_conv.plan(bf16)
+    with pytest.raises(ValueError, match="unsupported"):
+        fa_fdot2.plan(bf16)
+    with pytest.raises(ValueError, match="unsupported"):
+        gdn_scan.plan(bf16)
+    with pytest.raises(ValueError, match="unsupported"):
+        w4a16_fdot2.plan(bf16)
+    with pytest.raises(ValueError, match="unsupported"):
+        fa_fdot2.plan(Caps(arch="gfx900"))
+    with pytest.raises(ValueError, match="unknown dtype"):
+        Caps(arch="gfx1030", dtype="fp8")

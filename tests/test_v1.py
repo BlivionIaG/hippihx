@@ -3,7 +3,14 @@ from __future__ import annotations
 from pathlib import Path
 
 import hippihx
-from hippihx.v1 import ABI_REVISION, V1_OP_NAMES, V1OpId, v1_op_is_dot, v1_op_name
+from hippihx.v1 import (
+    ABI_REVISION,
+    V1_OP_NAMES,
+    V1OpId,
+    v1_op_fp16_act,
+    v1_op_is_dot,
+    v1_op_name,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -20,6 +27,7 @@ def test_v1_dot_flags() -> None:
     for meta in hippihx.list_ops():
         op = V1OpId(V1_OP_NAMES.index(meta.qualname))
         assert v1_op_is_dot(op) is meta.dot
+        assert v1_op_fp16_act(op) is meta.fp16_act
 
 
 def test_v1_header_lockstep() -> None:
@@ -29,9 +37,9 @@ def test_v1_header_lockstep() -> None:
     assert "hippihx_v1_plan" in header
     assert "hippihx_v1_run" in header
     assert "HIPPIHX_V1_ERR_NOT_READY" in header
-    for name in V1_OP_NAMES:
-        # C comments / docs may omit; enum names are enough for a few anchors.
-        pass
+    assert "HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE" in header
+    assert "HIPPIHX_V1_DTYPE_BF16" in header
+    assert "hippihx_v1_op_fp16_act" in header
     assert "HIPPIHX_V1_OP_GEMM_EXL3_3INST" in header
     assert "HIPPIHX_V1_OP_SEQUENCE_CAUSAL_CONV" in header
     assert "HIPPIHX_V1_OP_COMM_PCIE" in header
@@ -57,3 +65,4 @@ def test_package_exports_v1() -> None:
     assert hippihx.V1_ABI_REVISION == ABI_REVISION
     assert hippihx.V1_OP_NAMES == V1_OP_NAMES
     assert hippihx.v1_op_name(V1OpId.ATTN_FA_FDOT2) == "attn.fa_fdot2"
+    assert hippihx.v1_op_fp16_act(V1OpId.ATTN_GDN_SCAN) is True

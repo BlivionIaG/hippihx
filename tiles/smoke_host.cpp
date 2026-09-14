@@ -33,6 +33,16 @@ int main() {
     std::fprintf(stderr, "hippihx v1: causal_conv must not be DOT\n");
     return 1;
   }
+  if (!hippihx_v1_op_fp16_act(HIPPIHX_V1_OP_ATTN_GDN_SCAN) ||
+      !hippihx_v1_op_fp16_act(HIPPIHX_V1_OP_GEMM_W4A16_FDOT2)) {
+    std::fprintf(stderr, "hippihx v1: GDN/W4 must be fp16_act\n");
+    return 1;
+  }
+  if (hippihx_v1_op_fp16_act(HIPPIHX_V1_OP_SEQUENCE_CAUSAL_CONV) ||
+      hippihx_v1_op_fp16_act(HIPPIHX_V1_OP_MOE_LEFTOVER_BF16)) {
+    std::fprintf(stderr, "hippihx v1: leftover/conv must not be fp16_act\n");
+    return 1;
+  }
 
   hippihx_v1_caps caps{};
   caps.arch = "gfx1030";
@@ -53,6 +63,47 @@ int main() {
     std::fprintf(stderr, "hippihx v1: expected NOT_READY, got %d\n", run_rc);
     return 1;
   }
+
+  // bf16 on DOT / GDN HIP is refused (no fdot2.bf16). causal_conv is ok.
+  caps.dtype = HIPPIHX_V1_DTYPE_BF16;
+  nspecs = 1;
+  if (hippihx_v1_plan(HIPPIHX_V1_OP_ATTN_FA_FDOT2, &caps, specs, &nspecs) !=
+      HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE) {
+    std::fprintf(stderr, "hippihx v1: FA must refuse bf16\n");
+    return 1;
+  }
+  nspecs = 1;
+  if (hippihx_v1_plan(HIPPIHX_V1_OP_ATTN_GDN_SCAN, &caps, specs, &nspecs) !=
+      HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE) {
+    std::fprintf(stderr, "hippihx v1: GDN must refuse bf16\n");
+    return 1;
+  }
+  nspecs = 1;
+  if (hippihx_v1_plan(HIPPIHX_V1_OP_SEQUENCE_CAUSAL_CONV, &caps, specs,
+                      &nspecs) != HIPPIHX_V1_OK) {
+    std::fprintf(stderr, "hippihx v1: causal_conv must accept bf16\n");
+    return 1;
+  }
+  nspecs = 1;
+  if (hippihx_v1_plan(HIPPIHX_V1_OP_MOE_LEFTOVER_BF16, &caps, specs, &nspecs) !=
+      HIPPIHX_V1_OK) {
+    std::fprintf(stderr, "hippihx v1: leftover_bf16 must accept bf16\n");
+    return 1;
+  }
+  nspecs = 1;
+  if (hippihx_v1_plan(HIPPIHX_V1_OP_GEMM_W4A16_FDOT2, &caps, specs, &nspecs) !=
+      HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE) {
+    std::fprintf(stderr, "hippihx v1: W4 must refuse bf16\n");
+    return 1;
+  }
+  caps.dtype = HIPPIHX_V1_DTYPE_FP32;
+  nspecs = 1;
+  if (hippihx_v1_plan(HIPPIHX_V1_OP_ATTN_GDN_SCAN, &caps, specs, &nspecs) !=
+      HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE) {
+    std::fprintf(stderr, "hippihx v1: GDN must refuse fp32\n");
+    return 1;
+  }
+  caps.dtype = HIPPIHX_V1_DTYPE_UNSET;
 
   // DOT refused on gfx900; Later gfx906 refused entirely.
   caps.arch = "gfx900";

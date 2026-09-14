@@ -14,6 +14,9 @@
 // Craft locks:
 //   * wave32 only
 //   * fdot2 / v_dot2c — never fdot2.bf16
+//     (gfx1030 LLVM aborts on llvm.amdgcn.fdot2.bf16.bf16; dest extras
+//     / Flash-Next integration rolled those paths back to fp32-promoted
+//     scalar FMA or a PyTorch reference)
 //   * never #ifdef WMMA on this path
 //
 // Vega (gfx900 / gfx906) does not load these tiles.
@@ -33,6 +36,10 @@
 
 #ifndef HIPPIHX_NO_FDOT2_BF16
 #define HIPPIHX_NO_FDOT2_BF16 1
+#endif
+
+#if defined(HIPPIHX_HAS_FDOT2_BF16) && (HIPPIHX_HAS_FDOT2_BF16)
+#error "hippihx DOT tiles must not enable fdot2.bf16 (gfx1030 LLVM ISel abort)"
 #endif
 
 #ifndef HIPPIHX_DOT_SHARED_SOURCE
