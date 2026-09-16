@@ -24,6 +24,7 @@ from ._lib.fatbin import (
     VERIFY_WAVE_ARCHES,
     ROCM_PIN,
 )
+from ._lib.fabric import Fabric
 from ._lib.protocol import Binding, Caps, OpMeta, Plan, ScratchSpec
 from ._lib.v1 import ABI_REVISION as V1_ABI_REVISION
 from ._lib.v1 import V1_OP_NAMES, V1OpId, v1_op_fp16_act, v1_op_is_dot, v1_op_name
@@ -71,6 +72,7 @@ __all__ = [
     "Caps",
     "DEFAULT_ARCH",
     "DOT_ARCHES",
+    "Fabric",
     "GFX1030_WAVE",
     "KNOWN_ARCHES",
     "LATER_ARCHES",

@@ -24,6 +24,7 @@ Same *shape* as b12x (`<group>.<op>` + `api.py`), HIP objects:
 | `tiles/<group>/<op>/kernel.hip` | HIP ISA (dest). Torch-free |
 | `include/hippihx/v1.h` | C consume ABI extras wraps as `torch.ops` |
 | `hippihx/flydsl/` | FlyDSL compiler atoms + kernel contracts |
+| `hippihx/comm/fabric.py` | PCIe/PLX hop class (PIX/PXB/PHB × 88096/8749) |
 
 Group rename **`attn` → `attention`** (V1 ABI rev **3**; ids unchanged). ISA
 class names stay (`fa_fdot2`, not b12x `paged`). Map:
@@ -145,7 +146,9 @@ These are room-locked for future Python / `torch.ops` and for anyone wiring
 6. **Key on arch + wave size.** Serve must not select a fatbin from the
    GFX name alone. All of gfx1030 / Deck gfx1033 / gfx1013 are RDNA2;
    Deck is wave32; gfx1013 wave is unverified (RADV reports 64) — still
-   a separate object.
+   a separate object. **Comm also keys on hop + switch** (`pix` /
+   `pxb` / `phb` × `pex88096` / `pex8749` / `generic`). Do not load a PIX
+   AR on a PHB job.
 7. **Activations: fp16 for DOT and GDN HIP.** Never `fdot2.bf16`
    (`llvm.amdgcn.fdot2.bf16.bf16` aborts on gfx1030). V1 returns
    `HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE`. BF16 leftover / causal conv use
@@ -163,8 +166,9 @@ Directories are classes, not SKUs:
 - `sequence/causal_conv` — scalar FMA, `state_len≈4`; **not** under
   `gdn_scan`. GDN vs KDA layouts differ (do not retarget GDN 16/48 onto
   KDA 64×128).
-- `comm/pcie` — Uncached+push **Later**; INT8/Q8 wire class preferred;
-  Leave E4M3 / `f8_dma` without FP8 HW
+- `comm/pcie` — Uncached+push; INT8/Q8 wire. Plan keys on
+  `Fabric(hop, switch)`: PIX+ACS on **88096** may custom-AR; PHB/PXB /
+  8749 stay RCCL. Leave E4M3 / NTB / switch DMA.
 
 Each tile README will lock **LDS** and **`__launch_bounds__`** before ISA
 lands. Occupancy notes (VGPR vs `waves_per_eu`) belong there too.

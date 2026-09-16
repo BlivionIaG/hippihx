@@ -38,7 +38,9 @@ MFMA/WMMA FlyDSL GEMM/MoE/FA into `tiles/` or `hippihx.flydsl`.
 - DOT + GDN HIP: fp16 activations. V1 refuses bf16.
 - W4: integer `q - zero` then scale. `K_STEP=32`. No ConfigH. One GEMM family.
 - `bind` never allocates. `run` never D2H under capture. Scratch zeroed by serve.
-- Live request counts are runtime args, not compile keys (b12x rule, same here).
+- Comm: bind keys **arch + wave + hop + switch**. Custom AR / mapped-peer
+  only on PIX + ACS-clear + large-BAR (PEX/PLX 88096). PHB/PXB stay RCCL.
+  Never Finegrained, NTB, switch DMA, E4M3 wire, or `HSA_OVERRIDE`.
 
 ## Attribution
 

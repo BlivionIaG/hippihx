@@ -1,5 +1,6 @@
-"""Collectives. PCIe Uncached+push is stub-only."""
+"""Collectives. PCIe Uncached+push + PLX/PEX hop class."""
 
-from . import pcie
+from . import fabric, pcie
+from .fabric import Fabric
 
-__all__ = ["pcie"]
+__all__ = ["Fabric", "fabric", "pcie"]

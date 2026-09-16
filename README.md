@@ -117,11 +117,13 @@ tiles/moe/routed                 # gate / up / down
 tiles/moe/shared                 # DOT
 tiles/moe/leftover_bf16
 tiles/sequence/causal_conv       # scalar FMA; not under gdn_scan
-tiles/comm/pcie                  # Uncached+push Later
+tiles/comm/pcie                  # Uncached+push; PIX on PEX88096
 ```
 
 Host consume contracts that extras should import (not reimplement):
 `hippihx.gemm.w4a16_fdot2.pack` (integer ZP, `K_STEP=32`).
+`hippihx.comm.fabric` (PIX/PXB/PHB × PEX88096/8749) +
+`hippihx.comm.pcie.policy` (Uncached+push, `AR_MAX_KB=512`).
 
 FlyDSL dest kernel: `hippihx.flydsl.launch_vec_add`. Atoms: `FDOT2`,
 `SDOT4`. Optional extra: `pip install hippihx[flydsl]`.

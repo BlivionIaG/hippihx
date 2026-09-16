@@ -5,6 +5,7 @@ Kernel guts live in ``tiles/``. Serve wiring stays in ``rdna_extras``.
 
 from .backend import DEST_BACKEND, FATBIN_BACKEND, FLYDSL_DEST, FLYDSL_V1_CONSUME, Backend
 from .catalog import OPS, OpSpec, find_spec, list_qualnames
+from .fabric import Fabric
 from .fatbin import (
     BIND_KEYS_ON_ARCH_AND_WAVE,
     DEFAULT_ARCH,
@@ -35,6 +36,7 @@ __all__ = [
     "FATBIN_BACKEND",
     "FLYDSL_DEST",
     "FLYDSL_V1_CONSUME",
+    "Fabric",
     "GFX1030_WAVE",
     "GFX103X_WAVE",
     "KNOWN_ARCHES",

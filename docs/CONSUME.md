@@ -36,6 +36,9 @@ Import these instead of reimplementing extras bugs:
 
 - `hippihx.gemm.w4a16_fdot2.pack` — integer ZP, `K_STEP=32`, refuse ConfigH
   and 40-wide K-splits.
+- `hippihx.comm.fabric.Fabric` + `hippihx.comm.pcie.policy` — PIX vs
+  PHB/PXB, 88096 vs 8749, Uncached+push, `AR_MAX_KB=512`. extras PIX
+  `lspci` helpers stay serve.
 - `Caps.dtype` — DOT and GDN HIP refuse bf16 (`HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE`).
 
 ## Fatbin

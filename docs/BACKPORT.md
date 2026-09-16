@@ -78,7 +78,7 @@ would freeze a second ISA copy. Dual copies are how serve bugs accrete.
 | Dest tip M-RoPE / gated RMS / Flash-Next HIP scaffolding | **Watch / extras** | `mrope_rdna2.cu` fp16 scalar, no LDS, no fdot2. HC/QSA/PLE HIP **opt-in** (`VLLM_RDNA_{HC_PREFILL,QSA,PLE_CONV}_HIP` default **off**). `rdna_fused_glue.cu` is product fuse. No new V1 op until dest locks a class and extras can bind. |
 | Dest tip GDN arenas + persist keepalive + TP=4 W4 serve | **No** | Stay extras. Arenas / `rdna2_graph_keepalive.cuh` / breakable cudagraphs / PYNCCL. |
 | Dest tip Hybrid W4A16 gfx10 ungate | **No** | extras linear backend. RDNA2 W4 stays auto default on gfx1030. Not a second W4 family. |
-| Dest tip leapdragon `rdna_ar` (PR #1) + PIX helpers (PR #7) | **Later** — `comm.pcie` | AR still opt-in (`VLLM_RDNA_AR=1`). Occupancy pin closed. PIX topology is serve, not a tile. |
+| Dest tip leapdragon `rdna_ar` (PR #1) + PIX helpers (PR #7) | **Later** — `comm.pcie` | AR still opt-in (`VLLM_RDNA_AR=1`). Occupancy pin closed. Hop class is `hippihx.comm.fabric`; `lspci`/ACS helpers stay extras. |
 | PR #2 GLM-5.3 KDA/DSA (`later/glm53-…`) | **Later** — `kda_scan` / `dsa_nope` / `qsa_indexer` | Product-named `glm5_*` files. Do not name tiles after GLM. |
 | PR #3 a17t `[WIP] Similar work, different fork` | **No** | WIP, mixed Triton+HIP+qwen4_exp. Duplicate W4 family. |
 | PR #5 Flash-Next draft | **Closed** | Dest absorbed TunableOp + Flash-Next via **#8**. Do not merge the old other-fork PR. |

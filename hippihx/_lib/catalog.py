@@ -137,7 +137,7 @@ OPS: tuple[OpSpec, ...] = (
         "comm.pcie",
         11,
         "COMM_PCIE",
-        "PCIe Uncached+push AR (INT8/Q8 wire class) — stub",
+        "PCIe Uncached+push AR (PIX on PEX88096; INT8/Q8 wire)",
         "comm/pcie",
         "hippihx_comm_pcie_stub",
         "comm.pcie",

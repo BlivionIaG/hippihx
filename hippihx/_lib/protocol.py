@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any, Mapping, Protocol, runtime_checkable
 
 from .backend import Backend, is_zoo_backend
+from .fabric import Fabric
 from .fatbin import (
     DEFAULT_ARCH,
     DOT_WAVE,
@@ -55,8 +56,9 @@ class ScratchSpec:
 class Caps:
     """Host-side capabilities handed to ``plan``. No device work.
 
-    Serve bind keys on ``arch`` **and** ``wave``. ``backend`` is ``hip``
-    (fatbin / extras V1) or ``flydsl`` (compiler). Default is HIP.
+    Serve bind keys on ``arch`` **and** ``wave``. Comm also keys on
+    ``fabric.hop`` + ``fabric.switch`` (PIX vs PHB/PXB). ``backend`` is
+    ``hip`` (fatbin / extras V1) or ``flydsl`` (compiler). Default is HIP.
     """
 
     arch: str = DEFAULT_ARCH
@@ -64,6 +66,7 @@ class Caps:
     device: str = "hip"
     dtype: str | None = None
     backend: str = "hip"
+    fabric: Fabric | None = None
 
     def __post_init__(self) -> None:
         if self.arch in LATER_ARCHES:
@@ -84,6 +87,8 @@ class Caps:
             ) from exc
         if not is_zoo_backend(backend):
             raise ValueError(f"backend {self.backend!r} is not a hippihx zoo backend")
+        if self.fabric is not None and not isinstance(self.fabric, Fabric):
+            raise ValueError("caps.fabric must be hippihx.comm.fabric.Fabric or None")
         if self.wave is None:
             if self.arch == "gfx900":
                 object.__setattr__(self, "wave", 64)
