@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from hippihx._lib.backend import FORBIDDEN_FLYDSL_KERNELS
-from hippihx._lib.fatbin import DEFAULT_ARCH, DOT_WAVE
+from hippihx._lib.fatbin import DEFAULT_ARCH, DOT_WAVE, NO_HSA_OVERRIDE
 
 
 def available() -> bool:
@@ -22,6 +22,13 @@ def require() -> None:
 
 
 def env_arch(arch: str = DEFAULT_ARCH) -> dict[str, str]:
+    import os
+
+    if os.environ.get("HSA_OVERRIDE_GFX_VERSION"):
+        raise ValueError(
+            "Never HSA_OVERRIDE_GFX_VERSION. Pin FLYDSL_GPU_ARCH="
+            f"{arch} (NO_HSA_OVERRIDE={NO_HSA_OVERRIDE})."
+        )
     return {"FLYDSL_GPU_ARCH": arch, "HIPPIHX_FLY_WAVE": str(DOT_WAVE)}
 
 

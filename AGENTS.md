@@ -25,7 +25,8 @@ this tree. Do not dump `csrc/rocm/*.cu` here until extras consumes V1.
 
 ## HIP fatbins / FlyDSL compiler
 
-Both are dest zoo backends. extras V1 consume is HIP (`FLYDSL_V1_CONSUME`
+Both are dest zoo backends. Compiler + vec-add is dest
+(`FLYDSL_GATE0_OBJECT`). extras V1 consume is HIP (`FLYDSL_V1_CONSUME`
 is false). FlyDSL is an optional extra, not a required dep. Do not port
 MFMA/WMMA FlyDSL GEMM/MoE/FA into `tiles/` or `hippihx.flydsl`.
 `Caps(backend="flydsl")` is valid. See `docs/FLYDSL.md`.

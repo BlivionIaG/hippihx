@@ -123,8 +123,8 @@ tiles/comm/pcie                  # Uncached+push Later
 Host consume contracts that extras should import (not reimplement):
 `hippihx.gemm.w4a16_fdot2.pack` (integer ZP, `K_STEP=32`).
 
-FlyDSL atoms and kernel contracts: `hippihx.flydsl` (`FDOT2`, `SDOT4`,
-`VEC_ADD`). Optional extra: `pip install hippihx[flydsl]`.
+FlyDSL dest kernel: `hippihx.flydsl.launch_vec_add`. Atoms: `FDOT2`,
+`SDOT4`. Optional extra: `pip install hippihx[flydsl]`.
 
 ## Packs stay outside
 

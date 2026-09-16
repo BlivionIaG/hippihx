@@ -21,8 +21,8 @@ DEST_BACKEND = FATBIN_BACKEND
 FLYDSL_DEST = True
 FLYDSL_V1_CONSUME = False
 
-# Kernel-readiness in *this* tree. Caps does not wait on these.
-FLYDSL_GATE0_OBJECT = False
+# Compiler + vec-add is dest (lab-tested). DOT wrappers / skinny / extras JIT next.
+FLYDSL_GATE0_OBJECT = True
 FLYDSL_GATE1_DOT_WRAPPERS = False
 FLYDSL_GATE2_SKINNY = False
 FLYDSL_GATE3_TABLE = False

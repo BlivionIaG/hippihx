@@ -15,7 +15,7 @@ from hippihx._lib.backend import (
     flydsl_ready,
     is_zoo_backend,
 )
-from hippihx.flydsl import FDOT2, SDOT4, VEC_ADD, available, refuse_shipped_kernel
+from hippihx.flydsl import FDOT2, SDOT4, VEC_ADD, available, launch_vec_add, refuse_shipped_kernel
 from hippihx.gemm.w4a16_fdot2.pack import (
     AWQ_ZERO_OFFSET,
     CONFIG_A_K_STEP,
@@ -34,7 +34,7 @@ def test_hip_and_flydsl_are_zoo_backends() -> None:
     assert FATBIN_BACKEND is Backend.HIP
     assert FLYDSL_DEST is True
     assert FLYDSL_V1_CONSUME is False
-    assert FLYDSL_GATE0_OBJECT is False
+    assert FLYDSL_GATE0_OBJECT is True
     assert flydsl_ready() is False
     assert is_zoo_backend("hip")
     assert is_zoo_backend("flydsl")
@@ -72,6 +72,27 @@ def test_flydsl_optional_and_atoms() -> None:
     assert "dest compiler backend" in fly.lower()
     assert "research" not in fly.lower()
     assert "MFMA" in fly
+    vec = (
+        Path(__file__).resolve().parents[1] / "hippihx" / "flydsl" / "vec_add.py"
+    ).read_text(encoding="utf-8")
+    assert "@flyc.kernel" in vec
+    assert "UniversalCopy128b" in vec
+    with pytest.raises(ModuleNotFoundError, match="optional extra"):
+        launch_vec_add(None, None, None)
+    import os
+
+    from hippihx.flydsl.runtime import env_arch
+
+    prev = os.environ.get("HSA_OVERRIDE_GFX_VERSION")
+    os.environ["HSA_OVERRIDE_GFX_VERSION"] = "10.3.0"
+    try:
+        with pytest.raises(ValueError, match="HSA_OVERRIDE"):
+            env_arch("gfx1030")
+    finally:
+        if prev is None:
+            del os.environ["HSA_OVERRIDE_GFX_VERSION"]
+        else:
+            os.environ["HSA_OVERRIDE_GFX_VERSION"] = prev
     for name in FORBIDDEN_FLYDSL_KERNELS:
         with pytest.raises(ValueError, match="MFMA/WMMA"):
             refuse_shipped_kernel(name)

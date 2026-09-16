@@ -19,7 +19,7 @@ VEC_ADD = FlyKernel(
     name="vec_add",
     arch=DEFAULT_ARCH,
     wave=DOT_WAVE,
-    summary="gfx1030 vector-add; wave32; no gfx11/12 opcodes",
+    summary="dest gfx1030 vector-add (FlyDSL 01-vectorAdd; wave32)",
 )
 
 KERNELS: tuple[FlyKernel, ...] = (VEC_ADD,)
