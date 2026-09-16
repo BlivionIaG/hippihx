@@ -7,8 +7,9 @@ consume one V1 op. Details: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `f5cbbdfec494` (2026-09-16 10:03 UTC; 1 commit past
-`4d25a0483912`, 3 past `1ff73596d81a`, 35 past `820465315bde`, 78 past
+`rdna_extras` @ `7e70e2400542` (2026-09-16 12:10 UTC; 1 commit past
+`f5cbbdfec494`, 2 past `4d25a0483912`, 4 past `1ff73596d81a`, 36 past
+`820465315bde`, 79 past
 `1046782fb8c4`, which
 deleted the unused AWQ prefill `.cu`; merged extras
 [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1) is still
@@ -30,7 +31,8 @@ W4 MoE oracle `RDNA2_W4A16`, moe_align prealloc, PLE `Tensor?` schema
 n≤5, V1 FULL→PIECEWISE + persist keepalive, custom AR under breakable
 cudagraphs (`849292ec`), dest gfx1030 launcher default-on for
 `VLLM_FORCE_CUSTOM_ALL_REDUCE` (`4d25a048`; leapdragon `rdna_ar` still
-opt-in), extras `bench_report.py` (`f5cbbdfe`). Do **not** copy dest W4
+opt-in), extras `bench_report.py` (`f5cbbdfe` / newest-by-mtime
+`7e70e240`). Do **not** copy dest W4
 scale-baked ZP, unaligned prefill K-splits, persist keepalive, GDN
 HIP-on-BF16 dispatch, ConfigH, Triton QSA, or tok/s. V1 refuses bf16 on
 DOT and GDN HIP. Details:
@@ -168,4 +170,4 @@ Serve knobs. hippihx does not read these. **Unvalidated.** Debug probes stay ext
 | ConfigH (`K_STEP=64`) | dest-reverted; garbage for `M>256` |
 | V1 FULL→PIECEWISE + persist keepalive | extras runner; not a zoo file |
 | vLLM custom AR cudagraph + launcher default-on | extras `custom_all_reduce.py` / `serve_gfx1030_full.sh`; not Uncached+push |
-| extras `bench_report.py` | extras ops; do not copy tok/s |
+| extras `bench_report.py` | extras ops; newest by mtime (`7e70e240`); do not copy tok/s |

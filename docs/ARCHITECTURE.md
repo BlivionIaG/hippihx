@@ -201,7 +201,7 @@ One V1 id per tile (`HIPPIHX_V1_OP_*`). Serve wraps as
 Python mirror: `hippihx.v1` (`V1OpId`, `ABI_REVISION`). Caps include
 optional activation `dtype` (revision **2**). Qualnames `attention.*`
 (revision **3**; ids unchanged). Dest extras tip
-`f5cbbdfec494` still has no `torch.ops.hippihx.*` rewire. Persist
+`7e70e2400542` still has no `torch.ops.hippihx.*` rewire. Persist
 keepalive / GDN arenas / Flash-Next `qwen4_exp` / V1 FULL→PIECEWISE /
 vLLM custom AR stay extras. Dest deleted the second W4 prefill `.cu`
 and reverted ConfigH. GDN decode HIP now accepts fp16 SSM state
