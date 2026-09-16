@@ -100,6 +100,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "a4060647" in extras
     assert "1ff735" in extras
     assert "4d25a0" in extras
+    assert "f5cbbd" in extras
     assert "820465" in extras
     assert "1046782" in extras
     assert "docs/EXTRAS.md" in readme
@@ -110,6 +111,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "a4060647" in bp
     assert "1ff735" in bp
     assert "4d25a0" in bp
+    assert "f5cbbd" in bp
     assert "849292ec" in bp
     assert "820465" in bp
     assert "1046782" in bp
@@ -130,7 +132,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "torch.ops.hippihx" in extras or "torch.ops.hippihx" in bp
     assert "wvSplitK" in extras
     contrib = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
-    assert "4d25a0" in contrib
+    assert "f5cbbd" in contrib
     gdn = (ROOT / "tiles" / "attention" / "gdn_scan" / "README.md").read_text(
         encoding="utf-8"
     )
