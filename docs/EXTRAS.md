@@ -7,12 +7,13 @@ consume one V1 op. Details: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `820465315bde` (2026-09-14 09:01 UTC; 43 commits past
-`1046782fb8c4`, which deleted the unused AWQ prefill `.cu`; merged extras
+`rdna_extras` @ `1ff73596d81a` (2026-09-16 07:57 UTC; 32 commits past
+`820465315bde`, 75 past `1046782fb8c4`, which deleted the unused AWQ
+prefill `.cu`; merged extras
 [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1) is still
 `a4060647cfbb`) plus open extras PRs **#2–#3**. Dest default branch is
 **`rdna_extras`**. `main` is still upstream vLLM `c00091e02670` — no
-dest HIP there.
+dest HIP there. **No** `torch.ops.hippihx.*` consume bind yet.
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs; bodies stay in extras until a consume bind exists. This
@@ -20,11 +21,15 @@ list is a tracker, not a claim that any row works.
 
 Dest extras journals GDN FPP13 16k c=8 capture **green** via serve
 arenas, **deleted** the separate AWQ prefill `.cu` (one W4 family),
-**reverted** ConfigH, and dest-landed Flash-Next **as serve** (HIP
-HC/QSA/PLE still opt-in / default off). Do **not** copy dest W4
+**reverted** ConfigH, dest-landed Flash-Next **as serve** (HIP
+HC/QSA/PLE still opt-in / default off), and since `820465` also: GDN
+decode **fp16 SSM state** (`02adbfd4`), GDN prefill backend `'rdna2'`,
+W4 MoE oracle `RDNA2_W4A16`, moe_align prealloc, PLE `Tensor?` schema
+(67 `_rocm_C` schemas), page-commit `new_zeros`/`zeros_like`, wvSplitK
+n≤5, V1 FULL→PIECEWISE + persist keepalive. Do **not** copy dest W4
 scale-baked ZP, unaligned prefill K-splits, persist keepalive, GDN
-HIP-on-BF16 dispatch, ConfigH, or Triton QSA. V1 refuses bf16 on DOT
-and GDN HIP. Details:
+HIP-on-BF16 dispatch, ConfigH, Triton QSA, or tok/s. V1 refuses bf16 on
+DOT and GDN HIP. Details:
 [`BACKPORT.md`](BACKPORT.md#dest-extras-defects-do-not-copy).
 
 Status key: **extras** = live on dest tip (unvalidated here) ·
@@ -41,13 +46,13 @@ Status key: **extras** = live on dest tip (unvalidated here) ·
 | W4A16 dense decode | `q_gemm_rdna2.cu` | `gemm/w4a16_fdot2` | GPTQ + AWQ = pack/zeros, one GEMM. Dest ZP is scale-baked `half` — zoo uses integer `q-zero` then scale. **unvalidated** |
 | W4A16 prefill | `q_gemm_rdna2_prefill.cu` | `gemm/w4a16_fdot2` | Unified GPTQ+AWQ. ConfigA for `M>256`. Dest **reverted** ConfigH. Dest `compute_split_k` can pick K=640→16×40; zoo requires equal ×32. **unvalidated** |
 | W4A16 AWQ high-M prefill | ~~`q_gemm_rdna2_awq_prefill.cu`~~ | `gemm/w4a16_fdot2` | **Dest-deleted** @ `1046782`. Do not reintroduce. |
-| W4A16 MoE | `moe_q_gemm_rdna2.cu` | `moe/routed` | **unvalidated** |
+| W4A16 MoE | `moe_q_gemm_rdna2.cu` | `moe/routed` | Dest oracle now selects `RDNA2_W4A16` (`b549c229`). Same W4 family. moe_align prealloc is extras. **unvalidated** |
 | EXL3 dense / MoE / dequant / Hadamard / trellis decode | `exl3_dot2_*.cu` | `gemm/exl3_3inst` | Consume `-cb 3inst`. Produce outside. UNC-26. **unvalidated** |
-| GDN packed decode | `gdn_decode_rdna2.cu` | `attention/gdn_scan` | Register-resident. Dest journals FPP13 16k c=8 green via **serve arenas**. **fp16 act only.** **unvalidated** |
+| GDN packed decode | `gdn_decode_rdna2.cu` | `attention/gdn_scan` | Register-resident. Dest journals FPP13 16k c=8 green via **serve arenas**. Dest @ `02adbfd4`: SSM state **fp16 or fp32**; recurrence fp32 VGPR. **fp16 act only.** **unvalidated** |
 | GDN prefill chain (prep / kkt / solve_wy / delta_h / o) | `gdn_prefill_*_rdna2.cu` | `attention/gdn_scan` | Opt-out (`VLLM_GDN_HIP_PREFILL=0`). `o` varlen `i_t_local` dest-fixed. Dispatch still misses dtype. **unvalidated** |
 | causal_conv1d update + fwd | `causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA, `state_len≈3–4`. FIR on pre-shift then shift. Fwd `stride_o_token` + null-block. BF16: fp32-promoted mul, **not** `fdot2.bf16`. **unvalidated** |
 | Paged MQA indexer | `indexer_paged_mqa_rdna2.cu` | `attention/qsa_indexer` | DeepSeek V4 Lightning class. gfx1030 BF16 6h×256: **4 warps**. **unvalidated** |
-| Flash-Next QSA store/compress/MQA | `qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | `VLLM_RDNA_QSA_HIP` default **off**. Triton `forward_qsa` abort still dest-live. **unvalidated** |
+| Flash-Next QSA store/compress/MQA | `qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | `VLLM_RDNA_QSA_HIP` default **off**. Eager Triton now serves (`8cf0dedb`); dest V1 maps FULL→PIECEWISE. **unvalidated** |
 | Sparse MLA decode / prefill | `sparse_mla_rdna2.cu` | `attention/dsa_nope` | **unvalidated** |
 | M-RoPE forward | `mrope_rdna2.cu` | — | fp16, no LDS, no fdot2. No tile until dest locks a rotary class. **unvalidated** |
 | Flash-Next HC / PLE conv / fused glue | `hc_rdna2.cu`, `ple_short_conv_rdna2.cu`, `rdna_fused_glue.cu` | — | Product HIP. HC/PLE default off; fused HC/SE default on. Stay extras. **unvalidated** |
@@ -71,15 +76,17 @@ Status key: **extras** = live on dest tip (unvalidated here) ·
 | EXL3 codebook | `cb==0` 3inst produce, `cb==1` mcg compile, `cb==2` mul1 not produced | 3inst dest | consume only |
 | EXL3 memory | `full` int16 trellis vs `packed` stub | `full` | — |
 | EXL3 prefill | decode-trellis prefill vs fused GEMM | `VLLM_EXL3_PREFILL_DECODE=1` | — |
-| GDN decode HIP | packed HIP vs Triton/FLA | on unless `VLLM_GDN_DECODE_RDNA2=0` | `gdn_scan` |
-| GDN prefill HIP | 5-kernel chain | **opt-out** (`== "0"`) | `gdn_scan` |
+| GDN decode HIP | packed HIP vs Triton/FLA | on unless `VLLM_GDN_DECODE_RDNA2=0`; dest @ `02adbfd4` HIP fires on fp16 SSM state | `gdn_scan` |
+| GDN prefill HIP | 5-kernel chain | **opt-out** (`== "0"`); dest log backend `'rdna2'` (`ce3c9397`) | `gdn_scan` |
 | FA backend | `RDNA_ATTN` when gfx10x | `VLLM_USE_RDNA2_FA` (envs.py default false; backend reads `"1"`) | `fa_fdot2` |
 | FA spec/MTP gate | opt-in abort on verify-shaped batches | **off** | serve, not a tile |
 | MLA sparse HIP | indexer + sparse MLA | `VLLM_USE_RDNA2_MLA=1` | indexer / `dsa_nope` |
 | causal conv HIP | update (decode) + fwd (prefill) | on unless set `0`; fwd dest-enabled with out-stride | `causal_conv` |
 | FA GQA prefill | subgroup / true / off | **`subgroup`** (`VLLM_FA_RDNA2_GQA_MODE`) | `fa_fdot2` observation |
-| Flash-Next HC/QSA/PLE HIP | dest scaffolding | **off** (`VLLM_RDNA_{HC_PREFILL,QSA,PLE_CONV}_HIP`) | extras until dest-on |
+| Flash-Next HC/QSA/PLE HIP | dest scaffolding | **off** (`VLLM_RDNA_{HC_PREFILL,QSA,PLE_CONV}_HIP`); PLE schema loads (`b26763e7`) | extras until dest-on |
 | Hybrid W4A16 gfx10 | extras linear backend | ungated; RDNA2 W4 stays auto default on gfx1030 | not a second W4 family |
+| gfx1030 wvSplitK n≤5 | extras dense GEMM (`c350fa218`) | dest-on for n≤5 FP16/BF16 decode | **no tile** |
+| V1 FULL_AND_PIECEWISE | dest maps FULL→PIECEWISE + persist keepalive | extras runner (`1ff73596`) | serve, not a tile |
 | Custom AR (dest) | force custom all-reduce on PCIe-only | **off** | serve |
 | leapdragon `rdna_ar` | size-gated Uncached+push | **off** (`VLLM_RDNA_AR=0`; dest extras after merged #1) | `comm/pcie` Later |
 
@@ -149,8 +156,10 @@ Serve knobs. hippihx does not read these. **Unvalidated.** Debug probes stay ext
 | dest `qwen4_exp/**` / PLE offload / TunableOp CSVs | product serve; Flash-Next dest-landed as extras |
 | leapdragon `gemv_f16` as a zoo family | no skinny tile; extras consume only |
 | Produce / pack (`-cb 3inst`, AWQ produce) | outside hippihx |
-| Cudagraph `torch.zeros`, persist keepalive, `eager_break_during_capture`, GDN arenas | serve page-commit / dispatcher |
+| Cudagraph `torch.zeros` / `new_zeros` / `zeros_like`, persist keepalive, `eager_break_during_capture`, GDN arenas | serve page-commit / dispatcher |
 | extras PR **#5** Flash-Next draft | **closed**; dest absorbed via PR **#8** — do not merge the old other-fork |
+| extras PR **#11** wvSplitK | **closed**; dest-picked as `c350fa218` — extras dense GEMM |
 | Explore PRs **#9/#10** W4A8 sdot4 / W4A4 sdot8 | not dest; no sdot tile |
 | `rdna_extras_wip_20260910` TRUE FULL snapshot | not dest tip |
 | ConfigH (`K_STEP=64`) | dest-reverted; garbage for `M>256` |
+| V1 FULL→PIECEWISE + persist keepalive | extras runner; not a zoo file |

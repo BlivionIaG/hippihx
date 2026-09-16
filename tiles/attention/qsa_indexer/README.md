@@ -18,8 +18,10 @@ opt-in `qsa_rdna2.cu` (Flash-Next store/compress/MQA; `VLLM_RDNA_QSA_HIP`
 default **off**). PR #2 `glm5_dsa_indexer_rdna2.cu` is Later. Confirm
 class before a body migrate.
 
-Dest @ `820465` records a Flash-Next **Triton** `forward_qsa` GPU trap
+Dest @ `820465` recorded a Flash-Next **Triton** `forward_qsa` GPU trap
 (`SIGABRT`). `VLLM_RDNA_QSA_WARPS=2` did **not** fix it — do not treat
-the 2-warp prefill spill as that abort. HIP `qsa_rdna2.cu` is
-scaffolding, not dest-on. Do not dump Triton QSA. The 4-warp occupancy
-row is a gfx1030 observation, not a tok/s claim.
+the 2-warp prefill spill as that abort. Dest since then: eager QSA
+break (`8cf0dedb`) serves; dest V1 maps FULL→PIECEWISE (`1ff73596`).
+HIP `qsa_rdna2.cu` is still scaffolding, not dest-on. Do not dump
+Triton QSA. The 4-warp occupancy row is a gfx1030 observation, not a
+tok/s claim.
