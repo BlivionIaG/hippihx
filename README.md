@@ -49,7 +49,7 @@ No PRs to upstream vLLM. Do not edit the extras fork from this tree.
 | **gfx1100/1101/1102** | yes | first-class, separate fatbin |
 | **gfx1151** | portable | can run, not dest-tuned |
 | **gfx1031–1036** | portable | Deck **gfx1033** is wave32 |
-| **gfx1013** | portable | BC-250 / Cyan Skillfish, **RDNA2**, **not** gfx906 |
+| **gfx1013** | Later | BC-250 / Cyan Skillfish, **not true RDNA2**, not dest |
 | **gfx900** | stub | Vega; never load FA/EXL3 DOT |
 | **gfx906** | Later | Vega20/MI50, not BC-250 |
 

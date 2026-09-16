@@ -56,7 +56,7 @@ typedef enum hippihx_v1_op_id {
 
 typedef struct hippihx_v1_caps {
   const char* arch;  // e.g. "gfx1030"; required
-  int wave;          // 32 / 64; 0 = unset (VERIFY arches like gfx1013)
+  int wave;          // 32 / 64; 0 = unset
   int dtype;         // hippihx_v1_dtype; 0 = unset
 } hippihx_v1_caps;
 

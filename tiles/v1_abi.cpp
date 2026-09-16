@@ -38,14 +38,15 @@ bool arch_ok(const char* arch, int is_dot) {
   if (std::strchr(arch, ',') != nullptr || std::strchr(arch, ' ') != nullptr) {
     return false;  // one fatbin slot per artifact
   }
-  // Later non-DOT only — refuse here (same as Caps).
-  if (std::strcmp(arch, "gfx906") == 0) {
+  // Later — refuse here (same as Caps).
+  if (std::strcmp(arch, "gfx906") == 0 ||
+      std::strcmp(arch, "gfx1013") == 0) {
     return false;
   }
   static const char* kAll[] = {
       "gfx1030", "gfx1100", "gfx1101", "gfx1102", "gfx1151",
       "gfx1031", "gfx1032", "gfx1033", "gfx1035", "gfx1036",
-      "gfx1013", "gfx900",
+      "gfx900",
   };
   bool known = false;
   for (const char* a : kAll) {

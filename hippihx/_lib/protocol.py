@@ -23,7 +23,6 @@ from .fatbin import (
     KNOWN_ARCHES,
     LATER_ARCHES,
     LATER_ARCH_NOTES,
-    VERIFY_WAVE_ARCHES,
 )
 
 KNOWN_DTYPES: tuple[str, ...] = ("fp16", "bf16", "fp32")
@@ -92,8 +91,6 @@ class Caps:
         if self.wave is None:
             if self.arch == "gfx900":
                 object.__setattr__(self, "wave", 64)
-            elif self.arch in VERIFY_WAVE_ARCHES:
-                pass
             else:
                 object.__setattr__(self, "wave", DOT_WAVE)
 

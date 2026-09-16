@@ -12,7 +12,7 @@ a DOT path.
 | Lock | Status |
 |---|---|
 | LDS bytes | A-tile `[M][BLOCK_K + LDS_PAD]`; **`LDS_PAD=8`** (extras `q_gemm_rdna2.cu`, add `fabf51493` BlivionIaG) |
-| High-M prefill | extras @ `820465`: **one** kernel `gptq_gemm_rdna2_prefill`. `select_config` uses ConfigA (`M_TILE=16`, `N_TILE=1024`, `THREADS=256`, `K_STEP=32`) for `M>256` & `N>=4096`, else ConfigC. Dest **reverted** ConfigH (`K_STEP=64`) — garbage for `M>256`; do not reintroduce. AWQ is `use_v2_format` / `zero_offset=0`. Dest **deleted** `q_gemm_rdna2_awq_prefill.cu` @ `1046782`. |
+| High-M prefill | extras @ `820465` / tip `1ff735`: **one** kernel `gptq_gemm_rdna2_prefill`. `select_config` uses ConfigA (`M_TILE=16`, `N_TILE=1024`, `THREADS=256`, `K_STEP=32`) for `M>256` & `N>=4096`, else ConfigC. Dest **reverted** ConfigH (`K_STEP=64`) — garbage for `M>256`; do not reintroduce. AWQ is `use_v2_format` / `zero_offset=0`. Dest **deleted** `q_gemm_rdna2_awq_prefill.cu` @ `1046782`. |
 | `__launch_bounds__` | extras prefill `__launch_bounds__(THREADS)` (ConfigA=256 / V1=512 / C=128). Not dest-locked here until migrate |
 | Wave | **32 only** |
 | Zero-point | **Integer nibble `q` minus integer `zero`, then `* scale`.** GPTQ zeros are `uint4b8` (+1); AWQ zeros are literal. Do **not** copy extras `prep_zero_scale_fp16` scale-baked `half` (`0xE400 \| zero`) — that rounded offset is a dest defect (all-zero weights were not exact zero). |

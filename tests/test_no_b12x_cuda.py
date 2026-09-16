@@ -98,6 +98,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "VLLM_RDNA_AR_MAX_KB" in extras
     assert "fa_rdna2" in extras
     assert "a4060647" in extras
+    assert "1ff735" in extras
     assert "820465" in extras
     assert "1046782" in extras
     assert "docs/EXTRAS.md" in readme
@@ -106,8 +107,11 @@ def test_readme_unvalidated_inventory() -> None:
     text = extras
     bp = (ROOT / "docs" / "BACKPORT.md").read_text(encoding="utf-8")
     assert "a4060647" in bp
+    assert "1ff735" in bp
     assert "820465" in bp
     assert "1046782" in bp
+    assert "02adbfd4" in bp
+    assert "new_zeros" in extras or "zeros_like" in bp
     assert "i_t_local" in bp
     assert "rdna2_graph_keepalive" in bp
     assert "**not** squash" in bp
@@ -120,8 +124,19 @@ def test_readme_unvalidated_inventory() -> None:
     assert "_awq_prefill_available" in bp
     assert "ConfigH" in bp
     assert "VLLM_RDNA_QSA_HIP" in bp or "qsa_rdna2" in bp
+    assert "torch.ops.hippihx" in extras or "torch.ops.hippihx" in bp
+    assert "wvSplitK" in extras
     contrib = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
-    assert "820465" in contrib
+    assert "1ff735" in contrib
+    gdn = (ROOT / "tiles" / "attention" / "gdn_scan" / "README.md").read_text(
+        encoding="utf-8"
+    )
+    assert "02adbfd4" in gdn
+    assert "fp16" in gdn
+    qsa = (ROOT / "tiles" / "attention" / "qsa_indexer" / "README.md").read_text(
+        encoding="utf-8"
+    )
+    assert "1ff735" in qsa or "8cf0dedb" in qsa
     w4 = (ROOT / "tiles" / "gemm" / "w4a16_fdot2" / "README.md").read_text(
         encoding="utf-8"
     )

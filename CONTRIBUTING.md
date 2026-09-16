@@ -40,7 +40,7 @@ those commits.
 **Foreign HIP** (leapdragon, a17t, anyone who is not this lab) keeps
 **their** Author **and** Committer. Same rule as extras
 [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1) (leapdragon
-`rdna_ar`, now dest extras @ `a4060647` squash / tip `820465`; pick unique Aron Hsiao commits,
+`rdna_ar`, now dest extras @ `a4060647` squash / tip `1ff735`; pick unique Aron Hsiao commits,
 not the GitHub squash). Do not rewrite those as Blivion or Cursor.
 
 | Rule | Meaning |
@@ -78,16 +78,14 @@ replaces Author with the picker.
   EXL3 / AWQ / `moe.shared` source. One `--offload-arch` per fatbin.
 - gfx900 is a Vega stub (`mad_mix` / `pk_fma`). It does **not** load DOT
   tiles.
-- **BC-250 is gfx1013** (Cyan Skillfish): **RDNA2**, same generation as
-  V620/Deck, built portable/unoptimized. Different GFX than Navi21 or
-  Van Gogh — not Steam Deck. RADV/llama.cpp report Skillfish warp size
-  64 — do not force `-mwavefrontsize32` or `HSA_OVERRIDE`. Serve bind
-  keys on **arch + wave size**. **gfx906 is Vega20/MI50**, Later non-DOT,
-  **not** BC-250.
+- **BC-250 is gfx1013** (Cyan Skillfish): **Later**. It is **not true
+  RDNA2**, not dest, not a portable DOT fatbin with gfx1030. Never
+  `HSA_OVERRIDE` a dest object onto it. **gfx906 is Vega20/MI50**, Later
+  non-DOT, **not** BC-250.
 - gfx1151 and Deck gfx103x (including Steam Deck **gfx1033 / wave32**)
   are built portable DOT fatbins (same stubs, can run, not dest-tuned).
-- CMake must refuse multi-arch lists and gfx906, and never imply
-  `HSA_OVERRIDE` / foreign ISA load.
+- CMake must refuse multi-arch lists and Later slots (gfx1013, gfx906),
+  and never imply `HSA_OVERRIDE` / foreign ISA load.
 - Shared DOT tiles: **wave32 only**, **no `fdot2.bf16`**, **never
   `#ifdef WMMA`**. WMMA is a gfx110x-only Later overlay. gfx1030 LLVM
   aborts on `fdot2.bf16` — BF16 leftover/conv is scalar FMA, not DOT.
@@ -107,9 +105,9 @@ replaces Author with the picker.
 5. Host tests for the protocol stay torch-free until a HIP extension exists.
 6. If the tile is DOT, include `hippihx/dot.hpp` (not a WMMA header) and
    mark the catalog row `dot=True`. Do not add a per-SKU copy of the file.
-   gfx1151 / gfx103x / gfx1013 compile the same header (portable, not
-   dest-tuned). Deck is wave32; gfx1013 does not force wave32. Never
-   HSA_OVERRIDE a dest object onto those chips.
+   gfx1151 / gfx103x compile the same header (portable, not dest-tuned).
+   Deck is wave32. gfx1013 is Later — never HSA_OVERRIDE a dest object
+   onto Skillfish.
 
 ## Build checks
 

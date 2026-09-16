@@ -8,16 +8,13 @@
 //   gfx1151           Strix Halo — portable/unoptimized, can run
 //   gfx1031..1036     Deck/mobile RDNA2 — portable/unoptimized, wave32
 //                     (Steam Deck gfx1033 is wave32, same class as gfx1030)
-//   gfx1013           BC-250 / Cyan Skillfish — RDNA2 (same generation
-//                     as gfx1030/Deck), portable/unoptimized, can run.
-//                     Different GFX than Navi21 / Van Gogh. Wave VERIFY:
-//                     RADV reports 64. Do not force -mwavefrontsize32 /
-//                     HSA_OVERRIDE. Serve bind keys on arch + wave size.
 //
 // Built non-DOT:
 //   gfx900            mad_mix / pk_fma stub — do not load FA/EXL3 DOT
 //
 // Later (not built):
+//   gfx1013           BC-250 / Cyan Skillfish — not true RDNA2, not dest,
+//                     not a portable DOT fatbin. Never HSA_OVERRIDE dest ISA.
 //   gfx906            real Vega20/MI50 — Later non-DOT. NOT BC-250.
 //
 // Never compile more than one of these into the same object.
@@ -26,8 +23,6 @@
 #ifndef HIPPIHX_WAVE_SIZE
 #if defined(__gfx900__) || defined(__gfx906__)
 #define HIPPIHX_WAVE_SIZE 64
-#elif defined(__gfx1013__) || defined(HIPPIHX_ARCH_gfx1013)
-// Wave VERIFY: RADV reports 64. Do not assume Navi21 wave32.
 #else
 #define HIPPIHX_WAVE_SIZE 32
 #endif
@@ -75,7 +70,6 @@
 #endif
 #if defined(__gfx1013__) || defined(HIPPIHX_ARCH_gfx1013)
 #define HIPPIHX_GFX1013 1
-#define HIPPIHX_DOT_SLOT 1
 #endif
 #if defined(__gfx900__) || defined(HIPPIHX_ARCH_gfx900)
 #define HIPPIHX_GFX900 1

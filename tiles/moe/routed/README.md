@@ -10,3 +10,6 @@ this directory owns the MoE launch, dispatch, and scratch around them.
 | Wave | 32 on gfx1030 |
 
 Do not take a17t `moe_awq_gemm_rdna2.cu` as a second routed family.
+Dest extras @ `b549c229` wires the existing `moe_q_gemm_rdna2` kernel
+into the oracle as `RDNA2_W4A16` — extras serve, same W4 family. moe_align
+prealloc (`4b799bf4`) stays extras.
