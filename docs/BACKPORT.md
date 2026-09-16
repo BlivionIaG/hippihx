@@ -1,15 +1,16 @@
 # extras → hippihx backport review
 
-Last checked `opengfx1030/vllm-rdna` `rdna_extras` @ `d0d577f1907c`
-(2026-09-16 13:56 UTC). Dest **default branch is `rdna_extras`**, not
+Last checked `opengfx1030/vllm-rdna` `rdna_extras` @ `8960a3bcbb17`
+(2026-09-16 16:18 UTC). Dest **default branch is `rdna_extras`**, not
 `main`. `main` is still unrelated upstream vLLM (`c00091e02670`,
 2026-09-02) — **no dest HIP landed there**. **Do not copy kernel bodies
 into this tree yet.** extras still has no `torch.ops.hippihx.*`.
 
-Dest extras is **3 commits** past the previous hippihx lock
-`7e70e2400542` (bench_report mtime), **4** past `f5cbbdfec494`, **5**
-past `4d25a0483912` (custom AR launcher), **7** past `1ff73596d81a`,
-**39** past `820465315bde`, and **82** past `1046782fb8c4` (AWQ
+Dest extras is **1 commit** past the previous hippihx lock
+`d0d577f1907c` (Qwen4Exp `_custom_ops` wrappers), **4** past
+`7e70e2400542` (bench_report mtime), **5** past `f5cbbdfec494`, **6**
+past `4d25a0483912` (custom AR launcher), **8** past `1ff73596d81a`,
+**40** past `820465315bde`, and **83** past `1046782fb8c4` (AWQ
 prefill `.cu` deleted; one W4 family). That W4 lock still holds. Dest
 **also** landed Flash-Next / Qwen4Exp **as serve** (merged extras PR
 **#8**, stacked on recipe PR **#6**) plus opt-in HIP scaffolding
@@ -18,7 +19,10 @@ prefill `.cu` deleted; one W4 family). That W4 lock still holds. Dest
 **off**; dest tried S6 default-on (`cb0d4418`) and **reverted**
 (`9c9509b3`). Triton remains dest SoT. `d0d577f1` added the missing
 `_custom_ops` wrappers so a gate-on path no longer AttributeErrors.
-Do not dump `qwen4_exp/` or those `.cu` bodies here. Do not copy tok/s.
+`8960a3bc` dest-fixed isolated HC HIP compute (runtime `GROUP_DIM`,
+contig fp16, `new_zeros`, weight index). Gate still **off**: PIECEWISE
+capture still faults in the MoE path. Do not dump `qwen4_exp/` or
+those `.cu` bodies here. Do not copy tok/s or extras maxdiff.
 
 **Remove / no longer dest-state:** extras PR **#5** is **closed**. Dest
 imported V620 TunableOp tables (`ca83d922`) and dest-landed Flash-Next
@@ -55,7 +59,8 @@ cudagraphs (`849292ec`) and dest gfx1030 launcher default-on for
 opt-in), then extras `bench_report.py` (`f5cbbdfe`), then bench_report
 newest-by-mtime (`7e70e240`), dest tried Qwen4Exp HIP default-on then
 reverted (`cb0d4418` / `9c9509b3`), then extras `_custom_ops` wrappers
-(`d0d577f1`). GitHub squash-merged
+(`d0d577f1`), then extras HC HIP isolated compute (`8960a3bc`).
+GitHub squash-merged
 [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1) (`rdna_ar`
 Uncached+push) at `a4060647`. Open: PRs **#2** (GLM Later) and **#3**
 (a17t WIP). **#4** closed after landing. **#5** closed (dest imported
@@ -91,7 +96,7 @@ would freeze a second ISA copy. Dual copies are how serve bugs accrete.
 | Dest tip ISA (`fa_rdna2`, EXL3, W4A16, GDN, causal_conv) | **Yes, later** — zoo class | Wait. Record observed locks. **One** W4 prefill (`gptq_gemm_rdna2_prefill` + `use_v2_format`; ConfigA for `M>256`). **Do not copy dest W4 ZP / K-split / ConfigH / persist keepalive.** Do not reintroduce ConfigH (`K_STEP=64`). Migrate only when extras can *call* hippihx. |
 | Dest tip FA GQA-subgroup prefill (`ecfec4e412ad`) | **Yes, later** — `attention/fa_fdot2` observation | `VLLM_FA_RDNA2_GQA_MODE` default `subgroup`. Occupancy pin closed. Do not copy tok/s. Persist O stay extras. |
 | Dest tip causal_conv out-stride + null-block (`82b6f183da2a`) | **Yes, later** — `sequence/causal_conv` | Record ISA. FIR still pre-shift then shift. |
-| Dest tip M-RoPE / gated RMS / Flash-Next HIP scaffolding | **Watch / extras** | `mrope_rdna2.cu` fp16 scalar, no LDS, no fdot2. HC/QSA/PLE HIP **opt-in** (`VLLM_RDNA_{HC_PREFILL,QSA,PLE_CONV}_HIP` default **off**). Dest tried S6 default-on (`cb0d4418`) and **reverted** (`9c9509b3`). Wrappers @ `d0d577f1`. `rdna_fused_glue.cu` is product fuse. No new V1 op until dest locks a class and extras can bind. |
+| Dest tip M-RoPE / gated RMS / Flash-Next HIP scaffolding | **Watch / extras** | `mrope_rdna2.cu` fp16 scalar, no LDS, no fdot2. HC/QSA/PLE HIP **opt-in** (`VLLM_RDNA_{HC_PREFILL,QSA,PLE_CONV}_HIP` default **off**). Dest tried S6 default-on (`cb0d4418`) and **reverted** (`9c9509b3`). Wrappers @ `d0d577f1`. Isolated HC HIP compute dest-fixed @ `8960a3bc`; capture still not dest-on. `rdna_fused_glue.cu` is product fuse. No new V1 op until dest locks a class and extras can bind. |
 | Dest tip GDN arenas + persist keepalive + TP=4 W4 serve | **No** | Stay extras. Arenas / `rdna2_graph_keepalive.cuh` / breakable cudagraphs / PYNCCL. |
 | Dest tip Hybrid W4A16 gfx10 ungate | **No** | extras linear backend. RDNA2 W4 stays auto default on gfx1030. Not a second W4 family. |
 | Dest tip leapdragon `rdna_ar` (PR #1) + PIX helpers (PR #7) | **Later** — `comm.pcie` | AR still opt-in (`VLLM_RDNA_AR=1`). Occupancy pin closed. Hop class is `hippihx.comm.fabric`; `lspci`/ACS helpers stay extras. Dest `c350fa218` device-index normalize is extras. |
@@ -106,7 +111,8 @@ would freeze a second ISA copy. Dual copies are how serve bugs accrete.
 | Dest tip gfx1030 launcher custom AR default-on (`4d25a048`) | **No** | extras `serve_gfx1030_full.sh`: `VLLM_FORCE_CUSTOM_ALL_REDUCE` default **1**. `envs.py` still False. leapdragon `VLLM_RDNA_AR` still **0**. |
 | Dest tip `bench_report.py` (`f5cbbdfe` / mtime `7e70e240`) | **No** | extras ops reporter (PP / TG / TTFT). Newest result dir by mtime, not lexical name. Do not copy tok/s into tile locks. |
 | Dest tip Qwen4Exp HIP S6 default-on then revert (`cb0d4418` / `9c9509b3`) | **No** | extras `envs.py` only. Gates still default **off**. Do not copy tok/s. |
-| Dest tip Qwen4Exp `_custom_ops` wrappers (`d0d577f1`) | **No** | extras Python wrappers for existing HC/QSA/PLE HIP. Gates still off. Next dest blocker if gated on: `grouped_gemma_rmsnorm` `BLOCK<=512` vs `GROUP_DIM=2560`. Do not dump `.cu`. |
+| Dest tip Qwen4Exp `_custom_ops` wrappers (`d0d577f1`) | **No** | extras Python wrappers for existing HC/QSA/PLE HIP. Gates still off. Do not dump `.cu`. |
+| Dest tip Qwen4Exp HC HIP compute (`8960a3bc`) | **No** | extras product HC. Isolated compute dest-fixed (runtime `GROUP_DIM`, contig fp16, `new_zeros`, weight index). Gate still **off**: PIECEWISE capture still faults in MoE. Do not dump `.cu`. Do not copy extras maxdiff. |
 | PR #2 GLM-5.3 KDA/DSA (`later/glm53-…`) | **Later** — `kda_scan` / `dsa_nope` / `qsa_indexer` | Product-named `glm5_*` files. Do not name tiles after GLM. |
 | PR #3 a17t `[WIP] Similar work, different fork` | **No** | WIP, mixed Triton+HIP+qwen4_exp. Duplicate W4 family. |
 | PR #5 Flash-Next draft | **Closed** | Dest absorbed TunableOp + Flash-Next via **#8**. Do not merge the old other-fork PR. |
@@ -133,8 +139,8 @@ would freeze a second ISA copy. Dual copies are how serve bugs accrete.
 
 ## Dest file → tile (when migrate is allowed)
 
-Observed at dest tip `d0d577f1907c` (ISA files + PR #1 AR @
-`a4060647cfbb`; previous lock `7e70e2400542`). Numbers are extras
+Observed at dest tip `8960a3bcbb17` (ISA files + PR #1 AR @
+`a4060647cfbb`; previous lock `d0d577f1907c`). Numbers are extras
 *observations*, not dest locks. Fill tile READMEs; do not invent tok/s.
 
 | extras path | hippihx tile | Notes |
@@ -174,7 +180,7 @@ Observed at dest tip `d0d577f1907c` (ISA files + PR #1 AR @
 | dest profiling findings / `docs/rdna2/bench_27b_awq_matrix.md` | Serve / ops. Do not copy tok/s or µs tables into tile locks. |
 | `rdna2_w4a16.py` `_awq_prefill_available` + dead `awq_prefill` apply branch | Extras dead code after HIP delete. `select_kernel` already returns `"prefill"` for AWQ. |
 | `vllm/models/qwen4_exp/**` + PLE offload / TunableOp CSVs | Product serve. Stay extras. |
-| `mrope_rdna2.cu` / `hc_rdna2.cu` / `qsa_rdna2.cu` / `ple_short_conv_rdna2.cu` / `rdna_fused_glue.cu` | ATen-coupled scaffolding. HC/QSA/PLE HIP default off (S6 default-on reverted). Wrappers @ `d0d577f1`. No V1 op yet. |
+| `mrope_rdna2.cu` / `hc_rdna2.cu` / `qsa_rdna2.cu` / `ple_short_conv_rdna2.cu` / `rdna_fused_glue.cu` | ATen-coupled scaffolding. HC/QSA/PLE HIP default off (S6 default-on reverted). Wrappers @ `d0d577f1`. Isolated HC compute @ `8960a3bc`; capture still not dest-on. No V1 op yet. |
 | PIX topology helpers (PR **#7**) | Serve. AR policy unchanged (still opt-in). |
 | Hybrid W4A16 gfx10 ungate | extras linear backend, not a hippihx family. |
 | Explore PRs **#9** / **#10** sdot | Not dest. |
@@ -186,7 +192,8 @@ Observed at dest tip `d0d577f1907c` (ISA files + PR #1 AR @
 | extras vLLM custom AR (`849292ec` / launcher `4d25a048`) | extras capture + gfx1030 launcher. Not `comm/pcie` Uncached+push. Never `empty_like` on a real forward. |
 | extras `bench_report.py` (`f5cbbdfe` / mtime `7e70e240`) | extras ops. Newest by mtime. Do not copy tok/s. |
 | extras Qwen4Exp HIP S6 default-on (`cb0d4418`) then revert (`9c9509b3`) | dest-reverted. Gates still default off. Do not copy tok/s. |
-| extras Qwen4Exp `_custom_ops` wrappers (`d0d577f1`) | extras Python wrappers. Still opt-in. `grouped_gemma_rmsnorm` BLOCK limit stays extras. Do not dump `.cu`. |
+| extras Qwen4Exp `_custom_ops` wrappers (`d0d577f1`) | extras Python wrappers. Still opt-in. Do not dump `.cu`. |
+| extras Qwen4Exp HC HIP compute (`8960a3bc`) | extras product HC. Isolated compute dest-fixed; capture still not dest-on. Do not dump `.cu`. Do not copy extras maxdiff. |
 | extras PR **#11** wvSplitK | **Closed / dest-picked** as `c350fa218`. Do not re-merge. |
 
 ## Do not take from a17t PR #3
@@ -215,7 +222,7 @@ All of:
 3. hippihx ships one HIP entry that extras can bind as one V1 op.
    **Started:** `include/hippihx/v1.h` (`hippihx_v1_plan` / `hippihx_v1_run`).
    `run` is still `NOT_READY` (no body). Extras has not rewired yet
-   (`d0d577f1907c` still has no `torch.ops.hippihx.*`).
+   (`8960a3bcbb17` still has no `torch.ops.hippihx.*`).
 4. extras is rewired to call it (that edit happens **in extras**, not from
    this tree). The extras copy is then deleted.
 
@@ -225,19 +232,20 @@ mode / env / AR tracker (all **unvalidated**):
 
 ## Dest extras defects (do not copy)
 
-Dest tip is `d0d577f1907c` (3 commits past `7e70e2`; 4 past `f5cbbd`;
-5 past `4d25a0`; 7 past `1ff735`; 39 past `820465`; 82 past
-`1046782`). These are **live dest bugs / rolled-back paths**, not tok/s.
-hippihx contracts must not reproduce them. Dest **fixed / dropped**:
-GDN state arenas, prefill `o` `i_t_local`, conv FIR order, **separate
-AWQ prefill `.cu`**, causal_conv out-stride/null-block, ConfigH
-(`K_STEP=64`), gfx10 hybrid bf16 *serve* abort (reject combo), GDN
-decode HIP skipped on fp16 SSM state, custom AR garbage under
+Dest tip is `8960a3bcbb17` (1 commit past `d0d577`; 4 past `7e70e2`;
+5 past `f5cbbd`; 6 past `4d25a0`; 8 past `1ff735`; 40 past `820465`;
+83 past `1046782`). These are **live dest bugs / rolled-back paths**, not
+tok/s. hippihx contracts must not reproduce them. Dest **fixed /
+dropped**: GDN state arenas, prefill `o` `i_t_local`, conv FIR order,
+**separate AWQ prefill `.cu`**, causal_conv out-stride/null-block,
+ConfigH (`K_STEP=64`), gfx10 hybrid bf16 *serve* abort (reject combo),
+GDN decode HIP skipped on fp16 SSM state, custom AR garbage under
 breakable cudagraphs (`849292ec`), Qwen4Exp HIP S6 default-on
-(`9c9509b3` revert). Do not copy persist keepalive, FULL→PIECEWISE, or
-tok/s.
+(`9c9509b3` revert), Qwen4Exp `_custom_ops` wrappers (`d0d577f1`),
+isolated HC HIP compute (`8960a3bc`; gate still off). Do not copy
+persist keepalive, FULL→PIECEWISE, or tok/s.
 
-| Defect | Where on dest extras | Status @ `d0d577` | Proper zoo lock | hippihx |
+| Defect | Where on dest extras | Status @ `8960a3` | Proper zoo lock | hippihx |
 |---|---|---|---|---|
 | `llvm.amdgcn.fdot2.bf16.bf16` ISel abort | Hybrid W4 gfx10 + bf16 used to abort Triton off skinny. Dest HIP has **no** `fdot2.bf16`. HIP conv stays scalar FMA. | **Dest-mitigated in serve** (`59237b3`: reject gfx10 hybrid bf16). HIP lock unchanged. | Never `fdot2.bf16`. DOT + GDN HIP are **fp16 activations**. BF16 leftover / conv = scalar FMA, fp32 mul. | `dot.hpp`, V1 `HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE`, `sequence/causal_conv`, `moe/leftover_bf16` |
 | Scale-baked W4 zero-point | `qdq_4_rdna2.cuh` `prep_zero_scale_fp16`: `0xE400 \| zero` then `scale * (-1024 - zero)` in `half`. All-zero weights were not exact zero. | **Still live** | Integer `q - zero`, then `* scale`. GPTQ `uint4b8` (+1) vs AWQ literal is pack/zeros, not a second GEMM. | `gemm/w4a16_fdot2` |
@@ -254,7 +262,8 @@ tok/s.
 | Custom AR garbage under breakable graphs | vLLM `custom_all_reduce.py`: `registered=True` shortcut + `empty_like` on a real forward (not leapdragon `rdna_ar`). | **Dest-fixed (serve)** (`849292ec`). gfx1030 launcher now defaults `VLLM_FORCE_CUSTOM_ALL_REDUCE=1` (`4d25a048`). | Never `empty_like` on a real forward. Zoo Uncached+push stays opt-in (`VLLM_RDNA_AR=0`). Do not dump. | extras; `comm/pcie` Later |
 | Separate AWQ prefill `.cu` | `q_gemm_rdna2_awq_prefill.cu` (exllama-clone, `BLOCK_M=16`) | **Dest-deleted** (`1046782`). HIP binding gone. Python leftover `_awq_prefill_available` is extras dead code. Dest path doc still *names* the deleted op — do not treat that as dest. | One W4 family. Pack/zeros only. Do not reintroduce. | `gemm/w4a16_fdot2` |
 | Qwen4Exp HIP S6 default-on | `envs.py` `VLLM_RDNA_{HC_PREFILL,QSA,PLE_CONV}_HIP` | **Dest-reverted** (`cb0d4418` then `9c9509b3`). Gates still default **off**. | Stay extras. No V1 op. Do not copy tok/s. | extras |
-| Qwen4Exp HIP `_custom_ops` missing | HC/QSA/PLE called ops with no Python wrapper (inert / AttributeError if gated on) | **Dest-fixed (serve)** (`d0d577f1`). Gates still off. Next dest blocker if gated on: `grouped_gemma_rmsnorm` `BLOCK<=512` vs `GROUP_DIM=2560`. | Stay extras. Do not dump product HC. | extras |
+| Qwen4Exp HIP `_custom_ops` missing | HC/QSA/PLE called ops with no Python wrapper (inert / AttributeError if gated on) | **Dest-fixed (serve)** (`d0d577f1`). Gates still off. | Stay extras. Do not dump product HC. | extras |
+| Qwen4Exp HC HIP compute / `GROUP_DIM` | `hc_rdna2.cu` + `hc_rdna2.py`: `BLOCK<=512` reject, `float local[BLOCK]`, weight index OOB, strided views, `new_empty` | **Dest-fixed isolated** (`8960a3bc`). Gate still **off**: PIECEWISE capture still faults in MoE. | Stay extras. Serve zeros. No V1 op. Do not dump `.cu`. Do not copy extras maxdiff. | extras |
 
 Serve rollbacks / capture notes (keep as serve, not zoo):
 
