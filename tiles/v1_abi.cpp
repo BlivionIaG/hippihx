@@ -17,11 +17,11 @@ struct OpRow {
 
 // Keep order identical to hippihx_v1_op_id and hippihx.list_ops().
 constexpr OpRow kOps[HIPPIHX_V1_OP_COUNT] = {
-    {"attn.fa_fdot2", 1, 0, 1},
-    {"attn.gdn_scan", 0, 0, 1},
-    {"attn.kda_scan", 0, 0, 0},
-    {"attn.qsa_indexer", 0, 0, 0},
-    {"attn.dsa_nope", 0, 0, 0},
+    {"attention.fa_fdot2", 1, 0, 1},
+    {"attention.gdn_scan", 0, 0, 1},
+    {"attention.kda_scan", 0, 0, 0},
+    {"attention.qsa_indexer", 0, 0, 0},
+    {"attention.dsa_nope", 0, 0, 0},
     {"gemm.w4a16_fdot2", 1, 0, 1},
     {"gemm.exl3_3inst", 1, 0, 1},
     {"moe.routed", 0, 0, 0},

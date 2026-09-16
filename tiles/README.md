@@ -5,11 +5,11 @@ Class directories (not product names). Each child README will lock LDS and
 
 | Group | Contracts |
 |---|---|
-| [`attn/`](attn/README.md) | `fa_fdot2` (DOT), `gdn_scan`, `kda_scan`, `qsa_indexer`, `dsa_nope` |
+| [`attention/`](attention/README.md) | `fa_fdot2` (DOT), `gdn_scan`, `kda_scan`, `qsa_indexer`, `dsa_nope` |
 | [`gemm/`](gemm/README.md) | `w4a16_fdot2` (DOT), `exl3_3inst` (DOT, consume only) |
 | [`moe/`](moe/README.md) | `routed`, `shared` (DOT), `leftover_bf16` |
 | [`sequence/`](sequence/README.md) | `causal_conv` (scalar FMA, not a scan) |
-| [`comm/`](comm/README.md) | `pcie` (stub) |
+| [`comm/`](comm/README.md) | `pcie` (Uncached+push; PIX on 88096) |
 
 **DOT tiles** (`fa_fdot2`, `w4a16_fdot2`, `exl3_3inst`, `moe/shared`) share
 one source compiled per `--offload-arch` (gfx1030, gfx110x, gfx1151,
@@ -19,3 +19,5 @@ Skillfish (same generation, different GFX); do not force
 `-mwavefrontsize32`. gfx900 does not load them.
 
 `smoke.hip` is a CMake link stub only.
+
+FlyDSL kernel contracts live in `hippihx/flydsl/`, not under `tiles/`.

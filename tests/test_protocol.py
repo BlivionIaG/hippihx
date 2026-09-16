@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from hippihx.attn import fa_fdot2
+from hippihx.attention import fa_fdot2
 from hippihx.protocol import (
     BIND_KEYS_ON_ARCH_AND_WAVE,
     DEFAULT_ARCH,
@@ -74,6 +74,7 @@ def test_plan_bind_run_stub() -> None:
     caps = fa_fdot2.Caps(arch="gfx1100")
     plan = fa_fdot2.plan(caps)
     assert plan.arch == "gfx1100"
+    assert plan.qualname == "attention.fa_fdot2"
     assert plan.scratch_specs()[0].zeroed is True
     binding = fa_fdot2.bind(plan, scratch=None)
     assert fa_fdot2.run(binding) is None
@@ -136,7 +137,7 @@ def test_require_single_arch() -> None:
 
 
 def test_bf16_refused_on_dot_and_gdn() -> None:
-    from hippihx.attn import fa_fdot2, gdn_scan
+    from hippihx.attention import fa_fdot2, gdn_scan
     from hippihx.gemm import w4a16_fdot2
     from hippihx.moe import leftover_bf16
 

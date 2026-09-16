@@ -1,9 +1,4 @@
-from hippihx._ops import make_op
+from .api import META, Caps, bind, is_supported, plan, run
+from . import policy
 
-_op = make_op("comm.pcie", "PCIe Uncached+push AR (INT8/Q8 wire class) — stub")
-META = _op.META
-Caps = _op.Caps
-plan = _op.plan
-bind = _op.bind
-run = _op.run
-is_supported = _op.is_supported
+__all__ = ["META", "Caps", "bind", "is_supported", "plan", "policy", "run"]

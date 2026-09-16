@@ -21,7 +21,7 @@ int main() {
   }
 
   const char* fa = hippihx_v1_op_name(HIPPIHX_V1_OP_ATTN_FA_FDOT2);
-  if (fa == nullptr || std::strcmp(fa, "attn.fa_fdot2") != 0) {
+  if (fa == nullptr || std::strcmp(fa, "attention.fa_fdot2") != 0) {
     std::fprintf(stderr, "hippihx v1: fa name mismatch\n");
     return 1;
   }

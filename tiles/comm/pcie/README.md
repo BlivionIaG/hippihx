@@ -1,7 +1,8 @@
 # comm/pcie
 
-Stub only. **Later:** size-gated **Uncached + push** custom all-reduce on
-PCIe (`hipDeviceMallocUncached`).
+Size-gated **Uncached + push** custom all-reduce on PCIe
+(`hipDeviceMallocUncached`). Host fabric contracts:
+`hippihx.comm.fabric.Fabric` + `hippihx.comm.pcie.policy`.
 
 | Lock | Status |
 |---|---|
@@ -9,12 +10,17 @@ PCIe (`hipDeviceMallocUncached`).
 | `__launch_bounds__` | TBD — few blocks to fill PCIe, not an FA occupancy knob |
 | Staging | Uncached + push; do not trust Finegrained on V620 |
 | Wire class | **INT8 / Q8 preferred** |
-| Leave | E4M3 / `f8_dma` without FP8 hardware — do not land FP8 wire on gfx1030 |
+| Leave | E4M3 / `f8_dma` without FP8 hardware; NTB; switch DMA |
 | Graph | IPC scratch + device-resident seq; in/out stay local; scratch **zeroed**; **no D2H under capture** |
+| Bind key | **arch + wave + hop + switch**. PIX on PEX/PLX **88096** may custom-AR. PHB/PXB and 8749 stay RCCL. |
 
 Wire codec (INT8 / Q8) is a class, not a product name. RCCL remains the
-fallback above the byte gate. Not a DOT tile — Vega may carry this stub;
-do not load FA/EXL3/AWQ objects into a gfx900 fatbin just to ship AR.
+fallback above `AR_MAX_KB=512` and off PIX. Not a DOT tile — Vega may
+carry this stub; do not load FA/EXL3/AWQ objects into a gfx900 fatbin
+just to ship AR. Do not mix gfx900 with gfx1030 on one 88096 host.
+
+Mapped-peer MoE A2A (later) is BAR0 peer-store on the same PIX hop — not
+IBGDA, not PEX switch DMA.
 
 extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
 (`cursor/leapdragon-cherry-d2a4`) squash-merged onto dest `rdna_extras`

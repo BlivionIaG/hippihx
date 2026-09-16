@@ -1,13 +1,4 @@
-from hippihx._ops import make_op
+from .api import META, Caps, bind, is_supported, plan, run
+from . import pack
 
-_op = make_op(
-    "gemm.w4a16_fdot2",
-    "W4A16 nibble+ZP via fdot2 (AWQ/GPTQ pack modes; shared DOT source)",
-    dot=True,
-)
-META = _op.META
-Caps = _op.Caps
-plan = _op.plan
-bind = _op.bind
-run = _op.run
-is_supported = _op.is_supported
+__all__ = ["META", "Caps", "bind", "is_supported", "pack", "plan", "run"]

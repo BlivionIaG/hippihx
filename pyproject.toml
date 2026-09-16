@@ -1,7 +1,7 @@
 [project]
 name = "hippihx"
 version = "0.0.0"
-description = "HIP kernel / op zoo for gfx1030 (fatbin slots for gfx1100 and gfx900)."
+description = "HIP/FlyDSL kernel zoo for RDNA (gfx1030 dest)."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Blivion" }]
@@ -9,6 +9,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+flydsl = ["flydsl"]
 
 [build-system]
 requires = ["setuptools>=69"]
