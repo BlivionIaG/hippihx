@@ -7,9 +7,9 @@ consume one V1 op. Details: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `7e70e2400542` (2026-09-16 12:10 UTC; 1 commit past
-`f5cbbdfec494`, 2 past `4d25a0483912`, 4 past `1ff73596d81a`, 36 past
-`820465315bde`, 79 past
+`rdna_extras` @ `d0d577f1907c` (2026-09-16 13:56 UTC; 3 commits past
+`7e70e2400542`, 4 past `f5cbbdfec494`, 5 past `4d25a0483912`, 7 past
+`1ff73596d81a`, 39 past `820465315bde`, 82 past
 `1046782fb8c4`, which
 deleted the unused AWQ prefill `.cu`; merged extras
 [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1) is still
@@ -24,7 +24,9 @@ list is a tracker, not a claim that any row works.
 Dest extras journals GDN FPP13 16k c=8 capture **green** via serve
 arenas, **deleted** the separate AWQ prefill `.cu` (one W4 family),
 **reverted** ConfigH, dest-landed Flash-Next **as serve** (HIP
-HC/QSA/PLE still opt-in / default off), and since `820465` also: GDN
+HC/QSA/PLE still opt-in / default off; dest tried S6 default-on
+`cb0d4418` and reverted `9c9509b3`; wrappers @ `d0d577f1`), and since
+`820465` also: GDN
 decode **fp16 SSM state** (`02adbfd4`), GDN prefill backend `'rdna2'`,
 W4 MoE oracle `RDNA2_W4A16`, moe_align prealloc, PLE `Tensor?` schema
 (67 `_rocm_C` schemas), page-commit `new_zeros`/`zeros_like`, wvSplitK
@@ -32,7 +34,7 @@ n≤5, V1 FULL→PIECEWISE + persist keepalive, custom AR under breakable
 cudagraphs (`849292ec`), dest gfx1030 launcher default-on for
 `VLLM_FORCE_CUSTOM_ALL_REDUCE` (`4d25a048`; leapdragon `rdna_ar` still
 opt-in), extras `bench_report.py` (`f5cbbdfe` / newest-by-mtime
-`7e70e240`). Do **not** copy dest W4
+`7e70e240`), Qwen4Exp HIP wrappers (`d0d577f1`). Do **not** copy dest W4
 scale-baked ZP, unaligned prefill K-splits, persist keepalive, GDN
 HIP-on-BF16 dispatch, ConfigH, Triton QSA, or tok/s. V1 refuses bf16 on
 DOT and GDN HIP. Details:
@@ -61,7 +63,7 @@ Status key: **extras** = live on dest tip (unvalidated here) ·
 | Flash-Next QSA store/compress/MQA | `qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | `VLLM_RDNA_QSA_HIP` default **off**. Eager Triton now serves (`8cf0dedb`); dest V1 maps FULL→PIECEWISE. **unvalidated** |
 | Sparse MLA decode / prefill | `sparse_mla_rdna2.cu` | `attention/dsa_nope` | **unvalidated** |
 | M-RoPE forward | `mrope_rdna2.cu` | — | fp16, no LDS, no fdot2. No tile until dest locks a rotary class. **unvalidated** |
-| Flash-Next HC / PLE conv / fused glue | `hc_rdna2.cu`, `ple_short_conv_rdna2.cu`, `rdna_fused_glue.cu` | — | Product HIP. HC/PLE default off; fused HC/SE default on. Stay extras. **unvalidated** |
+| Flash-Next HC / PLE conv / fused glue | `hc_rdna2.cu`, `ple_short_conv_rdna2.cu`, `rdna_fused_glue.cu` | — | Product HIP. HC/PLE default off (S6 default-on reverted `9c9509b3`); wrappers @ `d0d577f1`. Stay extras. **unvalidated** |
 | W8A16 / W8A16-FP8 / W8A8-FP8 dense+MoE | `moe_w8a16*.cu`, `gemm_w8a8_fp8_dense_rdna2.cu`, `q_gemm_w8a16_fp8_rdna2.cu` | — | No hippihx tile yet. **unvalidated** |
 | MXFP4 dense + MoE | `mxfp4_dot2_*.cu` | — | No hippihx tile yet. **unvalidated** |
 | gfx1100 W4 WMMA | `q_gemm_rdna3_wmma.cu` | — | WMMA Later overlay, not shared DOT. **unvalidated** |
@@ -89,7 +91,7 @@ Status key: **extras** = live on dest tip (unvalidated here) ·
 | MLA sparse HIP | indexer + sparse MLA | `VLLM_USE_RDNA2_MLA=1` | indexer / `dsa_nope` |
 | causal conv HIP | update (decode) + fwd (prefill) | on unless set `0`; fwd dest-enabled with out-stride | `causal_conv` |
 | FA GQA prefill | subgroup / true / off | **`subgroup`** (`VLLM_FA_RDNA2_GQA_MODE`) | `fa_fdot2` observation |
-| Flash-Next HC/QSA/PLE HIP | dest scaffolding | **off** (`VLLM_RDNA_{HC_PREFILL,QSA,PLE_CONV}_HIP`); PLE schema loads (`b26763e7`) | extras until dest-on |
+| Flash-Next HC/QSA/PLE HIP | dest scaffolding | **off** (`VLLM_RDNA_{HC_PREFILL,QSA,PLE_CONV}_HIP`); dest tried default-on `cb0d4418` and reverted `9c9509b3`; wrappers @ `d0d577f1`; PLE schema loads (`b26763e7`) | extras until dest-on |
 | Hybrid W4A16 gfx10 | extras linear backend | ungated; RDNA2 W4 stays auto default on gfx1030 | not a second W4 family |
 | gfx1030 wvSplitK n≤5 | extras dense GEMM (`c350fa218`) | dest-on for n≤5 FP16/BF16 decode | **no tile** |
 | V1 FULL_AND_PIECEWISE | dest maps FULL→PIECEWISE + persist keepalive | extras runner (`1ff73596`) | serve, not a tile |
@@ -171,3 +173,5 @@ Serve knobs. hippihx does not read these. **Unvalidated.** Debug probes stay ext
 | V1 FULL→PIECEWISE + persist keepalive | extras runner; not a zoo file |
 | vLLM custom AR cudagraph + launcher default-on | extras `custom_all_reduce.py` / `serve_gfx1030_full.sh`; not Uncached+push |
 | extras `bench_report.py` | extras ops; newest by mtime (`7e70e240`); do not copy tok/s |
+| extras Qwen4Exp HIP S6 default-on then revert | dest-reverted (`cb0d4418` / `9c9509b3`); gates still off |
+| extras Qwen4Exp `_custom_ops` wrappers | extras Python wrappers (`d0d577f1`); still opt-in; do not dump `.cu` |
