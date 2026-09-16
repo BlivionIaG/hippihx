@@ -9,7 +9,7 @@ HIP/RDNA op zoo. Methodology from
 
 | Layer | Owns |
 |---|---|
-| **this repo** | Tile contracts, HIP, fatbins, catalog, V1 ABI |
+| **this repo** | Tile contracts, HIP fatbins, FlyDSL atoms, catalog, V1 ABI |
 | **`opengfx1030/vllm-rdna` `rdna_extras`** | `torch.ops`, envs, graphs, model hooks |
 | **produce** | AWQ / EXL3 `-cb 3inst` packers |
 
@@ -23,11 +23,12 @@ this tree. Do not dump `csrc/rocm/*.cu` here until extras consumes V1.
 - Catalog is `hippihx/_lib/catalog.py` — one table for Python, C, tiles, tests.
 - Never import `b12x`, CuTe, CUTLASS, CUDA, WMMA, NVFP4.
 
-## HIP dest / FlyDSL research
+## HIP fatbins / FlyDSL compiler
 
-HIP fatbins are dest. FlyDSL is **not dest** until gates in
-`docs/FLYDSL.md` pass. Do not add a FlyDSL wheel. Do not port MFMA/WMMA
-FlyDSL GEMM/MoE/FA into `tiles/`. `Caps(backend="flydsl")` must raise.
+Both are dest zoo backends. extras V1 consume is HIP (`FLYDSL_V1_CONSUME`
+is false). FlyDSL is an optional extra, not a required dep. Do not port
+MFMA/WMMA FlyDSL GEMM/MoE/FA into `tiles/` or `hippihx.flydsl`.
+`Caps(backend="flydsl")` is valid. See `docs/FLYDSL.md`.
 
 ## Craft locks
 

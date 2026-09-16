@@ -1,6 +1,7 @@
 """plan / bind / run protocol (HIP/RDNA).
 
-Same verbs as b12x → serve. No CUDA/CuTe types. FlyDSL is not dest.
+Same verbs as b12x → serve. No CUDA/CuTe types. Backends: HIP fatbins and
+the FlyDSL compiler.
 
 - ``plan`` is host-side and may allocate metadata.
 - ``bind`` builds views; it must not allocate tensors.
@@ -14,7 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Protocol, runtime_checkable
 
-from .backend import Backend, flydsl_ready, is_dest_backend
+from .backend import Backend, is_zoo_backend
 from .fatbin import (
     DEFAULT_ARCH,
     DOT_WAVE,
@@ -54,8 +55,8 @@ class ScratchSpec:
 class Caps:
     """Host-side capabilities handed to ``plan``. No device work.
 
-    Serve bind keys on ``arch`` **and** ``wave``. ``backend`` is HIP dest;
-    FlyDSL plans are refused until research gates pass.
+    Serve bind keys on ``arch`` **and** ``wave``. ``backend`` is ``hip``
+    (fatbin / extras V1) or ``flydsl`` (compiler). Default is HIP.
     """
 
     arch: str = DEFAULT_ARCH
@@ -81,14 +82,8 @@ class Caps:
             raise ValueError(
                 f"unknown backend {self.backend!r}; known hip, flydsl"
             ) from exc
-        if backend is Backend.FLYDSL:
-            if not flydsl_ready():
-                raise ValueError(
-                    "FlyDSL is research, not dest. HIP fatbins are the consume path. "
-                    "See docs/FLYDSL.md."
-                )
-        elif not is_dest_backend(backend):
-            raise ValueError(f"backend {self.backend!r} is not dest")
+        if not is_zoo_backend(backend):
+            raise ValueError(f"backend {self.backend!r} is not a hippihx zoo backend")
         if self.wave is None:
             if self.arch == "gfx900":
                 object.__setattr__(self, "wave", 64)

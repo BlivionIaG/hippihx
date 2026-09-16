@@ -7,7 +7,7 @@
 | Tile contract, HIP ISA, LDS / `__launch_bounds__` lock | **this repo** (`tiles/…`) |
 | `plan` / `bind` / `run`, scratch specs | **this repo** (`hippihx/<group>/<op>/api.py`) |
 | Op catalog (qualname / V1 id / DOT) | **this repo** (`hippihx/_lib/catalog.py`) |
-| FlyDSL research kernels | **not dest** — [`docs/FLYDSL.md`](docs/FLYDSL.md) |
+| FlyDSL atoms / kernels | **this repo** (`hippihx/flydsl/`) — not ROCm MFMA/WMMA ports |
 | C V1 consume ABI (`hippihx_v1_*`) | **this repo** (`include/hippihx/v1.h`) |
 | Fatbin / CMake / ROCm pin | **this repo** |
 | Observed extras LDS / launch numbers (no body dump) | **this repo** (tile READMEs) |

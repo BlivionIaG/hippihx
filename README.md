@@ -7,12 +7,12 @@ consumers of the **same tile source**. gfx1151, Deck **gfx103x**
 Skillfish) build the same DOT stubs — they can run, not dest-tuned.
 **gfx900** is a Vega stub. **gfx906** is Later Vega20/MI50, not BC-250.
 
-This is the HIP/RDNA analogue of
+This is the HIP/FlyDSL analogue of
 [`local-inference-lab/b12x`](https://github.com/local-inference-lab/b12x):
 **plan / bind / run** in the zoo, engine binds one `torch.ops` entry. It
 is **not** a b12x clone and must not import CUDA, CuTe, CE, WMMA, or
-NVFP4. FlyDSL is a **research** compiler substrate, not dest — see
-[`docs/FLYDSL.md`](docs/FLYDSL.md).
+NVFP4. FlyDSL is a dest **compiler** backend; extras V1 consume is still
+HIP fatbins — see [`docs/FLYDSL.md`](docs/FLYDSL.md).
 
 hippihx is the place tile contracts live so
 [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
@@ -27,7 +27,7 @@ until that rewire lands.
 
 | Tree | Owns | Does not own |
 |---|---|---|
-| **hippihx** (this repo) | Tile contracts, HIP ISA, scratch *layout*, `plan`/`bind`/`run`, per-arch fatbins | vLLM scheduler, model registry, PagedAttention wrappers, produce/packers |
+| **hippihx** (this repo) | Tile contracts, HIP ISA, FlyDSL atoms, scratch *layout*, `plan`/`bind`/`run`, per-arch fatbins | vLLM scheduler, model registry, PagedAttention wrappers, produce/packers |
 | **`vllm-rdna` `rdna_extras`** | Serve wiring: load hippihx, register one V1 op, hand caller scratch, capture-safe launch | Kernel bodies, LDS locks, pack formats |
 
 hippihx is a **library**. It is not a mini-vLLM. Do **not** open PRs
@@ -49,7 +49,7 @@ from hippihx.attention import fa_fdot2
 
 print(hippihx.list_ops())
 
-caps = fa_fdot2.Caps(arch="gfx1100")  # or gfx1030 — same DOT source
+caps = fa_fdot2.Caps(arch="gfx1100")  # or gfx1030; backend="flydsl" is valid
 plan = fa_fdot2.plan(caps)
 # caller: scratch = zeros(plan.scratch_specs()[0].nbytes)
 binding = fa_fdot2.bind(plan, scratch=None)
@@ -123,6 +123,9 @@ tiles/comm/pcie                  # Uncached+push Later
 Host consume contracts that extras should import (not reimplement):
 `hippihx.gemm.w4a16_fdot2.pack` (integer ZP, `K_STEP=32`).
 
+FlyDSL atoms and kernel contracts: `hippihx.flydsl` (`FDOT2`, `SDOT4`,
+`VEC_ADD`). Optional extra: `pip install hippihx[flydsl]`.
+
 ## Packs stay outside
 
 `3inst` / AWQ **produce** is not a hippihx directory.
@@ -131,7 +134,7 @@ Host consume contracts that extras should import (not reimplement):
 
 - Not a fork of `b12x` CUDA / CuTe / CE / NVFP4.
 - Not a vLLM tree. Not a Triton zoo. Not a produce/packer.
-- Not a FlyDSL dest backend (research gates in [`docs/FLYDSL.md`](docs/FLYDSL.md)).
+- Not a port of ROCm/FlyDSL MFMA/WMMA GEMM/MoE/FA kernels.
 - No multi-arch `.so`. No `#ifdef WMMA` on shared DOT tiles. No
   `fdot2.bf16`. No HSA_OVERRIDE.
 - BC-250 is **gfx1013** (Cyan Skillfish), **RDNA2** — not gfx906.
@@ -140,7 +143,7 @@ Host consume contracts that extras should import (not reimplement):
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — fatbin, DOT, bind, layout
 - [`docs/CONSUME.md`](docs/CONSUME.md) — how extras wraps V1
-- [`docs/FLYDSL.md`](docs/FLYDSL.md) — FlyDSL research gates
+- [`docs/FLYDSL.md`](docs/FLYDSL.md) — FlyDSL compiler backend
 - [`docs/BACKPORT.md`](docs/BACKPORT.md) — extras → zoo review
 - [`docs/EXTRAS.md`](docs/EXTRAS.md) — unvalidated extras inventory
 - [`AGENTS.md`](AGENTS.md) — room locks for agents

@@ -1,6 +1,12 @@
 """Re-export the protocol + fatbin locks. Prefer ``hippihx._lib`` for new code."""
 
-from hippihx._lib.backend import DEST_BACKEND, FLYDSL_DEST, Backend
+from hippihx._lib.backend import (
+    DEST_BACKEND,
+    FATBIN_BACKEND,
+    FLYDSL_DEST,
+    FLYDSL_V1_CONSUME,
+    Backend,
+)
 from hippihx._lib.fatbin import (
     BIND_KEYS_ON_ARCH_AND_WAVE,
     DEFAULT_ARCH,
@@ -62,7 +68,9 @@ __all__ = [
     "DTYPE_FP16",
     "DTYPE_FP32",
     "DTYPE_UNSET",
+    "FATBIN_BACKEND",
     "FLYDSL_DEST",
+    "FLYDSL_V1_CONSUME",
     "FP16_ACT_ONLY_ON_DOT",
     "FP16_ACT_ONLY_ON_GDN",
     "GFX1030_WAVE",

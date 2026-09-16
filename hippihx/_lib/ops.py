@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .backend import flydsl_ready
+from .backend import is_zoo_backend
 from .catalog import OpSpec, find_spec
 from .fatbin import supported_arches
 from .protocol import (
@@ -61,10 +61,7 @@ class StubOp:
 
     def is_supported(self, caps: Caps | None = None) -> bool:
         caps = caps or Caps()
-        if caps.backend == "flydsl":
-            if not flydsl_ready():
-                return False
-        elif caps.backend != "hip":
+        if not is_zoo_backend(caps.backend):
             return False
         if caps.arch not in supported_arches(self.META.dot):
             return False

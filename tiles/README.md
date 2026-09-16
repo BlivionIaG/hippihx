@@ -19,3 +19,5 @@ Skillfish (same generation, different GFX); do not force
 `-mwavefrontsize32`. gfx900 does not load them.
 
 `smoke.hip` is a CMake link stub only.
+
+FlyDSL kernel contracts live in `hippihx/flydsl/`, not under `tiles/`.

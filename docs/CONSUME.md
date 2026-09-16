@@ -27,7 +27,8 @@ fa_fdot2.run(binding)
 
 Register **one** `torch.ops.hippihx.<op>` that calls `hippihx_v1_run`.
 No Triton→HIP double-fire. Bind keys on **arch + wave**, not GFX name
-alone.
+alone. extras V1 consume is the HIP fatbin. FlyDSL extras consume waits
+on `FLYDSL_V1_CONSUME` (graph-safe JIT) — see [`FLYDSL.md`](FLYDSL.md).
 
 ## Host contracts already here
 

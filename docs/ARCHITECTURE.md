@@ -23,7 +23,7 @@ Same *shape* as b12x (`<group>.<op>` + `api.py`), HIP objects:
 | `hippihx/<group>/<op>/api.py` | `plan` / `bind` / `run` |
 | `tiles/<group>/<op>/kernel.hip` | HIP ISA (dest). Torch-free |
 | `include/hippihx/v1.h` | C consume ABI extras wraps as `torch.ops` |
-| FlyDSL | Research only — [`FLYDSL.md`](FLYDSL.md) |
+| `hippihx/flydsl/` | FlyDSL compiler atoms + kernel contracts |
 
 Group rename **`attn` → `attention`** (V1 ABI rev **3**; ids unchanged). ISA
 class names stay (`fa_fdot2`, not b12x `paged`). Map:
@@ -42,12 +42,14 @@ class names stay (`fa_fdot2`, not b12x `paged`). Map:
 
 Do not dual-export aliases. Do not import b12x.
 
-## HIP dest / FlyDSL research
+## HIP fatbins / FlyDSL compiler
 
-HIP fatbins are dest. FlyDSL (`ROCm/FlyDSL`) may emit gfx1030 objects, but
-no current FlyDSL GEMM/MoE/FA kernel is RDNA2 (MFMA/WMMA). `Caps(backend="flydsl")`
-raises until wiki gates 0–3 pass. Never add a FlyDSL wheel to this package
-as dest. Never port an MFMA/WMMA pipeline into `tiles/`.
+HIP fatbins (`tiles/`) are the extras V1 consume path. FlyDSL
+(`hippihx.flydsl`) is a dest **compiler** backend: `Caps(backend="flydsl")`
+is valid. Do not port ROCm/FlyDSL MFMA/WMMA GEMM/MoE/FA into `tiles/` or
+`hippihx.flydsl`. FlyDSL is an optional extra, not a required dependency.
+extras FlyDSL consume waits on `FLYDSL_V1_CONSUME` (graph-safe JIT). See
+[`FLYDSL.md`](FLYDSL.md).
 
 
 ```
@@ -217,7 +219,7 @@ deleted the second W4 prefill `.cu` and reverted ConfigH. Do not edit
 ## Non-goals (room lock)
 
 - Importing or forking b12x CUDA / CuTe / CE / NVFP4 / WMMA sources
-- Treating FlyDSL as dest (see [`FLYDSL.md`](FLYDSL.md))
+- Porting ROCm/FlyDSL MFMA/WMMA GEMM/MoE/FA (see [`FLYDSL.md`](FLYDSL.md))
 - A serve stack, model registry, or vLLM plugin inside this repo
 - PRs against upstream vLLM
 - Editing `opengfx1030/vllm-rdna` from this tree

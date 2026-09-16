@@ -93,3 +93,4 @@ def test_b12x_analogues_are_maps_not_aliases() -> None:
     analogues = {meta.b12x_analogue for meta in hippihx.list_ops()}
     assert "attention.paged" in analogues
     assert "attention.paged" not in names
+    assert "flydsl" not in {q.split(".", 1)[0] for q in names}
