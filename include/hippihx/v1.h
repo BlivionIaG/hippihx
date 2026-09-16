@@ -93,7 +93,8 @@ int hippihx_v1_run(hippihx_v1_op_id op, const hippihx_v1_caps* caps,
 
 // ABI revision for extras loaders (bump on breaking layout changes).
 // Rev 2: caps.dtype + HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE (no fdot2.bf16).
-enum { HIPPIHX_V1_ABI_REVISION = 2 };
+// Rev 3: qualnames attn.* → attention.* (ids unchanged; extras has not bound).
+enum { HIPPIHX_V1_ABI_REVISION = 3 };
 int hippihx_v1_abi_revision(void);
 
 #ifdef __cplusplus

@@ -5,7 +5,7 @@ Class directories (not product names). Each child README will lock LDS and
 
 | Group | Contracts |
 |---|---|
-| [`attn/`](attn/README.md) | `fa_fdot2` (DOT), `gdn_scan`, `kda_scan`, `qsa_indexer`, `dsa_nope` |
+| [`attention/`](attention/README.md) | `fa_fdot2` (DOT), `gdn_scan`, `kda_scan`, `qsa_indexer`, `dsa_nope` |
 | [`gemm/`](gemm/README.md) | `w4a16_fdot2` (DOT), `exl3_3inst` (DOT, consume only) |
 | [`moe/`](moe/README.md) | `routed`, `shared` (DOT), `leftover_bf16` |
 | [`sequence/`](sequence/README.md) | `causal_conv` (scalar FMA, not a scan) |

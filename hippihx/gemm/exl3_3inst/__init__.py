@@ -1,13 +1,3 @@
-from hippihx._ops import make_op
+from .api import META, Caps, bind, is_supported, plan, run
 
-_op = make_op(
-    "gemm.exl3_3inst",
-    "EXL3 3inst consume hook (shared DOT source; produce stays outside)",
-    dot=True,
-)
-META = _op.META
-Caps = _op.Caps
-plan = _op.plan
-bind = _op.bind
-run = _op.run
-is_supported = _op.is_supported
+__all__ = ["META", "Caps", "bind", "is_supported", "plan", "run"]

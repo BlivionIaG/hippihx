@@ -65,7 +65,7 @@ target_include_directories(hippihx PUBLIC
 # gfx1013 builds; wave is VERIFY — never force -mwavefrontsize32.
 # gfx900 does not load these. Never #ifdef WMMA. Never HSA_OVERRIDE.
 set(HIPPIHX_DOT_SOURCES
-  tiles/attn/fa_fdot2/kernel.hip
+  tiles/attention/fa_fdot2/kernel.hip
   tiles/gemm/w4a16_fdot2/kernel.hip
   tiles/gemm/exl3_3inst/kernel.hip
   tiles/moe/shared/kernel.hip
@@ -76,10 +76,10 @@ set(HIPPIHX_DOT_SOURCES
 set(HIPPIHX_COMMON_SOURCES
   tiles/smoke.hip
   tiles/v1_abi.cpp
-  tiles/attn/gdn_scan/kernel.hip
-  tiles/attn/kda_scan/kernel.hip
-  tiles/attn/qsa_indexer/kernel.hip
-  tiles/attn/dsa_nope/kernel.hip
+  tiles/attention/gdn_scan/kernel.hip
+  tiles/attention/kda_scan/kernel.hip
+  tiles/attention/qsa_indexer/kernel.hip
+  tiles/attention/dsa_nope/kernel.hip
   tiles/moe/routed/kernel.hip
   tiles/moe/leftover_bf16/kernel.hip
   tiles/sequence/causal_conv/kernel.hip

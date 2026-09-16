@@ -13,6 +13,43 @@ registration. hippihx keeps tile contracts, LDS locks, and fatbins here.
 `rdna_extras` should load a library, size scratch from `plan`, bind views,
 and launch one V1 op.
 
+## Package layout
+
+Same *shape* as b12x (`<group>.<op>` + `api.py`), HIP objects:
+
+| Path | Owns |
+|---|---|
+| `hippihx/_lib/catalog.py` | One op table (qualname, V1 id, DOT, tile path) |
+| `hippihx/<group>/<op>/api.py` | `plan` / `bind` / `run` |
+| `tiles/<group>/<op>/kernel.hip` | HIP ISA (dest). Torch-free |
+| `include/hippihx/v1.h` | C consume ABI extras wraps as `torch.ops` |
+| FlyDSL | Research only — [`FLYDSL.md`](FLYDSL.md) |
+
+Group rename **`attn` → `attention`** (V1 ABI rev **3**; ids unchanged). ISA
+class names stay (`fa_fdot2`, not b12x `paged`). Map:
+
+| hippihx | b12x analogue |
+|---|---|
+| `attention.fa_fdot2` | `attention.paged` |
+| `attention.gdn_scan` | `sequence.gdn_decode` |
+| `attention.kda_scan` | `sequence.kda_prefill` |
+| `attention.qsa_indexer` | `attention.dsa_indexer` |
+| `attention.dsa_nope` | `attention.sparse_mla` |
+| `gemm.w4a16_fdot2` | W4 class (b12x folds W4 into MoE) |
+| `gemm.exl3_3inst` | `gemm.trellis_linear` |
+| `sequence.causal_conv` | `sequence.ple` (short conv) |
+| `comm.pcie` | `comm.pcie` |
+
+Do not dual-export aliases. Do not import b12x.
+
+## HIP dest / FlyDSL research
+
+HIP fatbins are dest. FlyDSL (`ROCm/FlyDSL`) may emit gfx1030 objects, but
+no current FlyDSL GEMM/MoE/FA kernel is RDNA2 (MFMA/WMMA). `Caps(backend="flydsl")`
+raises until wiki gates 0–3 pass. Never add a FlyDSL wheel to this package
+as dest. Never port an MFMA/WMMA pipeline into `tiles/`.
+
+
 ```
                     plan(caps) ── scratch specs
                          │
@@ -31,7 +68,7 @@ gfx1100/1101/1102 are **first-class DOT consumers**, not a later port.
 
 | Rule | Meaning |
 |---|---|
-| One source | `tiles/attn/fa_fdot2`, `tiles/gemm/w4a16_fdot2`, `tiles/gemm/exl3_3inst`, `tiles/moe/shared` |
+| One source | `tiles/attention/fa_fdot2`, `tiles/gemm/w4a16_fdot2`, `tiles/gemm/exl3_3inst`, `tiles/moe/shared` |
 | Separate fatbins | one `--offload-arch` per CMake tree (every built DOT slot) |
 | No multi-arch object | Never `--offload-arch=gfx1030,gfx1100` in one `.a` / `.so` |
 | No foreign ISA load | **Never** `HSA_OVERRIDE_GFX_VERSION` or load gfx1030 objects on another GFX |
@@ -117,8 +154,8 @@ These are room-locked for future Python / `torch.ops` and for anyone wiring
 
 Directories are classes, not SKUs:
 
-- `attn/fa_fdot2` (DOT), `attn/gdn_scan`, `attn/kda_scan`,
-  `attn/qsa_indexer`, `attn/dsa_nope`
+- `attention/fa_fdot2` (DOT), `attention/gdn_scan`, `attention/kda_scan`,
+  `attention/qsa_indexer`, `attention/dsa_nope`
 - `gemm/w4a16_fdot2` (DOT), `gemm/exl3_3inst` (DOT consume hook)
 - `moe/routed` (gate/up/down), `moe/shared` (DOT), `moe/leftover_bf16`
 - `sequence/causal_conv` — scalar FMA, `state_len≈4`; **not** under
@@ -132,7 +169,7 @@ lands. Occupancy notes (VGPR vs `waves_per_eu`) belong there too.
 
 ### FA LDS pins (before extras migrate)
 
-Recorded on `tiles/attn/fa_fdot2/README.md`. Fill numbers at migrate; do
+Recorded on `tiles/attention/fa_fdot2/README.md`. Fill numbers at migrate; do
 not invent tok/s:
 
 - prefill leftover launch shape hygiene `(N,1)`
@@ -170,7 +207,8 @@ the fatbin:
 One V1 id per tile (`HIPPIHX_V1_OP_*`). Serve wraps as
 `torch.ops.hippihx.<op>` — never a second Triton path in this library.
 Python mirror: `hippihx.v1` (`V1OpId`, `ABI_REVISION`). Caps include
-optional activation `dtype` (revision **2**). Dest extras tip
+optional activation `dtype` (revision **2**). Qualnames `attention.*`
+(revision **3**; ids unchanged). Dest extras tip
 `820465315bde` still has no `torch.ops.hippihx.*` rewire. Persist
 keepalive / GDN arenas / Flash-Next `qwen4_exp` stay extras. Dest
 deleted the second W4 prefill `.cu` and reverted ConfigH. Do not edit
@@ -179,6 +217,7 @@ deleted the second W4 prefill `.cu` and reverted ConfigH. Do not edit
 ## Non-goals (room lock)
 
 - Importing or forking b12x CUDA / CuTe / CE / NVFP4 / WMMA sources
+- Treating FlyDSL as dest (see [`FLYDSL.md`](FLYDSL.md))
 - A serve stack, model registry, or vLLM plugin inside this repo
 - PRs against upstream vLLM
 - Editing `opengfx1030/vllm-rdna` from this tree

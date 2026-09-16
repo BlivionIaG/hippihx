@@ -31,9 +31,10 @@ bf16 on DOT/GDN. See [Dest extras defects](#dest-extras-defects-do-not-copy).
 
 **Consume ABI started.** `include/hippihx/v1.h` + `tiles/v1_abi.cpp` ship
 the torch-free C entry family (`hippihx_v1_plan` / `hippihx_v1_run`) that
-extras will wrap as one `torch.ops.hippihx.*` per op. `hippihx_v1_run`
-returns `HIPPIHX_V1_ERR_NOT_READY` until a body migrates. This is migrate
-criterion **#3** (one HIP entry extras can bind) — not a body dump.
+extras will wrap as one `torch.ops.hippihx.*` per op. ABI rev **3**
+renames qualnames `attn.*` → `attention.*` (ids unchanged; extras has
+not bound). `hippihx_v1_run` returns `HIPPIHX_V1_ERR_NOT_READY` until a
+body migrates.
 
 Delta since `a4060647cfbb`: dest extras is **far ahead** (GDN arenas,
 one W4 family @ `1046782`, then 43 commits through `820465315bde`:
@@ -72,7 +73,7 @@ would freeze a second ISA copy. Dual copies are how serve bugs accrete.
 | Source | Pertinent to hippihx? | Action |
 |---|---|---|
 | Dest tip ISA (`fa_rdna2`, EXL3, W4A16, GDN, causal_conv) | **Yes, later** — zoo class | Wait. Record observed locks. **One** W4 prefill (`gptq_gemm_rdna2_prefill` + `use_v2_format`; ConfigA for `M>256`). **Do not copy dest W4 ZP / K-split / ConfigH / persist keepalive.** Do not reintroduce ConfigH (`K_STEP=64`). Migrate only when extras can *call* hippihx. |
-| Dest tip FA GQA-subgroup prefill (`ecfec4e412ad`) | **Yes, later** — `attn/fa_fdot2` observation | `VLLM_FA_RDNA2_GQA_MODE` default `subgroup`. Occupancy pin closed. Do not copy tok/s. Persist O stay extras. |
+| Dest tip FA GQA-subgroup prefill (`ecfec4e412ad`) | **Yes, later** — `attention/fa_fdot2` observation | `VLLM_FA_RDNA2_GQA_MODE` default `subgroup`. Occupancy pin closed. Do not copy tok/s. Persist O stay extras. |
 | Dest tip causal_conv out-stride + null-block (`82b6f183da2a`) | **Yes, later** — `sequence/causal_conv` | Record ISA. FIR still pre-shift then shift. |
 | Dest tip M-RoPE / gated RMS / Flash-Next HIP scaffolding | **Watch / extras** | `mrope_rdna2.cu` fp16 scalar, no LDS, no fdot2. HC/QSA/PLE HIP **opt-in** (`VLLM_RDNA_{HC_PREFILL,QSA,PLE_CONV}_HIP` default **off**). `rdna_fused_glue.cu` is product fuse. No new V1 op until dest locks a class and extras can bind. |
 | Dest tip GDN arenas + persist keepalive + TP=4 W4 serve | **No** | Stay extras. Arenas / `rdna2_graph_keepalive.cuh` / breakable cudagraphs / PYNCCL. |
@@ -109,21 +110,21 @@ Fill tile READMEs; do not invent tok/s.
 
 | extras path | hippihx tile | Notes |
 |---|---|---|
-| `csrc/rocm/fa_rdna2.cu` | `attn/fa_fdot2` | ~33 KiB decode / ~48 KiB prefill smem. Occupancy pin closed. GQA-256 idle-wave + NaN guard. @ `ecfec4e412ad`: GQA-subgroup prefill (`HEADS_PER_CTA=2`, dual-acc fdot2); env `VLLM_FA_RDNA2_GQA_MODE` default `subgroup`. True-GQA dropped. fp16 flash KV writer used for non-native KV. Persist workspaces stay extras. |
-| `csrc/rocm/gdn_decode_rdna2.cu` | `attn/gdn_scan` | Register-resident 16 VGPR/thread, no LDS. `NULL_BLOCK_ID=0` is a **vLLM sentinel** — zoo contract is “invalid slot → zero out, do not touch state”, not that constant. |
-| `csrc/rocm/gdn_prefill_*_rdna2.cu` | `attn/gdn_scan` | `o` kernel LDS ≈ 45312 B. Varlen uses **local** chunk `i_t_local`. Prefill HIP opt-out (`VLLM_GDN_HIP_PREFILL==0`). Dispatch still misses dtype. |
+| `csrc/rocm/fa_rdna2.cu` | `attention/fa_fdot2` | ~33 KiB decode / ~48 KiB prefill smem. Occupancy pin closed. GQA-256 idle-wave + NaN guard. @ `ecfec4e412ad`: GQA-subgroup prefill (`HEADS_PER_CTA=2`, dual-acc fdot2); env `VLLM_FA_RDNA2_GQA_MODE` default `subgroup`. True-GQA dropped. fp16 flash KV writer used for non-native KV. Persist workspaces stay extras. |
+| `csrc/rocm/gdn_decode_rdna2.cu` | `attention/gdn_scan` | Register-resident 16 VGPR/thread, no LDS. `NULL_BLOCK_ID=0` is a **vLLM sentinel** — zoo contract is “invalid slot → zero out, do not touch state”, not that constant. |
+| `csrc/rocm/gdn_prefill_*_rdna2.cu` | `attention/gdn_scan` | `o` kernel LDS ≈ 45312 B. Varlen uses **local** chunk `i_t_local`. Prefill HIP opt-out (`VLLM_GDN_HIP_PREFILL==0`). Dispatch still misses dtype. |
 | `csrc/rocm/q_gemm_rdna2.cu` + `q_gemm_rdna2_prefill.cu` + `qdq_4_rdna2.cuh` | `gemm/w4a16_fdot2` | GPTQ and AWQ are pack/zeros (`use_v2_format` → `zero_offset` 1/0), **one** GEMM family. Prefill `select_config`: ConfigA for `M>256` & `N>=4096`, else ConfigC. Dest **deleted** `q_gemm_rdna2_awq_prefill.cu` @ `1046782`. Dest **reverted** ConfigH (`K_STEP=64`). Dest ZP still scale-baked. K-split still unaligned. |
 | `csrc/rocm/moe_q_gemm_rdna2.cu` | `moe/routed` | Reuses W4 helpers. |
 | `csrc/rocm/exl3_dot2_{dense,moe,dequant,hadamard}.*` | `gemm/exl3_3inst` | `LDS_PAD=8` on A-staging. No `__launch_bounds__` on DOT kernels (VGPR is the occupancy lever). Produce stays `-cb 3inst` **outside**. |
 | `csrc/rocm/causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA, wave32, `state_len≈3–4`, register-only. FIR on **pre-shift** then shift. @ `82b6f183da2a`: separate `stride_o_token`; null-block early return. |
-| `csrc/rocm/indexer_paged_mqa_rdna2.cu` | `attn/qsa_indexer` | Dest DeepSeek-class indexer. Confirm class vs Flash-Next QSA later. |
-| `csrc/rocm/qsa_rdna2.cu` | `attn/qsa_indexer` (watch) | Flash-Next store/compress/MQA HIP. Gate `VLLM_RDNA_QSA_HIP` default **off**. Not dest-on. Do not dump. |
-| `csrc/rocm/sparse_mla_rdna2.cu` | `attn/dsa_nope` | Sparse MLA class, not a product fuse. |
+| `csrc/rocm/indexer_paged_mqa_rdna2.cu` | `attention/qsa_indexer` | Dest DeepSeek-class indexer. Confirm class vs Flash-Next QSA later. |
+| `csrc/rocm/qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | Flash-Next store/compress/MQA HIP. Gate `VLLM_RDNA_QSA_HIP` default **off**. Not dest-on. Do not dump. |
+| `csrc/rocm/sparse_mla_rdna2.cu` | `attention/dsa_nope` | Sparse MLA class, not a product fuse. |
 | `csrc/rocm/rdna_allreduce.{cu,cuh}` (merged PR #1) | `comm/pcie` | Uncached+push Later. Host-coherent flags. Boot self-test. Communicator opt-in. Occupancy pin closed. INT8/Q8 wire preferred; no Finegrained. |
 | `csrc/rocm/mrope_rdna2.cu` | — | fp16, one program/token, no LDS, no fdot2. Stay extras until a rotary class exists. |
 | `csrc/rocm/{hc_rdna2,ple_short_conv_rdna2,rdna_fused_glue}.cu` | — | Flash-Next product HIP. HC/PLE HIP default off; fused HC/SE decode default on. Stay extras. |
-| `later/glm53-…` `glm5_kda_*.cu` | `attn/kda_scan` | Later. Do not keep the `glm5_` prefix. Do not retarget GDN 16/48 onto KDA 64×128. |
-| `later/glm53-…` `glm5_dsa_*.cu` | `attn/dsa_nope` + `qsa_indexer` | Later. Same rename rule. |
+| `later/glm53-…` `glm5_kda_*.cu` | `attention/kda_scan` | Later. Do not keep the `glm5_` prefix. Do not retarget GDN 16/48 onto KDA 64×128. |
+| `later/glm53-…` `glm5_dsa_*.cu` | `attention/dsa_nope` + `qsa_indexer` | Later. Same rename rule. |
 
 ## Stay in extras (not tiles)
 
@@ -180,7 +181,7 @@ All of:
 
 Until then: observe, lock numbers, keep stubs, grow the V1 ABI. Kernel /
 mode / env / AR tracker (all **unvalidated**):
-[`README.md`](../README.md#unvalidated-extras-inventory).
+[`EXTRAS.md`](EXTRAS.md).
 
 ## Dest extras defects (do not copy)
 
@@ -197,13 +198,13 @@ bf16 *serve* abort (reject combo). Do not copy persist keepalive.
 | Scale-baked W4 zero-point | `qdq_4_rdna2.cuh` `prep_zero_scale_fp16`: `0xE400 \| zero` then `scale * (-1024 - zero)` in `half`. All-zero weights were not exact zero. | **Still live** | Integer `q - zero`, then `* scale`. GPTQ `uint4b8` (+1) vs AWQ literal is pack/zeros, not a second GEMM. | `gemm/w4a16_fdot2` |
 | Unaligned prefill K-split | `q_gemm_rdna2_prefill.cu` `compute_split_k`: K=640 can pick 16 splits of 40. Kernel `K_STEP=32`. Findings proposed cap `split_k` at 8 and require `k_per_split % K_STEP == 0` — **not landed**. | **Still live** | Equal `k_per_split`, multiple of 32, inside LDS budget. Refuse the 40-wide split. | `gemm/w4a16_fdot2` |
 | Prefill ConfigH `K_STEP=64` | Tried as faster large-M tile; garbage for `M>256`. | **Dest-reverted** (`7ac98a26`); later dropped from the kernel. Inner loop now `K_STEP/8`. | Keep ConfigA (`K_STEP=32`) for `M>256`. Do not reintroduce ConfigH. | `gemm/w4a16_fdot2` |
-| GDN HIP selected on BF16 | `_gdn_prefill_dispatch_available()` checks GPU + symbols, **not dtype**. Kernel still `mixed_qkv` fp16. | **Still live** | `plan` / V1 refuse bf16 on `attn.gdn_scan`. Prefill HIP is opt-out (`== "0"`). | `attn/gdn_scan`, V1 dtype |
-| GDN prefill `o` varlen chunk index | `gdn_prefill_o_rdna2.cu` used global `i_t` so later sequences were OOB. | **Dest-fixed** (`i_t_local`) | Token offsets use per-sequence local chunk. | `attn/gdn_scan` |
+| GDN HIP selected on BF16 | `_gdn_prefill_dispatch_available()` checks GPU + symbols, **not dtype**. Kernel still `mixed_qkv` fp16. | **Still live** | `plan` / V1 refuse bf16 on `attention.gdn_scan`. Prefill HIP is opt-out (`== "0"`). | `attention/gdn_scan`, V1 dtype |
+| GDN prefill `o` varlen chunk index | `gdn_prefill_o_rdna2.cu` used global `i_t` so later sequences were OOB. | **Dest-fixed** (`i_t_local`) | Token offsets use per-sequence local chunk. | `attention/gdn_scan` |
 | GDN piecewise capture state poison | Pool-block conv/ssm pages; per-step `block_table` views. | **Dest-fixed (serve)** — permanent BS-sized arenas | Scratch/state from `plan`; no realloc under capture. Arenas stay extras. | extras, not a tile |
 | causal_conv update vs fwd FIR | Decode kernel shifted state **before** the FIR (mismatched fwd). | **Dest-fixed** (`cafe95ef8`) | FIR on pre-shift state, then shift. Scalar FMA. | `sequence/causal_conv` |
 | causal_conv fwd out-stride / null-block | Fwd used the wrong out stride; null slots wrote. | **Dest-fixed** (`82b6f183da2a`) | Use `stride_o_token`; invalid slot → skip. | `sequence/causal_conv` |
 | Global EXL3 FP16 clip | Serve `Qwen2MoeMLP` clipped every model to FP16. Rolled back to EXL3-only on the integration fork. | Serve | Not a tile. Stay in extras. | — |
-| QSA / Flash-Next attention abort | Triton `forward_qsa` / `qwen4_exp_qsa_with_output` GPU trap (`SIGABRT`, amdgpu trap). Dest `VLLM_RDNA_QSA_WARPS=2` did **not** fix it. HIP `qsa_rdna2.cu` is opt-in scaffolding (default off). | **Still live** (Triton path; dest-recorded `820465`) | Indexer occupancy observation: **4 warps** for gfx1030 BF16 6h×256. Do not dump Triton QSA or `qsa_rdna2.cu`. | `attn/qsa_indexer` (watch) |
+| QSA / Flash-Next attention abort | Triton `forward_qsa` / `qwen4_exp_qsa_with_output` GPU trap (`SIGABRT`, amdgpu trap). Dest `VLLM_RDNA_QSA_WARPS=2` did **not** fix it. HIP `qsa_rdna2.cu` is opt-in scaffolding (default off). | **Still live** (Triton path; dest-recorded `820465`) | Indexer occupancy observation: **4 warps** for gfx1030 BF16 6h×256. Do not dump Triton QSA or `qsa_rdna2.cu`. | `attention/qsa_indexer` (watch) |
 | Separate AWQ prefill `.cu` | `q_gemm_rdna2_awq_prefill.cu` (exllama-clone, `BLOCK_M=16`) | **Dest-deleted** (`1046782`). HIP binding gone. Python leftover `_awq_prefill_available` is extras dead code. Dest path doc still *names* the deleted op — do not treat that as dest. | One W4 family. Pack/zeros only. Do not reintroduce. | `gemm/w4a16_fdot2` |
 
 Serve rollbacks / capture notes (keep as serve, not zoo):

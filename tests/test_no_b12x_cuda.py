@@ -90,15 +90,20 @@ def test_foreign_hip_attribution_policy() -> None:
 
 
 def test_readme_unvalidated_inventory() -> None:
-    text = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "Unvalidated extras inventory" in text
-    assert "**Unvalidated.**" in text
-    assert "VLLM_RDNA_AR" in text
-    assert "VLLM_RDNA_AR_MAX_KB" in text
-    assert "fa_rdna2" in text
-    assert "a4060647" in text
-    assert "820465" in text
-    assert "1046782" in text
+    extras = (ROOT / "docs" / "EXTRAS.md").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "Unvalidated extras inventory" in extras
+    assert "**Unvalidated.**" in extras
+    assert "VLLM_RDNA_AR" in extras
+    assert "VLLM_RDNA_AR_MAX_KB" in extras
+    assert "fa_rdna2" in extras
+    assert "a4060647" in extras
+    assert "820465" in extras
+    assert "1046782" in extras
+    assert "docs/EXTRAS.md" in readme
+    assert "attention.fa_fdot2" in readme or "attention/fa_fdot2" in readme
+    assert "attn.fa_fdot2" not in readme
+    text = extras
     bp = (ROOT / "docs" / "BACKPORT.md").read_text(encoding="utf-8")
     assert "a4060647" in bp
     assert "820465" in bp

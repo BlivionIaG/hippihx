@@ -1,38 +1,39 @@
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 
+import pytest
+
 import hippihx
+from hippihx._lib.catalog import OPS
 
 
-EXPECTED = (
-    "attn.fa_fdot2",
-    "attn.gdn_scan",
-    "attn.kda_scan",
-    "attn.qsa_indexer",
-    "attn.dsa_nope",
-    "gemm.w4a16_fdot2",
-    "gemm.exl3_3inst",
-    "moe.routed",
-    "moe.shared",
-    "moe.leftover_bf16",
-    "sequence.causal_conv",
-    "comm.pcie",
-)
+EXPECTED = tuple(spec.qualname for spec in OPS)
 
-DOT_OPS = {
-    "attn.fa_fdot2",
-    "gemm.w4a16_fdot2",
-    "gemm.exl3_3inst",
-    "moe.shared",
-}
-
-FP16_ACT_OPS = DOT_OPS | {"attn.gdn_scan"}
+DOT_OPS = {spec.qualname for spec in OPS if spec.dot}
+FP16_ACT_OPS = {spec.qualname for spec in OPS if spec.fp16_act}
 
 
-def test_list_ops_matches_contracts() -> None:
+def test_catalog_ids_are_dense() -> None:
+    ids = [spec.v1_id for spec in OPS]
+    assert ids == list(range(len(OPS)))
+    enums = [spec.enum for spec in OPS]
+    assert len(enums) == len(set(enums))
+
+
+def test_no_legacy_attn_package() -> None:
+    root = Path(__file__).resolve().parents[1]
+    assert not (root / "hippihx" / "attn").exists()
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module("hippihx.attn")
+
+
+def test_list_ops_matches_catalog() -> None:
     names = tuple(meta.qualname for meta in hippihx.list_ops())
     assert names == EXPECTED
+    assert "attn.fa_fdot2" not in names
+    assert "attention.fa_fdot2" in names
 
 
 def test_find_op_roundtrip() -> None:
@@ -50,33 +51,21 @@ def test_dot_flags() -> None:
 
 def test_tiles_dirs_exist() -> None:
     root = Path(__file__).resolve().parents[1] / "tiles"
-    mapping = {
-        "attn.fa_fdot2": root / "attn" / "fa_fdot2",
-        "attn.gdn_scan": root / "attn" / "gdn_scan",
-        "attn.kda_scan": root / "attn" / "kda_scan",
-        "attn.qsa_indexer": root / "attn" / "qsa_indexer",
-        "attn.dsa_nope": root / "attn" / "dsa_nope",
-        "gemm.w4a16_fdot2": root / "gemm" / "w4a16_fdot2",
-        "gemm.exl3_3inst": root / "gemm" / "exl3_3inst",
-        "moe.routed": root / "moe" / "routed",
-        "moe.shared": root / "moe" / "shared",
-        "moe.leftover_bf16": root / "moe" / "leftover_bf16",
-        "sequence.causal_conv": root / "sequence" / "causal_conv",
-        "comm.pcie": root / "comm" / "pcie",
-    }
-    for qualname, path in mapping.items():
-        assert (path / "README.md").is_file(), qualname
-        assert (path / "kernel.hip").is_file(), qualname
+    assert not (root / "attn").exists()
+    for spec in OPS:
+        path = root / spec.tile
+        assert (path / "README.md").is_file(), spec.qualname
+        assert (path / "kernel.hip").is_file(), spec.qualname
+        text = (path / "kernel.hip").read_text(encoding="utf-8")
+        assert spec.stub_symbol in text, spec.qualname
 
 
 def test_dot_sources_include_lock_header() -> None:
     root = Path(__file__).resolve().parents[1]
-    for rel in (
-        "tiles/attn/fa_fdot2/kernel.hip",
-        "tiles/gemm/w4a16_fdot2/kernel.hip",
-        "tiles/gemm/exl3_3inst/kernel.hip",
-        "tiles/moe/shared/kernel.hip",
-    ):
+    for spec in OPS:
+        if not spec.dot:
+            continue
+        rel = f"tiles/{spec.tile}/kernel.hip"
         text = (root / rel).read_text(encoding="utf-8")
         assert '#include "hippihx/dot.hpp"' in text
         for line in text.splitlines():
@@ -87,7 +76,7 @@ def test_dot_sources_include_lock_header() -> None:
 
 def test_causal_conv_not_under_gdn() -> None:
     root = Path(__file__).resolve().parents[1]
-    assert not (root / "tiles" / "attn" / "gdn_scan" / "causal_conv").exists()
+    assert not (root / "tiles" / "attention" / "gdn_scan" / "causal_conv").exists()
     assert (root / "tiles" / "sequence" / "causal_conv" / "README.md").is_file()
 
 
@@ -97,3 +86,10 @@ def test_no_produce_dirs() -> None:
     top = {p.name for p in root.iterdir()}
     for name in forbidden:
         assert name not in top
+
+
+def test_b12x_analogues_are_maps_not_aliases() -> None:
+    names = {meta.qualname for meta in hippihx.list_ops()}
+    analogues = {meta.b12x_analogue for meta in hippihx.list_ops()}
+    assert "attention.paged" in analogues
+    assert "attention.paged" not in names

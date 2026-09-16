@@ -5,7 +5,9 @@
 | Change | Land in |
 |---|---|
 | Tile contract, HIP ISA, LDS / `__launch_bounds__` lock | **this repo** (`tiles/…`) |
-| `plan` / `bind` / `run`, scratch specs | **this repo** (`hippihx/`) |
+| `plan` / `bind` / `run`, scratch specs | **this repo** (`hippihx/<group>/<op>/api.py`) |
+| Op catalog (qualname / V1 id / DOT) | **this repo** (`hippihx/_lib/catalog.py`) |
+| FlyDSL research kernels | **not dest** — [`docs/FLYDSL.md`](docs/FLYDSL.md) |
 | C V1 consume ABI (`hippihx_v1_*`) | **this repo** (`include/hippihx/v1.h`) |
 | Fatbin / CMake / ROCm pin | **this repo** |
 | Observed extras LDS / launch numbers (no body dump) | **this repo** (tile READMEs) |
@@ -18,6 +20,10 @@
 
 Do not copy CUDA, CuTe, CE, or NVFP4 objects from
 `local-inference-lab/b12x`. Copy the **plan / bind / run** verbs only.
+Do not copy FlyDSL MFMA/WMMA kernels from `ROCm/FlyDSL`.
+
+`list_ops()` must stay in lockstep with `hippihx/_lib/catalog.py` and
+`tiles/` class directories. Add an op in the catalog first.
 
 Do not dump `opengfx1030/vllm-rdna` `csrc/rocm/*.cu` into `tiles/` until
 the extras consume path exists. Those files are ATen wrappers + paged
@@ -100,7 +106,7 @@ replaces Author with the picker.
    only. `run` is capture-safe (no D2H).
 5. Host tests for the protocol stay torch-free until a HIP extension exists.
 6. If the tile is DOT, include `hippihx/dot.hpp` (not a WMMA header) and
-   mark `make_op(..., dot=True)`. Do not add a per-SKU copy of the file.
+   mark the catalog row `dot=True`. Do not add a per-SKU copy of the file.
    gfx1151 / gfx103x / gfx1013 compile the same header (portable, not
    dest-tuned). Deck is wave32; gfx1013 does not force wave32. Never
    HSA_OVERRIDE a dest object onto those chips.
@@ -129,4 +135,4 @@ bad ISel is a drop, not a “tune later”.
 
 Keep `hippihx` importable without torch and without a built fatbin. Optional
 HIP extensions can load lazily later. `list_ops()` must stay in lockstep
-with `tiles/` class directories.
+with `hippihx/_lib/catalog.py` and `tiles/` class directories.

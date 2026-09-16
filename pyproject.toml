@@ -1,7 +1,7 @@
 [project]
 name = "hippihx"
 version = "0.0.0"
-description = "HIP kernel / op zoo for gfx1030 (fatbin slots for gfx1100 and gfx900)."
+description = "HIP/RDNA kernel zoo (gfx1030 dest; FlyDSL research, not dest)."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Blivion" }]
