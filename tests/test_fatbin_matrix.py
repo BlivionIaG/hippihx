@@ -19,7 +19,6 @@ def test_bc250_is_gfx1013_not_gfx906() -> None:
     text = _docs()
     assert "gfx1013" in text
     assert "Cyan Skillfish" in text
-    assert "RDNA2" in text
     assert "not** BC-250" in text or "NOT BC-250" in text or "not BC-250" in text
     for line in text.splitlines():
         low = line.lower()
@@ -48,19 +47,16 @@ def test_fatbin_slots_named() -> None:
     assert "unoptimized" in text.lower() or "not dest-tuned" in text.lower()
 
 
-def test_gfx1013_verify_gate_documented() -> None:
+def test_gfx1013_is_later_not_true_rdna2() -> None:
     text = _docs()
     low = text.lower()
-    assert "warpsize" in low or "warp size" in low
-    assert "hipdeviceprop.warpsize" in low
-    assert "-mwavefrontsize64" in low
-    assert "-mwavefrontsize32" in low
-    assert "arch + wave" in low
+    assert "later" in low
+    assert "not true rdna2" in low
+    assert "cyan skillfish" in low
     assert "steam deck" in low
     assert "wave32" in low
     assert "gfx1033" in low
-    assert "same generation" in low or "same gen" in low
-    # Deck is wave32; Skillfish wave note must not refuse the slot.
-    assert "does not refuse" in low or "cmake does not refuse" in low or (
-        "builds" in low and "gfx1013" in low
-    )
+    cmake = (ROOT / "cmake" / "HippihxArch.cmake").read_text(encoding="utf-8")
+    assert "HIPPIHX_LATER_ARCHES gfx906 gfx1013" in cmake
+    assert "not a dest fatbin" in cmake.lower()
+    assert "HSA_OVERRIDE" in text

@@ -13,7 +13,6 @@ KNOWN_ARCHES: tuple[str, ...] = (
     "gfx1033",
     "gfx1035",
     "gfx1036",
-    "gfx1013",
     "gfx900",
 )
 DOT_ARCHES: tuple[str, ...] = (
@@ -27,7 +26,6 @@ DOT_ARCHES: tuple[str, ...] = (
     "gfx1033",
     "gfx1035",
     "gfx1036",
-    "gfx1013",
 )
 UNOPTIMIZED_DOT_ARCHES: tuple[str, ...] = (
     "gfx1151",
@@ -36,17 +34,21 @@ UNOPTIMIZED_DOT_ARCHES: tuple[str, ...] = (
     "gfx1033",
     "gfx1035",
     "gfx1036",
-    "gfx1013",
 )
-VERIFY_WAVE_ARCHES: tuple[str, ...] = ("gfx1013",)
+VERIFY_WAVE_ARCHES: tuple[str, ...] = ()
 GFX103X_WAVE = 32
 LATER_NONDOT_ARCHES: tuple[str, ...] = ("gfx906",)
-LATER_ARCHES: tuple[str, ...] = LATER_NONDOT_ARCHES
+LATER_ARCHES: tuple[str, ...] = ("gfx906", "gfx1013")
 LATER_ARCH_NOTES: dict[str, str] = {
     "gfx906": (
         "Later non-DOT (real Vega20/MI50). Not BC-250 — BC-250 is gfx1013 "
-        "(RDNA2 Cyan Skillfish, built portable; wave VERIFY). Never load "
-        "FA/EXL3 DOT objects"
+        "(Cyan Skillfish, also Later; not true RDNA2). Never load FA/EXL3 DOT "
+        "objects"
+    ),
+    "gfx1013": (
+        "Later. BC-250 / Cyan Skillfish is not true RDNA2 — not dest, not a "
+        "portable DOT fatbin with gfx1030. Never HSA_OVERRIDE a gfx1030/Deck "
+        "object onto it. Not gfx906/Vega20"
     ),
 }
 DEFAULT_ARCH = "gfx1030"

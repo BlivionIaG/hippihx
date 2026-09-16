@@ -6,10 +6,9 @@
 // one --offload-arch per fatbin. Never one multi-arch object.
 // Never HSA_OVERRIDE / foreign ISA load.
 //
-// Built slots: gfx1030, gfx1100/1101/1102, gfx1151, gfx1031..1036, gfx1013.
-// gfx1151 / Deck gfx103x / gfx1013 are portable — can run, not dest-tuned.
-// gfx1013 is RDNA2 Skillfish (same generation as gfx1030/Deck). Wave is
-// VERIFY (RADV reports 64). Never force -mwavefrontsize32.
+// Built slots: gfx1030, gfx1100/1101/1102, gfx1151, gfx1031..1036.
+// gfx1151 / Deck gfx103x are portable — can run, not dest-tuned.
+// gfx1013 (Cyan Skillfish / BC-250) is Later — not true RDNA2, not dest DOT.
 //
 // Craft locks:
 //   * wave32 only
@@ -19,19 +18,18 @@
 //     scalar FMA or a PyTorch reference)
 //   * never #ifdef WMMA on this path
 //
-// Vega (gfx900 / gfx906) does not load these tiles.
+// Vega (gfx900 / gfx906) and gfx1013 do not load these tiles.
 // Do not import CUDA, CuTe, or b12x objects here.
 
 #if defined(HIPPIHX_GFX900) || defined(HIPPIHX_GFX906)
 #error "hippihx DOT tiles are not for Vega (gfx900/gfx906); never load FA/EXL3 DOT"
 #endif
-
 #if defined(HIPPIHX_GFX1013)
-// Portable Skillfish path. Wave unverified — do not require wave32 here.
-#else
+#error "hippihx DOT tiles are not for gfx1013 (Later; Cyan Skillfish is not true RDNA2)"
+#endif
+
 #if defined(HIPPIHX_WAVE_SIZE) && (HIPPIHX_WAVE_SIZE != 32)
 #error "hippihx DOT tiles are wave32 only"
-#endif
 #endif
 
 #ifndef HIPPIHX_NO_FDOT2_BF16

@@ -44,8 +44,8 @@ Import these instead of reimplementing extras bugs:
 
 ## Fatbin
 
-One `libhippihx_<arch>.a` per configure tree. Never load a gfx1030
-object on gfx1013. Never `HSA_OVERRIDE_GFX_VERSION`.
+One `libhippihx_<arch>.a` per configure tree. gfx1013 is Later (not true
+RDNA2) — never load a gfx1030 object on it. Never `HSA_OVERRIDE_GFX_VERSION`.
 
 ## After extras rewires
 

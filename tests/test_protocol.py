@@ -10,6 +10,7 @@ from hippihx.protocol import (
     DOT_WAVE,
     GFX1030_WAVE,
     GFX103X_WAVE,
+    KNOWN_ARCHES,
     LATER_ARCHES,
     LATER_NONDOT_ARCHES,
     FP16_ACT_ONLY_ON_DOT,
@@ -52,7 +53,8 @@ def test_engine_bind_rules_are_on() -> None:
     assert DOT_WAVE == 32
     assert GFX103X_WAVE == 32
     assert "gfx1151" in DOT_ARCHES
-    assert "gfx1013" in DOT_ARCHES
+    assert "gfx1013" not in DOT_ARCHES
+    assert "gfx1013" not in KNOWN_ARCHES
     assert "gfx1033" in DOT_ARCHES
     assert "gfx1035" in DOT_ARCHES
     assert UNOPTIMIZED_DOT_ARCHES == (
@@ -62,11 +64,10 @@ def test_engine_bind_rules_are_on() -> None:
         "gfx1033",
         "gfx1035",
         "gfx1036",
-        "gfx1013",
     )
-    assert VERIFY_WAVE_ARCHES == ("gfx1013",)
+    assert VERIFY_WAVE_ARCHES == ()
     assert LATER_NONDOT_ARCHES == ("gfx906",)
-    assert LATER_ARCHES == ("gfx906",)
+    assert LATER_ARCHES == ("gfx906", "gfx1013")
     assert ROCM_PIN == "7.14"
 
 
@@ -84,15 +85,12 @@ def test_plan_bind_run_stub() -> None:
     assert fa_fdot2.is_supported(Caps(arch="gfx1151"))
     assert fa_fdot2.is_supported(Caps(arch="gfx1035"))
     assert fa_fdot2.is_supported(Caps(arch="gfx1033"))
-    assert fa_fdot2.is_supported(Caps(arch="gfx1013"))
     assert not fa_fdot2.is_supported(Caps(arch="gfx900"))
 
 
-def test_deck_is_wave32_skillfish_wave_unverified() -> None:
+def test_deck_is_wave32() -> None:
     deck = Caps(arch="gfx1033")
     assert deck.wave == 32
-    skillfish = Caps(arch="gfx1013")
-    assert skillfish.wave is None
 
 
 def test_causal_conv_protocol() -> None:
@@ -102,7 +100,6 @@ def test_causal_conv_protocol() -> None:
     assert plan.scratch_specs()[0].zeroed is True
     assert causal_conv.run(causal_conv.bind(plan)) is None
     assert causal_conv.is_supported(Caps(arch="gfx900"))
-    assert causal_conv.is_supported(Caps(arch="gfx1013"))
     assert causal_conv.is_supported(Caps(arch="gfx1033"))
 
 
@@ -122,18 +119,21 @@ def test_caps_rejects_unknown_and_later() -> None:
     assert "not BC-250" in str(gfx906.value).lower() or "Not BC-250" in str(
         gfx906.value
     )
-    Caps(arch="gfx1013")  # built — must not refuse
+    with pytest.raises(ValueError, match="Later") as gfx1013:
+        Caps(arch="gfx1013")
+    assert "not true RDNA2" in str(gfx1013.value)
 
 
 def test_require_single_arch() -> None:
     assert require_single_arch("gfx1101") == "gfx1101"
-    assert require_single_arch("gfx1013") == "gfx1013"
     assert require_single_arch("gfx1151") == "gfx1151"
     assert require_single_arch("gfx1033") == "gfx1033"
     with pytest.raises(ValueError, match="one fatbin"):
         require_single_arch("gfx1030,gfx1100")
     with pytest.raises(ValueError, match="Later"):
         require_single_arch("gfx906")
+    with pytest.raises(ValueError, match="Later"):
+        require_single_arch("gfx1013")
 
 
 def test_bf16_refused_on_dot_and_gdn() -> None:
