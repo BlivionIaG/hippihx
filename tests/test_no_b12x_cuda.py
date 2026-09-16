@@ -99,6 +99,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "fa_rdna2" in extras
     assert "a4060647" in extras
     assert "1ff735" in extras
+    assert "4d25a0" in extras
     assert "820465" in extras
     assert "1046782" in extras
     assert "docs/EXTRAS.md" in readme
@@ -108,6 +109,8 @@ def test_readme_unvalidated_inventory() -> None:
     bp = (ROOT / "docs" / "BACKPORT.md").read_text(encoding="utf-8")
     assert "a4060647" in bp
     assert "1ff735" in bp
+    assert "4d25a0" in bp
+    assert "849292ec" in bp
     assert "820465" in bp
     assert "1046782" in bp
     assert "02adbfd4" in bp
@@ -127,7 +130,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "torch.ops.hippihx" in extras or "torch.ops.hippihx" in bp
     assert "wvSplitK" in extras
     contrib = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
-    assert "1ff735" in contrib
+    assert "4d25a0" in contrib
     gdn = (ROOT / "tiles" / "attention" / "gdn_scan" / "README.md").read_text(
         encoding="utf-8"
     )

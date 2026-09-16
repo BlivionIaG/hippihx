@@ -7,9 +7,9 @@ consume one V1 op. Details: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `1ff73596d81a` (2026-09-16 07:57 UTC; 32 commits past
-`820465315bde`, 75 past `1046782fb8c4`, which deleted the unused AWQ
-prefill `.cu`; merged extras
+`rdna_extras` @ `4d25a0483912` (2026-09-16 09:47 UTC; 2 commits past
+`1ff73596d81a`, 34 past `820465315bde`, 77 past `1046782fb8c4`, which
+deleted the unused AWQ prefill `.cu`; merged extras
 [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1) is still
 `a4060647cfbb`) plus open extras PRs **#2–#3**. Dest default branch is
 **`rdna_extras`**. `main` is still upstream vLLM `c00091e02670` — no
@@ -26,7 +26,10 @@ HC/QSA/PLE still opt-in / default off), and since `820465` also: GDN
 decode **fp16 SSM state** (`02adbfd4`), GDN prefill backend `'rdna2'`,
 W4 MoE oracle `RDNA2_W4A16`, moe_align prealloc, PLE `Tensor?` schema
 (67 `_rocm_C` schemas), page-commit `new_zeros`/`zeros_like`, wvSplitK
-n≤5, V1 FULL→PIECEWISE + persist keepalive. Do **not** copy dest W4
+n≤5, V1 FULL→PIECEWISE + persist keepalive, custom AR under breakable
+cudagraphs (`849292ec`), dest gfx1030 launcher default-on for
+`VLLM_FORCE_CUSTOM_ALL_REDUCE` (`4d25a048`; leapdragon `rdna_ar` still
+opt-in). Do **not** copy dest W4
 scale-baked ZP, unaligned prefill K-splits, persist keepalive, GDN
 HIP-on-BF16 dispatch, ConfigH, Triton QSA, or tok/s. V1 refuses bf16 on
 DOT and GDN HIP. Details:
@@ -87,7 +90,7 @@ Status key: **extras** = live on dest tip (unvalidated here) ·
 | Hybrid W4A16 gfx10 | extras linear backend | ungated; RDNA2 W4 stays auto default on gfx1030 | not a second W4 family |
 | gfx1030 wvSplitK n≤5 | extras dense GEMM (`c350fa218`) | dest-on for n≤5 FP16/BF16 decode | **no tile** |
 | V1 FULL_AND_PIECEWISE | dest maps FULL→PIECEWISE + persist keepalive | extras runner (`1ff73596`) | serve, not a tile |
-| Custom AR (dest) | force custom all-reduce on PCIe-only | **off** | serve |
+| Custom AR (vLLM/ROCm) | force custom all-reduce on PCIe | **on** in dest gfx1030 launcher (`4d25a048`); `envs.py` still False; cudagraph-correct @ `849292ec` | serve, not a tile |
 | leapdragon `rdna_ar` | size-gated Uncached+push | **off** (`VLLM_RDNA_AR=0`; dest extras after merged #1) | `comm/pcie` Later |
 
 ### Env (extras-added / extras-used)
@@ -122,7 +125,7 @@ Serve knobs. hippihx does not read these. **Unvalidated.** Debug probes stay ext
 | `VLLM_RDNA_FUSED_HC` / `VLLM_RDNA_FUSED_SE` | `"1"` | fused decode glue (extras product) |
 | `VLLM_ROCM_USE_AITER` | `False` | AITER (CDNA; not dest gfx1030) |
 | `VLLM_ROCM_USE_AITER_CUSTOM_AR` | `True` | AITER AR (CDNA) |
-| `VLLM_FORCE_CUSTOM_ALL_REDUCE` | `False` | force custom AR without full P2P |
+| `VLLM_FORCE_CUSTOM_ALL_REDUCE` | envs.py `False`; dest gfx1030 launcher default `"1"` (`4d25a048`) | force custom AR without full P2P |
 | `VLLM_CUSTOM_ALLREDUCE_ALGO` | unset | `1stage` / `2stage` |
 | `VLLM_ROCM_QUICK_REDUCE_*` | unset | ROCm quick-reduce size/quant knobs |
 | `VLLM_ALLREDUCE_USE_SYMM_MEM` | `1` | symmetric-memory AR |
@@ -142,7 +145,7 @@ Serve knobs. hippihx does not read these. **Unvalidated.** Debug probes stay ext
 | Path | Where | Default | hippihx |
 |---|---|---|---|
 | RCCL | extras fallback | on when custom AR off | — |
-| Custom all-reduce (vLLM/ROCm) | `VLLM_FORCE_CUSTOM_ALL_REDUCE` | **off** | serve |
+| Custom all-reduce (vLLM/ROCm) | `VLLM_FORCE_CUSTOM_ALL_REDUCE` | **on** in dest gfx1030 launcher (`4d25a048`); envs.py still False | serve |
 | AITER custom AR | `VLLM_ROCM_USE_AITER_CUSTOM_AR` | on in envs, AITER itself off | CDNA, not gfx1030 dest |
 | Quick-reduce | `VLLM_ROCM_QUICK_REDUCE_*` | unset | serve |
 | Symm-mem AR | `VLLM_ALLREDUCE_USE_SYMM_MEM` | on | serve |
@@ -163,3 +166,4 @@ Serve knobs. hippihx does not read these. **Unvalidated.** Debug probes stay ext
 | `rdna_extras_wip_20260910` TRUE FULL snapshot | not dest tip |
 | ConfigH (`K_STEP=64`) | dest-reverted; garbage for `M>256` |
 | V1 FULL→PIECEWISE + persist keepalive | extras runner; not a zoo file |
+| vLLM custom AR cudagraph + launcher default-on | extras `custom_all_reduce.py` / `serve_gfx1030_full.sh`; not Uncached+push |

@@ -32,9 +32,14 @@ Author **and** Committer on every unique commit. Keep
 `Co-Authored-By: Claude Fable 5`. Do not add Blivion/Cursor trailers.
 Do **not** pick dest squash `a4060647` (Author BlivionIaG). **AR default
 stays off** (`getenv("VLLM_RDNA_AR", "0") == "1"`). Occupancy pin stays
-closed. `VLLM_RDNA_AR_MAX_KB` default **512**. C consume id:
+closed. `VLLM_RDNA_AR_MAX_KB` zoo lock **512**. C consume id:
 `HIPPIHX_V1_OP_COMM_PCIE` (`include/hippihx/v1.h`) — stub only; do not
 dump the ATen wrapper until extras rewires onto this V1 entry.
+
+Dest extras @ `849292ec` / `4d25a048` made **vLLM/ROCm** custom AR
+(not this Uncached+push tile) cudagraph-correct and default-on in the
+gfx1030 launcher. That stay extras. Never `empty_like` on a real
+forward. Do not dump `custom_all_reduce.py`. Do not copy tok/s.
 
 **Later (not in dest squash):** leapdragon `3cfe000` moves host-coherent
 flags **beside each receiving GPU’s uncached staging** (PCIe ordering /
