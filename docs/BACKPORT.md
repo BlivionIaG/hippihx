@@ -63,13 +63,14 @@ reverted (`cb0d4418` / `9c9509b3`), then extras `_custom_ops` wrappers
 GitHub squash-merged
 [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1) (`rdna_ar`
 Uncached+push) at `a4060647`. Open: PRs **#2** (GLM Later) and **#3**
-(a17t WIP). **#4** closed after landing. **#5** closed (dest imported
-TunableOp; Flash-Next dest-landed via **#8**). **#6** merged (recipes +
-Hybrid W4 gfx10). **#7** merged (PIX topology; AR policy unchanged). **#8**
-closed after landing Flash-Next. Closed **#11** (wvSplitK) was
-cherry-picked as `c350fa218` — **skip the PR**, dest already has it.
-Draft **#9/#10** explore sdot — **skip**. `main` is unrelated upstream
-vLLM (`c00091e02670`). Issues are disabled. WIP
+(a17t WIP). Draft **#12** (Intel CPU PLE / V620 MTP startup) — **not
+dest**, no kernels, extras serve. **#4** closed after landing. **#5**
+closed (dest imported TunableOp; Flash-Next dest-landed via **#8**).
+**#6** merged (recipes + Hybrid W4 gfx10). **#7** merged (PIX topology;
+AR policy unchanged). **#8** closed after landing Flash-Next. Closed
+**#11** (wvSplitK) was cherry-picked as `c350fa218` — **skip the PR**,
+dest already has it. Draft **#9/#10** explore sdot — **skip**. `main`
+is unrelated upstream vLLM (`c00091e02670`). Issues are disabled. WIP
 `rdna_extras_wip_20260910` is a pre-`cafe95ef8` snapshot — **not dest**.
 
 The PR title said review-only / not dest. Dest extras **did** land the
@@ -106,7 +107,7 @@ would freeze a second ISA copy. Dual copies are how serve bugs accrete.
 | Dest tip W4 MoE oracle `RDNA2_W4A16` (`b549c229`) + moe_align prealloc (`4b799bf4`) | **No** | extras serve of existing `moe_q_gemm_rdna2`. Same W4 family. Graph-safety buffers stay extras. |
 | Dest tip PLE `Tensor?` schema (`b26763e7`) | **No** | extras `.so` load (67 schemas). PLE HIP still opt-in / default off. |
 | Dest tip wvSplitK n≤5 (`c350fa218`, closed extras PR **#11**) | **No** | extras dense GEMM dispatch. **No zoo tile.** Do not grow `gemv_f16`. |
-| Dest tip V1 FULL→PIECEWISE + persist keepalive (`1ff73596`) | **No** | extras V1 runner. Persist keepalive / capture stay extras. |
+| Dest tip V1 FULL→PIECEWISE + persist keepalive (`1ff73596`) | **No** | extras V1 runner. Persist keepalive / capture stay extras. extras PR **#12** would restrict the ROCm FULL redirect to compiled piecewise — **not dest**. Do not copy. |
 | Dest tip custom AR under breakable cudagraphs (`849292ec`) | **No** | extras `custom_all_reduce.py` (vLLM/ROCm path, not leapdragon `rdna_ar`). Drop registered-buffer shortcut; never `empty_like` on a real forward; cache output; ask `capturing_segment`. Matches zoo: serve zeros, no D2H. Do not dump. Do not copy tok/s. |
 | Dest tip gfx1030 launcher custom AR default-on (`4d25a048`) | **No** | extras `serve_gfx1030_full.sh`: `VLLM_FORCE_CUSTOM_ALL_REDUCE` default **1**. `envs.py` still False. leapdragon `VLLM_RDNA_AR` still **0**. |
 | Dest tip `bench_report.py` (`f5cbbdfe` / mtime `7e70e240`) | **No** | extras ops reporter (PP / TG / TTFT). Newest result dir by mtime, not lexical name. Do not copy tok/s into tile locks. |
@@ -118,6 +119,7 @@ would freeze a second ISA copy. Dual copies are how serve bugs accrete.
 | PR #5 Flash-Next draft | **Closed** | Dest absorbed TunableOp + Flash-Next via **#8**. Do not merge the old other-fork PR. |
 | Explore PRs **#9** / **#10** (W4A8 sdot4 / W4A4 sdot8) | **No** | Marked not dest. No sdot tile. |
 | extras PR **#11** wvSplitK | **Closed** | Dest-picked as `c350fa218`. extras dense GEMM. |
+| extras PR **#12** Intel CPU PLE / V620 MTP startup (`955322d6`) | **No** | Draft. No kernels. CPU PLE / `w2_zp` / GDN constructor device / FULL-redirect narrowing. Stay extras. Do not copy dest `1ff73596` FULL→PIECEWISE away. Do not copy startup seconds. Findings vs `3e1a0e1aa` are stale on dest-picked wvSplitK. |
 
 ## Why bodies stay in extras for now
 
@@ -194,6 +196,7 @@ Observed at dest tip `8960a3bcbb17` (ISA files + PR #1 AR @
 | extras Qwen4Exp HIP S6 default-on (`cb0d4418`) then revert (`9c9509b3`) | dest-reverted. Gates still default off. Do not copy tok/s. |
 | extras Qwen4Exp `_custom_ops` wrappers (`d0d577f1`) | extras Python wrappers. Still opt-in. Do not dump `.cu`. |
 | extras Qwen4Exp HC HIP compute (`8960a3bc`) | extras product HC. Isolated compute dest-fixed; capture still not dest-on. Do not dump `.cu`. Do not copy extras maxdiff. |
+| extras PR **#12** Intel CPU PLE / V620 MTP startup | Draft. No kernels. Stay extras. Do not copy FULL→PIECEWISE narrowing or startup seconds. |
 | extras PR **#11** wvSplitK | **Closed / dest-picked** as `c350fa218`. Do not re-merge. |
 
 ## Do not take from a17t PR #3
@@ -320,3 +323,4 @@ kernel migrate and must not be used as a template for body imports.
 | PR #2 `glm5_kda_*` / `glm5_dsa_*` | BlivionIaG | BlivionIaG; rename off `glm5_` in a **follow-up hippihx** commit, not by rewriting their HIP |
 | PR #3 a17t unique W4 (`d53572644`, later Simon Siebert) | **Not taken** | If dest ever locks that family, pick **their** commits, not a rewrite |
 | Explore PRs **#9/#10** sdot | **Not taken** | Not dest |
+| extras PR **#12** CPU PLE / MTP startup | **Not taken** | Serve-only. Foreign: George Muravei-Alkhavoi. If dest picks, keep **their** Author. No HIP body. |

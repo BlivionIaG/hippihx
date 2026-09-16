@@ -13,7 +13,7 @@ Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
 `1046782fb8c4`, which
 deleted the unused AWQ prefill `.cu`; merged extras
 [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1) is still
-`a4060647cfbb`) plus open extras PRs **#2–#3**. Dest default branch is
+`a4060647cfbb`) plus open extras PRs **#2–#3** and draft **#12**. Dest default branch is
 **`rdna_extras`**. `main` is still upstream vLLM `c00091e02670` — no
 dest HIP there. **No** `torch.ops.hippihx.*` consume bind yet.
 
@@ -178,3 +178,4 @@ Serve knobs. hippihx does not read these. **Unvalidated.** Debug probes stay ext
 | extras Qwen4Exp HIP S6 default-on then revert | dest-reverted (`cb0d4418` / `9c9509b3`); gates still off |
 | extras Qwen4Exp `_custom_ops` wrappers | extras Python wrappers (`d0d577f1`); still opt-in; do not dump `.cu` |
 | extras Qwen4Exp HC HIP compute | extras product HC (`8960a3bc`); isolated compute dest-fixed; capture still not dest-on; do not dump `.cu` |
+| extras PR **#12** Intel CPU PLE / V620 MTP startup | draft; no kernels; stay extras; do not copy FULL→PIECEWISE narrowing |

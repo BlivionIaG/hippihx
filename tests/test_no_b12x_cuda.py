@@ -139,6 +139,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "VLLM_RDNA_QSA_HIP" in bp or "qsa_rdna2" in bp
     assert "torch.ops.hippihx" in extras or "torch.ops.hippihx" in bp
     assert "wvSplitK" in extras
+    assert "PR **#12**" in extras or "PR **#12**" in bp
     contrib = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
     assert "8960a3" in contrib
     gdn = (ROOT / "tiles" / "attention" / "gdn_scan" / "README.md").read_text(
