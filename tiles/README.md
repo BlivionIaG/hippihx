@@ -9,7 +9,7 @@ Class directories (not product names). Each child README will lock LDS and
 | [`gemm/`](gemm/README.md) | `w4a16_fdot2` (DOT), `exl3_3inst` (DOT, consume only) |
 | [`moe/`](moe/README.md) | `routed`, `shared` (DOT), `leftover_bf16` |
 | [`sequence/`](sequence/README.md) | `causal_conv` (scalar FMA, not a scan) |
-| [`comm/`](comm/README.md) | `pcie` (stub) |
+| [`comm/`](comm/README.md) | `pcie` (Uncached+push; PIX on 88096) |
 
 **DOT tiles** (`fa_fdot2`, `w4a16_fdot2`, `exl3_3inst`, `moe/shared`) share
 one source compiled per `--offload-arch` (gfx1030, gfx110x, gfx1151,
