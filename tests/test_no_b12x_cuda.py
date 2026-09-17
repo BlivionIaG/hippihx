@@ -99,6 +99,13 @@ def test_readme_unvalidated_inventory() -> None:
     assert "fa_rdna2" in extras
     assert "a4060647" in extras
     assert "1ff735" in extras
+    assert "4d25a0" in extras
+    assert "f5cbbd" in extras
+    assert "7e70e2" in extras
+    assert "d0d577" in extras
+    assert "8960a3" in extras
+    assert "388a61" in extras
+    assert "d1b200" in extras
     assert "820465" in extras
     assert "1046782" in extras
     assert "docs/EXTRAS.md" in readme
@@ -108,6 +115,17 @@ def test_readme_unvalidated_inventory() -> None:
     bp = (ROOT / "docs" / "BACKPORT.md").read_text(encoding="utf-8")
     assert "a4060647" in bp
     assert "1ff735" in bp
+    assert "4d25a0" in bp
+    assert "f5cbbd" in bp
+    assert "7e70e2" in bp
+    assert "d0d577" in bp
+    assert "8960a3" in bp
+    assert "388a61" in bp
+    assert "d1b200" in bp
+    assert "cd1231" in bp
+    assert "9c9509" in bp
+    assert "cb0d441" in bp
+    assert "849292ec" in bp
     assert "820465" in bp
     assert "1046782" in bp
     assert "02adbfd4" in bp
@@ -126,8 +144,9 @@ def test_readme_unvalidated_inventory() -> None:
     assert "VLLM_RDNA_QSA_HIP" in bp or "qsa_rdna2" in bp
     assert "torch.ops.hippihx" in extras or "torch.ops.hippihx" in bp
     assert "wvSplitK" in extras
+    assert "PR **#12**" in extras or "PR **#12**" in bp
     contrib = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
-    assert "1ff735" in contrib
+    assert "388a61" in contrib
     gdn = (ROOT / "tiles" / "attention" / "gdn_scan" / "README.md").read_text(
         encoding="utf-8"
     )

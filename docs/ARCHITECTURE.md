@@ -201,12 +201,12 @@ One V1 id per tile (`HIPPIHX_V1_OP_*`). Serve wraps as
 Python mirror: `hippihx.v1` (`V1OpId`, `ABI_REVISION`). Caps include
 optional activation `dtype` (revision **2**). Qualnames `attention.*`
 (revision **3**; ids unchanged). Dest extras tip
-`1ff73596d81a` still has no `torch.ops.hippihx.*` rewire. Persist
-keepalive / GDN arenas / Flash-Next `qwen4_exp` / V1 FULL→PIECEWISE stay
-extras. Dest deleted the second W4 prefill `.cu` and reverted ConfigH.
-GDN decode HIP now accepts fp16 SSM state (`02adbfd4`) — observe, do not
-dump. Do not edit `opengfx1030/vllm-rdna` from this tree to rewire; that
-lands in extras.
+`388a61b6f75f` still has no `torch.ops.hippihx.*` rewire. Persist
+keepalive / GDN arenas / Flash-Next `qwen4_exp` / V1 FULL→PIECEWISE /
+vLLM custom AR stay extras. Dest deleted the second W4 prefill `.cu`
+and reverted ConfigH. GDN decode HIP now accepts fp16 SSM state
+(`02adbfd4`) — observe, do not dump. Do not edit
+`opengfx1030/vllm-rdna` from this tree to rewire; that lands in extras.
 
 ## Non-goals (room lock)
 
