@@ -7,7 +7,7 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `50120e13b468` (2026-09-17 06:11 UTC). Dest default
+`rdna_extras` @ `5c4ab9891910` (2026-09-17 19:04 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
 squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**. **No**
@@ -23,9 +23,11 @@ FULL→PIECEWISE · `849292ec` / `4d25a048` custom AR · `f5cbbdfe` /
 `d0d577f1` wrappers · `8960a3bc` HC compute · `d1b200b1` FA GQA O ·
 `cd1231fd` GDN prefill opt-in · `b78006a4` seq cap 6 · `388a61b6` GDN
 `zero_()` wipe · `3bddd3c9` Flash-Next PIECEWISE launcher · `50120e13`
-HC `_contig()` cache. Live dest bugs (do not copy): W4 scale-baked ZP,
-unaligned K-split, GDN HIP-on-BF16, ConfigH, GDN batched-decode n≥8,
-Flash-Next FULL_AND_PIECEWISE one-request corruption at c=8.
+HC `_contig()` cache · `31003ff` vision-on launcher comment ·
+`5c4ab989` wvSplitK gfx1030 revert. Live dest bugs (do not copy): W4
+scale-baked ZP, unaligned K-split, GDN HIP-on-BF16, ConfigH, GDN
+batched-decode n≥8, Flash-Next FULL_AND_PIECEWISE one-request
+corruption at c=8.
 
 Status: **extras** = live on dest tip · **Later** = side branch ·
 **skip** = do not take · **stub** = hippihx contract only.
@@ -70,7 +72,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | causal conv HIP | update + fwd | on unless set `0` | `causal_conv` |
 | Flash-Next HC/QSA/PLE HIP | dest scaffolding | **off**; S6 default-on reverted; wrappers @ `d0d577f1`; isolated HC @ `8960a3bc`; `_contig()` cache @ `50120e13` (same-shape clobber still live) | extras until dest-on |
 | Hybrid W4A16 gfx10 | extras linear backend | ungated; RDNA2 W4 auto on gfx1030 | not a second W4 family |
-| gfx1030 wvSplitK n≤5 | extras dense GEMM (`c350fa218`) | dest-on for n≤5 FP16/BF16 decode | **no tile** |
+| gfx1030 wvSplitK n≤5 | extras dense GEMM (`c350fa218`) | **dest-reverted** (`5c4ab989`); decode stays `gemv_f16_rdna2` `M<=8` | **no tile** |
 | V1 FULL_AND_PIECEWISE | dest maps FULL→PIECEWISE + persist keepalive | extras runner (`1ff73596`); Flash-Next production launcher uses PIECEWISE (`3bddd3c9`) because FULL still corrupts one request at c=8 | serve |
 | Custom AR (vLLM/ROCm) | force custom all-reduce on PCIe | **on** in dest gfx1030 launcher (`4d25a048`); `envs.py` still False; cudagraph-correct @ `849292ec` | serve |
 | leapdragon `rdna_ar` | size-gated Uncached+push | **off** (`VLLM_RDNA_AR=0`) | `comm/pcie` Later |
@@ -133,7 +135,8 @@ keepalive, GDN arenas, `eager_break_during_capture`), product serve
 (`qwen4_exp/**`, TunableOp, PLE offload), skinny GEMM, ConfigH, V1
 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, Qwen4Exp HIP gates /
 wrappers / HC compute / `_contig()` cache, seq cap 6, Flash-Next
-PIECEWISE launcher (`3bddd3c9`), GDN `zero_()` wipe, a17t PR **#3**,
+PIECEWISE launcher (`3bddd3c9`), vision-on stopgap (`31003ff`), GDN
+`zero_()` wipe, dest-reverted wvSplitK (`5c4ab989`), a17t PR **#3**,
 closed **#5/#11**, explore **#9/#10**, draft PR **#12** (Intel CPU PLE /
 V620 MTP — no kernels; do not copy FULL→PIECEWISE narrowing). Produce
 (`-cb 3inst`, AWQ pack) stays outside hippihx.

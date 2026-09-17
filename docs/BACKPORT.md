@@ -1,7 +1,7 @@
 # extras → hippihx backport review
 
 Lock: [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `50120e13b468` (2026-09-17 06:11 UTC). Dest **default
+`rdna_extras` @ `5c4ab9891910` (2026-09-17 19:04 UTC). Dest **default
 branch is `rdna_extras`**, not `main` (`c00091e02670` upstream vLLM — no
 dest HIP). **No** `torch.ops.hippihx.*`. Observe only: no `.cu` dump, no
 tok/s, no extras maxdiff.
@@ -31,15 +31,18 @@ until a body migrates and extras binds it.
 | `388a61b6f75f` | GDN one-shot `zero_()` wipe removed | zeros at allocation only; never wipe live state |
 | `3bddd3c9a5d1` | Flash-Next production launcher (`serve_gfx1030_flashnext.sh`) | extras scripts. PIECEWISE + seq cap 6. FULL_AND_PIECEWISE still corrupts one request at c=8 even with the cap. leapdragon `VLLM_RDNA_AR` unset (still **0**). Zoo still no Finegrained. |
 | `50120e13b468` | HC `_contig()` capture-safe per-shape cache | extras product Python. Gate still **off**. Remaining same-shape clobber. No V1 op. |
+| `31003ff042dc` | Flash-Next launcher vision-on stopgap comment | extras scripts. `--language-model-only` still dest. Stay extras. |
+| `5c4ab9891910` | dest-reverted gfx1030 wvSplitK decode port | extras dense GEMM. Kernel asserts on gfx1030 under capture. Keeps `gemv_f16_rdna2` for decode `M<=8`. **No zoo tile.** Do not reintroduce `gemv_f16`. |
 
 Other dest-fixed ISA (keep in tile locks, not a dump): GDN prefill `o`
 `i_t_local`; causal_conv FIR pre-shift then shift; ConfigH
 (`K_STEP=64`) reverted. Live dest bugs: [Dest extras defects](#dest-extras-defects).
 
 Open extras PRs **#2** (GLM Later) and **#3** (a17t WIP). Draft **#9/#10**
-sdot — skip. Closed **#11** wvSplitK dest-picked as `c350fa218` — extras
-dense GEMM, **no zoo tile**. Draft **#12** Intel CPU PLE / V620 MTP
-startup — serve-only, no kernels. `rdna_extras_wip_20260910` is not dest.
+sdot — skip. Closed extras **#11** wvSplitK dest-picked as `c350fa218`,
+then dest-reverted @ `5c4ab989` — **no zoo tile**. Draft **#12** Intel
+CPU PLE / V620 MTP startup — serve-only, no kernels.
+`rdna_extras_wip_20260910` is not dest.
 
 ## Action
 
@@ -51,16 +54,16 @@ startup — serve-only, no kernels. `rdna_extras_wip_20260910` is not dest.
 | GDN decode fp16 SSM state | **Later** `attention/gdn_scan`. Recurrence stays 16 fp32 VGPR. |
 | leapdragon `rdna_ar` + PIX helpers | **Later** `comm.pcie`. Still opt-in (`VLLM_RDNA_AR=1`). Hop class is `hippihx.comm.fabric`; `lspci`/ACS stay extras. |
 | PR **#2** GLM-5.3 KDA/DSA | **Later** `kda_scan` / `dsa_nope` / `qsa_indexer`. Do not name tiles `glm5_*`. |
-| GDN arenas, `rdna2_graph_keepalive.cuh`, breakable cudagraphs, Hybrid W4 gfx10, Flash-Next HC/QSA/PLE/M-RoPE HIP, wvSplitK, PLE schema, W4 MoE oracle, `new_zeros`/`zeros_like`, V1 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, seq cap 6, Flash-Next production launcher, HC `_contig()` cache, `qwen4_exp/**` | **Stay extras.** Product gates default off (S6 revert). No new V1 op until dest locks a class. |
+| GDN arenas, `rdna2_graph_keepalive.cuh`, breakable cudagraphs, Hybrid W4 gfx10, Flash-Next HC/QSA/PLE/M-RoPE HIP, skinny GEMM / `gemv_f16_rdna2`, PLE schema, W4 MoE oracle, `new_zeros`/`zeros_like`, V1 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, seq cap 6, Flash-Next production launcher, HC `_contig()` cache, `qwen4_exp/**` | **Stay extras.** Product gates default off (S6 revert). No new V1 op until dest locks a class. |
 | PR **#3** a17t / explore **#9/#10** sdot / PR **#12** | **Skip.** Second W4 family, not dest, serve-only. |
-| PR **#5** / **#8** Flash-Next, **#11** wvSplitK | **Closed.** Dest already has them. Do not re-merge. |
+| PR **#5** / **#8** Flash-Next, extras **#11** wvSplitK | **Closed.** Dest reverted the wvSplitK gfx1030 port (`5c4ab989`). Do not re-merge. Do not grow `gemv_f16`. |
 
 Bodies stay in extras because every dest HIP file includes `torch/all.h`.
 A dump is not a migrate. CONTRIBUTING: do not edit extras from this repo.
 
 ## Dest file → tile
 
-Observed at `50120e13b468`. Numbers are extras observations, not dest
+Observed at `5c4ab9891910`. Numbers are extras observations, not dest
 locks. Fill tile READMEs.
 
 | extras path | hippihx tile | Notes |
@@ -89,7 +92,7 @@ extras consume.
    journals FPP13 16k c=8 green via serve arenas — still extras.
 2. Tile README LDS / `__launch_bounds__` / wave / DOT unit are filled.
 3. hippihx ships one HIP entry extras can bind. **Started:** V1
-   `plan`/`run`. `run` is `NOT_READY`. extras @ `50120e13b468` has no
+   `plan`/`run`. `run` is `NOT_READY`. extras @ `5c4ab9891910` has no
    `torch.ops.hippihx.*`.
 4. extras is rewired **in extras**. The extras copy is then deleted.
 
@@ -98,10 +101,10 @@ Until then: observe, lock numbers, keep stubs. Tracker:
 
 ## Dest extras defects
 
-Dest tip `50120e13b468`. Live dest bugs / rolled-back paths — hippihx
+Dest tip `5c4ab9891910`. Live dest bugs / rolled-back paths — hippihx
 must not reproduce them.
 
-| Defect | Where | Status @ `50120e13` | Zoo lock |
+| Defect | Where | Status @ `5c4ab989` | Zoo lock |
 |---|---|---|---|
 | `llvm.amdgcn.fdot2.bf16.bf16` ISel abort | Hybrid W4 gfx10 + bf16. Dest HIP has **no** `fdot2.bf16`. | **Serve-mitigated** (`59237b3`). | Never `fdot2.bf16`. DOT + GDN HIP = **fp16 act**. |
 | Scale-baked W4 zero-point | `qdq_4_rdna2.cuh` `prep_zero_scale_fp16`: `0xE400 \| zero` then `scale * (-1024 - zero)` in `half`. | **Still live** | Integer `q - zero`, then `* scale`. |
@@ -123,6 +126,7 @@ must not reproduce them.
 | GDN one-shot `zero_()` state wipe | First `gdn_decode_rdna2` after prefill | **Dest-fixed (serve)** (`388a61b6`) | Zeros **once at allocation**. |
 | GDN batched-decode n≥8 | Corrupts recurrent state | **Still live.** Launchers cap `max-num-seqs` 6 (`b78006a4`, `3bddd3c9`). | Stay extras. No serve seq-cap in tiles. |
 | Flash-Next FULL_AND_PIECEWISE one-request corruption | `compilation-config` FULL_AND_PIECEWISE at c=8 even with seq cap 6 | **Still live** on FULL. Dest production launcher uses PIECEWISE (`3bddd3c9`). | Stay extras. Zoo does not own graph mode. |
+| gfx1030 wvSplitK decode (`n<=5`) | `wvSplitK_hf_big_` device `assert(false)` under cudagraph capture | **Dest-reverted** (`5c4ab989`; was `c350fa218`). Decode stays `gemv_f16_rdna2` `M<=8`. | **No zoo tile.** Do not grow `gemv_f16`. |
 
 Serve notes (not zoo): GDN prefill HIP opt-in (`cd1231fd`); RDNA_ATTN
 spec/MTP verify default-off; `eager_break_during_capture` stays extras;
