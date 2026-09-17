@@ -33,7 +33,7 @@ body yet — when you do, cherry-pick BlivionIaG, do not re-author
 | `__launch_bounds__` | extras @ `a4060647`: decode D=128 `__launch_bounds__(128)`; decode D=256 + GQA-aware D=256 `__launch_bounds__(256)`; prefill `THREADS_PREFILL=128` | **not dest-locked** — occupancy pin closed |
 | GQA D=256 decode | extras @ `6c5ff94`: idle waves still shuffle; skip online-softmax when `m_new == -inf` (NaN guard); zero `O_partial` on empty seq. `GQA_MAX_G=8`, `GQA_BC=32`, `GQA_DSK=256+8` | observed; not dest-locked |
 | fp16 flash KV writer | extras: `reshape_and_cache_flash_rdna2`, `__launch_bounds__(128, 4)`, used for non-native KV write, fp16 only | extras HIP; do not dump ATen wrapper. Persist workspaces stay extras. |
-| GQA-subgroup prefill | extras @ `ecfec4e412ad`: `fa_rdna2_prefill_paged_varlen_gqa`, `HEADS_PER_CTA=2` / `BR=8`, dual-acc fdot2. Env `VLLM_FA_RDNA2_GQA_MODE` default `subgroup`. True-GQA (`HEADS_PER_CTA=6`) dropped. | observed; occupancy pin closed. Do not copy tok/s. |
+| GQA-subgroup prefill | extras @ `ecfec4e412ad`: `fa_rdna2_prefill_paged_varlen_gqa`, `HEADS_PER_CTA=2` / `BR=8`, dual-acc fdot2. Env `VLLM_FA_RDNA2_GQA_MODE` default `subgroup`. True-GQA (`HEADS_PER_CTA=6`) dropped. Dest @ `d1b200b1`: GQA prefill O accumulator is register-resident (was smem). Occupancy pin closed. Do not dump `.cu`. Do not copy tok/s. | observed; occupancy pin closed. Do not copy tok/s. |
 
 Scratch is sized by `plan`. C consume id: `HIPPIHX_V1_OP_ATTN_FA_FDOT2`
 (`include/hippihx/v1.h`). Serve wraps as one `torch.ops.hippihx.*` — no

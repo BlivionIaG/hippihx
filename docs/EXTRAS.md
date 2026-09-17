@@ -7,9 +7,10 @@ consume one V1 op. Details: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `8960a3bcbb17` (2026-09-16 16:18 UTC; 1 commit past
-`d0d577f1907c`, 4 past `7e70e2400542`, 5 past `f5cbbdfec494`, 6 past
-`4d25a0483912`, 8 past `1ff73596d81a`, 40 past `820465315bde`, 83 past
+`rdna_extras` @ `388a61b6f75f` (2026-09-16 22:57 UTC; 4 commits past
+`8960a3bcbb17`, 5 past `d0d577f1907c`, 8 past `7e70e2400542`, 9 past
+`f5cbbdfec494`, 10 past `4d25a0483912`, 12 past `1ff73596d81a`, 44 past
+`820465315bde`, 87 past
 `1046782fb8c4`, which
 deleted the unused AWQ prefill `.cu`; merged extras
 [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1) is still
@@ -36,7 +37,9 @@ cudagraphs (`849292ec`), dest gfx1030 launcher default-on for
 `VLLM_FORCE_CUSTOM_ALL_REDUCE` (`4d25a048`; leapdragon `rdna_ar` still
 opt-in), extras `bench_report.py` (`f5cbbdfe` / newest-by-mtime
 `7e70e240`), Qwen4Exp HIP wrappers (`d0d577f1`), HC HIP isolated
-compute (`8960a3bc`). Do **not** copy dest W4
+compute (`8960a3bc`), FA GQA register-resident O (`d1b200b1`), GDN
+prefill HIP opt-in (`cd1231fd`), extras seq cap 6 (`b78006a4`), GDN
+`zero_()` wipe removed (`388a61b6`). Do **not** copy dest W4
 scale-baked ZP, unaligned prefill K-splits, persist keepalive, GDN
 HIP-on-BF16 dispatch, ConfigH, Triton QSA, or tok/s. V1 refuses bf16 on
 DOT and GDN HIP. Details:
@@ -50,7 +53,7 @@ Status key: **extras** = live on dest tip (unvalidated here) ·
 
 | Kernel / op | extras | hippihx tile | Notes |
 |---|---|---|---|
-| FA paged decode / prefill / split-K / short / GQA | `fa_rdna2.cu` | `attention/fa_fdot2` | `fdot2`. Occupancy pin closed. GQA-256 NaN/idle-wave. GQA-subgroup prefill default (`VLLM_FA_RDNA2_GQA_MODE=subgroup`). Persist O stay extras. **unvalidated** |
+| FA paged decode / prefill / split-K / short / GQA | `fa_rdna2.cu` | `attention/fa_fdot2` | `fdot2`. Occupancy pin closed. GQA-256 NaN/idle-wave. GQA-subgroup prefill default (`VLLM_FA_RDNA2_GQA_MODE=subgroup`). Dest @ `d1b200b1`: GQA prefill O is register-resident. Persist O stay extras. **unvalidated** |
 | FA INT8 KV writer | `reshape_and_cache_int8_rdna2` | `attention/fa_fdot2` | INT8 cache layout for RDNA_ATTN. **unvalidated** |
 | FA fp16 flash KV writer | `reshape_and_cache_flash_rdna2` | `attention/fa_fdot2` | Non-native KV write. `__launch_bounds__(128, 4)`. fp16 only. **unvalidated** |
 | W4A16 dense decode | `q_gemm_rdna2.cu` | `gemm/w4a16_fdot2` | GPTQ + AWQ = pack/zeros, one GEMM. Dest ZP is scale-baked `half` — zoo uses integer `q-zero` then scale. **unvalidated** |
@@ -58,8 +61,8 @@ Status key: **extras** = live on dest tip (unvalidated here) ·
 | W4A16 AWQ high-M prefill | ~~`q_gemm_rdna2_awq_prefill.cu`~~ | `gemm/w4a16_fdot2` | **Dest-deleted** @ `1046782`. Do not reintroduce. |
 | W4A16 MoE | `moe_q_gemm_rdna2.cu` | `moe/routed` | Dest oracle now selects `RDNA2_W4A16` (`b549c229`). Same W4 family. moe_align prealloc is extras. **unvalidated** |
 | EXL3 dense / MoE / dequant / Hadamard / trellis decode | `exl3_dot2_*.cu` | `gemm/exl3_3inst` | Consume `-cb 3inst`. Produce outside. UNC-26. **unvalidated** |
-| GDN packed decode | `gdn_decode_rdna2.cu` | `attention/gdn_scan` | Register-resident. Dest journals FPP13 16k c=8 green via **serve arenas**. Dest @ `02adbfd4`: SSM state **fp16 or fp32**; recurrence fp32 VGPR. **fp16 act only.** **unvalidated** |
-| GDN prefill chain (prep / kkt / solve_wy / delta_h / o) | `gdn_prefill_*_rdna2.cu` | `attention/gdn_scan` | Opt-out (`VLLM_GDN_HIP_PREFILL=0`). `o` varlen `i_t_local` dest-fixed. Dispatch still misses dtype. **unvalidated** |
+| GDN packed decode | `gdn_decode_rdna2.cu` | `attention/gdn_scan` | Register-resident. Dest journals FPP13 16k c=8 green via **serve arenas**. Dest @ `02adbfd4`: SSM state **fp16 or fp32**; recurrence fp32 VGPR. Dest @ `388a61b6`: no one-shot `zero_()` wipe. **fp16 act only.** **unvalidated** |
+| GDN prefill chain (prep / kkt / solve_wy / delta_h / o) | `gdn_prefill_*_rdna2.cu` | `attention/gdn_scan` | **Opt-in** (`VLLM_GDN_HIP_PREFILL=1`; default Triton/FLA @ `cd1231fd`). `o` varlen `i_t_local` dest-fixed. Dispatch still misses dtype. **unvalidated** |
 | causal_conv1d update + fwd | `causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA, `state_len≈3–4`. FIR on pre-shift then shift. Fwd `stride_o_token` + null-block. BF16: fp32-promoted mul, **not** `fdot2.bf16`. **unvalidated** |
 | Paged MQA indexer | `indexer_paged_mqa_rdna2.cu` | `attention/qsa_indexer` | DeepSeek V4 Lightning class. gfx1030 BF16 6h×256: **4 warps**. **unvalidated** |
 | Flash-Next QSA store/compress/MQA | `qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | `VLLM_RDNA_QSA_HIP` default **off**. Eager Triton now serves (`8cf0dedb`); dest V1 maps FULL→PIECEWISE. **unvalidated** |
@@ -87,7 +90,7 @@ Status key: **extras** = live on dest tip (unvalidated here) ·
 | EXL3 memory | `full` int16 trellis vs `packed` stub | `full` | — |
 | EXL3 prefill | decode-trellis prefill vs fused GEMM | `VLLM_EXL3_PREFILL_DECODE=1` | — |
 | GDN decode HIP | packed HIP vs Triton/FLA | on unless `VLLM_GDN_DECODE_RDNA2=0`; dest @ `02adbfd4` HIP fires on fp16 SSM state | `gdn_scan` |
-| GDN prefill HIP | 5-kernel chain | **opt-out** (`== "0"`); dest log backend `'rdna2'` (`ce3c9397`) | `gdn_scan` |
+| GDN prefill HIP | 5-kernel chain | **opt-in** (`=1`); default Triton/FLA (`cd1231fd`); dest log backend `'rdna2'` (`ce3c9397`) | `gdn_scan` |
 | FA backend | `RDNA_ATTN` when gfx10x | `VLLM_USE_RDNA2_FA` (envs.py default false; backend reads `"1"`) | `fa_fdot2` |
 | FA spec/MTP gate | opt-in abort on verify-shaped batches | **off** | serve, not a tile |
 | MLA sparse HIP | indexer + sparse MLA | `VLLM_USE_RDNA2_MLA=1` | indexer / `dsa_nope` |
@@ -111,7 +114,7 @@ Serve knobs. hippihx does not read these. **Unvalidated.** Debug probes stay ext
 | `VLLM_FARDNA2_ENABLE_SPEC_GATE` | `"0"` | MTP-verify abort (opt-in) |
 | `VLLM_FARDNA2_SPEC_VERIFY_Q_LEN` | `"3"` | spec-gate q len |
 | `VLLM_GDN_DECODE_RDNA2` | on (`!= "0"`) | GDN decode HIP |
-| `VLLM_GDN_HIP_PREFILL` | off if `"0"` (opt-out; not a code default-off) | GDN prefill HIP chain |
+| `VLLM_GDN_HIP_PREFILL` | off unless `"1"` (opt-in; default Triton/FLA @ `cd1231fd`) | GDN prefill HIP chain |
 | `VLLM_GDN_HIP_KERNELS` | recipe `1` | recipe umbrella; confirm vs the two gates above |
 | `VLLM_GDN_DECODE_KERNEL` | `"cuda"` | FLA packed-decode path name (`cuda`/`triton`) |
 | `VLLM_ENABLE_FLA_PACKED_RECURRENT_DECODE` | `1` | FLA packed decode |
@@ -178,4 +181,8 @@ Serve knobs. hippihx does not read these. **Unvalidated.** Debug probes stay ext
 | extras Qwen4Exp HIP S6 default-on then revert | dest-reverted (`cb0d4418` / `9c9509b3`); gates still off |
 | extras Qwen4Exp `_custom_ops` wrappers | extras Python wrappers (`d0d577f1`); still opt-in; do not dump `.cu` |
 | extras Qwen4Exp HC HIP compute | extras product HC (`8960a3bc`); isolated compute dest-fixed; capture still not dest-on; do not dump `.cu` |
+| extras FA GQA register-resident O | ISA observation (`d1b200b1`); occupancy pin closed; do not dump `.cu`; do not copy tok/s |
+| extras GDN prefill HIP opt-in | extras env (`cd1231fd`); default Triton/FLA; do not copy tok/s |
+| extras gfx1030 `max-num-seqs` 6 | extras launcher (`b78006a4`); GDN batched-decode n≥8 still live |
+| extras GDN `zero_()` wipe | dest-fixed extras serve (`388a61b6`); zeros at allocation only |
 | extras PR **#12** Intel CPU PLE / V620 MTP startup | draft; no kernels; stay extras; do not copy FULL→PIECEWISE narrowing |
