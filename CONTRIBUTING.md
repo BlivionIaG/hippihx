@@ -40,7 +40,7 @@ those commits.
 **Foreign HIP** (leapdragon, a17t, anyone who is not this lab) keeps
 **their** Author **and** Committer. Same rule as extras
 [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1) (leapdragon
-`rdna_ar`, now dest extras @ `a4060647` squash / tip `741e5bc3` (wvSplitK revert `5c4ab989`, HC `_contig` `50120e13`, GDN wipe `388a61`); pick unique Aron Hsiao commits,
+`rdna_ar`, now dest extras @ `a4060647` squash / tip `3b59ee16`; pick unique Aron Hsiao commits,
 not the GitHub squash). Do not rewrite those as Blivion or Cursor.
 
 | Rule | Meaning |

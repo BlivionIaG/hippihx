@@ -7,10 +7,10 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `741e5bc31ae5` (2026-09-17 22:16 UTC). Dest default
+`rdna_extras` @ `3b59ee16e553` (2026-09-18 00:46 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**, draft **#13**. **No**
+squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**. Merged **#13**. **No**
 `torch.ops.hippihx.*`.
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
@@ -26,8 +26,9 @@ FULL→PIECEWISE · `849292ec` / `4d25a048` custom AR · `f5cbbdfe` /
 HC `_contig()` cache · `31003ff` / `0dd38115` vision-on launcher ·
 `5c4ab989` wvSplitK gfx1030 revert · `e45dd5cb` QSA prefix-ring hits ·
 `c59a23f6` recovered extras ops · `741e5bc3` mamba spec-decode
-`req_idx`. Live dest bugs (do not copy): W4 scale-baked ZP, unaligned
-K-split, GDN HIP-on-BF16, ConfigH, GDN batched-decode n≥8, Flash-Next
+`req_idx` · `3b59ee16` T44b `rdna_ar` (still opt-in; dest `MAX_KB` 64).
+Live dest bugs (do not copy): W4 scale-baked ZP, unaligned K-split, GDN
+HIP-on-BF16, ConfigH, GDN batched-decode n≥8, Flash-Next
 FULL_AND_PIECEWISE one-request corruption at c=8.
 
 Status: **extras** = live on dest tip · **Later** = side branch ·
@@ -115,7 +116,7 @@ stay extras (no D2H under capture in the zoo).
 | `VLLM_RDNA_AR` | `"0"` (dest extras; merged PR **#1**) | leapdragon push AR (opt-in; communicator gate, not the stale “enabled by default” docstring) |
 | `VLLM_RDNA_AR_BLOCKS` | auto | AR block cap |
 | `VLLM_RDNA_AR_PACE` | `0` | AR store pace |
-| `VLLM_RDNA_AR_MAX_KB` | `512` (dest extras). extras draft **#13** would default `64` — **not dest**; zoo lock stays **512** | AR fast-path size cap |
+| `VLLM_RDNA_AR_MAX_KB` | dest extras **64** (`3b59ee16`). zoo lock **512** | AR fast-path size cap |
 | `VLLM_USE_BREAKABLE_CUDAGRAPH` | `0` (auto-on in some configs) | capture dispatcher |
 | `VLLM_LOG_GDN_PTRS` / `VLLM_GDN_DBG` / `VLLM_EXL3_*_DBG` / `VLLM_CONV1D_DEBUG` / `DBG_VLLM_STEP_TIMING` | off | probes |
 
@@ -127,7 +128,7 @@ stay extras (no D2H under capture in the zoo).
 | Custom all-reduce (vLLM/ROCm) | `VLLM_FORCE_CUSTOM_ALL_REDUCE` | **on** in dest gfx1030 launcher (`4d25a048`); envs.py still False | serve |
 | AITER custom AR | `VLLM_ROCM_USE_AITER_CUSTOM_AR` | on in envs, AITER itself off | CDNA, not gfx1030 dest |
 | Quick-reduce / symm-mem AR | `VLLM_ROCM_QUICK_REDUCE_*` / `VLLM_ALLREDUCE_USE_SYMM_MEM` | unset / on | serve |
-| leapdragon `rdna_ar` Uncached+push | dest extras (merged PR **#1** @ `a4060647`) | **off** | `comm/pcie` Later. Unique HIP: Aron Hsiao. Occupancy pin closed. INT8/Q8 wire preferred; no Finegrained. Pick unique commits, not the dest squash. |
+| leapdragon `rdna_ar` Uncached+push | dest extras (PR **#1** @ `a4060647`; T44b @ `3b59ee16`) | **off** | `comm/pcie` Later. Unique HIP: Aron Hsiao. Do not pick Cursor squash. |
 
 ### Not taken / leave in extras
 
@@ -139,8 +140,8 @@ wrappers / HC compute / `_contig()` cache, seq cap 6, Flash-Next
 PIECEWISE launcher (`3bddd3c9` / vision-on `0dd38115`), GDN
 `zero_()` wipe, dest-reverted wvSplitK (`5c4ab989`), QSA prefix-ring
 (`e45dd5cb`), recovered extras ops (`c59a23f6`), mamba spec-decode
-`req_idx` (`741e5bc3`), extras draft **#13** T44b `rdna_ar` (Cursor
-rewrite; still opt-in; do not pick; zoo `AR_MAX_KB=512`), a17t PR **#3**,
-closed **#5/#11**, explore **#9/#10**, draft PR **#12** (Intel CPU PLE /
-V620 MTP — no kernels; do not copy FULL→PIECEWISE narrowing). Produce
-(`-cb 3inst`, AWQ pack) stays outside hippihx.
+`req_idx` (`741e5bc3`), dest T44b `rdna_ar` (`3b59ee16`; still opt-in;
+do not pick Cursor squash), a17t PR **#3**, closed **#5/#11/#13**,
+explore **#9/#10**, draft PR **#12** (Intel CPU PLE / V620 MTP — no
+kernels; do not copy FULL→PIECEWISE narrowing). Produce (`-cb 3inst`,
+AWQ pack) stays outside hippihx.
