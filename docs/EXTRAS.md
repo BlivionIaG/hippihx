@@ -7,7 +7,7 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `3d6df9ed617a` (2026-09-18 17:44 UTC). Dest default
+`rdna_extras` @ `b33f9b66eb2b` (2026-09-18 18:53 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
 squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**. Merged **#13**,
@@ -31,7 +31,9 @@ HC `_contig()` cache · `31003ff` / `0dd38115` vision-on launcher ·
 PR **#14** (V620 Triton MoE JSON / ROCR amdsmi / PLE fp8) · `609c9c0d`
 Flash-Next FULL_AND_PIECEWISE launcher (ROCm executes as PIECEWISE) ·
 `4425834` ROCm platform/worker startup · `3d6df9ed` extras
-EXL3 `__HIP__RDNA__` docker arch-guard.
+EXL3 `__HIP__RDNA__` docker arch-guard · `ed94e3f3` Qwen4Exp MTP
+proposer / skinny `w2_zp` · `b33f9b66` amdsmi `get_device_name`
+torch fallback.
 Live dest bugs (do not copy): W4 scale-baked ZP, unaligned K-split, GDN
 HIP-on-BF16, ConfigH, GDN batched-decode n≥8. Dest retraces Flash-Next
 FULL_AND_PIECEWISE c=8 to probe artifacts (`609c9c0d`).
@@ -151,5 +153,7 @@ stay extras; HIP MoE ignores the JSON; do not pick), a17t PR **#3**,
 closed **#5/#11/#13/#14**, explore **#9/#10**, draft PR **#12** (Intel
 CPU PLE / V620 MTP — no kernels), dest ROCm platform/worker init
 (`4425834`), dest extras EXL3 docker arch-guard (`3d6df9ed`; zoo still
-one `--offload-arch` per fatbin; gfx1150 / gfx12xx not dest). Produce
-(`-cb 3inst`, AWQ pack) stays outside hippihx.
+one `--offload-arch` per fatbin; gfx1150 / gfx12xx not dest), Qwen4Exp
+MTP proposer / skinny `w2_zp` (`ed94e3f3`; MTP still not dest), amdsmi
+`get_device_name` torch fallback (`b33f9b66`). Produce (`-cb 3inst`,
+AWQ pack) stays outside hippihx.
