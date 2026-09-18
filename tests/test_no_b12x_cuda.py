@@ -109,6 +109,8 @@ def test_readme_unvalidated_inventory() -> None:
     assert "3bddd3c" in extras
     assert "5c4ab98" in extras
     assert "31003ff" in extras
+    assert "741e5bc" in extras
+    assert "e45dd5c" in extras
     assert "d1b200" in extras
     assert "820465" in extras
     assert "1046782" in extras
@@ -129,6 +131,8 @@ def test_readme_unvalidated_inventory() -> None:
     assert "3bddd3c" in bp
     assert "5c4ab98" in bp
     assert "31003ff" in bp
+    assert "741e5bc" in bp
+    assert "e45dd5c" in bp
     assert "d1b200" in bp
     assert "cd1231" in bp
     assert "9c9509" in bp
@@ -157,6 +161,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "388a61" in contrib
     assert "50120e1" in contrib
     assert "5c4ab98" in contrib
+    assert "741e5bc" in contrib
     gdn = (ROOT / "tiles" / "attention" / "gdn_scan" / "README.md").read_text(
         encoding="utf-8"
     )

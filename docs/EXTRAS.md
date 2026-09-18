@@ -7,7 +7,7 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `5c4ab9891910` (2026-09-17 19:04 UTC). Dest default
+`rdna_extras` @ `741e5bc31ae5` (2026-09-17 22:16 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
 squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**. **No**
@@ -23,11 +23,12 @@ FULL→PIECEWISE · `849292ec` / `4d25a048` custom AR · `f5cbbdfe` /
 `d0d577f1` wrappers · `8960a3bc` HC compute · `d1b200b1` FA GQA O ·
 `cd1231fd` GDN prefill opt-in · `b78006a4` seq cap 6 · `388a61b6` GDN
 `zero_()` wipe · `3bddd3c9` Flash-Next PIECEWISE launcher · `50120e13`
-HC `_contig()` cache · `31003ff` vision-on launcher comment ·
-`5c4ab989` wvSplitK gfx1030 revert. Live dest bugs (do not copy): W4
-scale-baked ZP, unaligned K-split, GDN HIP-on-BF16, ConfigH, GDN
-batched-decode n≥8, Flash-Next FULL_AND_PIECEWISE one-request
-corruption at c=8.
+HC `_contig()` cache · `31003ff` / `0dd38115` vision-on launcher ·
+`5c4ab989` wvSplitK gfx1030 revert · `e45dd5cb` QSA prefix-ring hits ·
+`c59a23f6` recovered extras ops · `741e5bc3` mamba spec-decode
+`req_idx`. Live dest bugs (do not copy): W4 scale-baked ZP, unaligned
+K-split, GDN HIP-on-BF16, ConfigH, GDN batched-decode n≥8, Flash-Next
+FULL_AND_PIECEWISE one-request corruption at c=8.
 
 Status: **extras** = live on dest tip · **Later** = side branch ·
 **skip** = do not take · **stub** = hippihx contract only.
@@ -48,7 +49,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | GDN prefill chain | `gdn_prefill_*_rdna2.cu` | `attention/gdn_scan` | **Opt-in** (`VLLM_GDN_HIP_PREFILL=1`; default Triton/FLA @ `cd1231fd`). `o` varlen `i_t_local` dest-fixed. Dispatch still misses dtype. **unvalidated** |
 | causal_conv1d update + fwd | `causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA. FIR on pre-shift then shift. BF16: fp32 mul, **not** `fdot2.bf16`. **unvalidated** |
 | Paged MQA indexer | `indexer_paged_mqa_rdna2.cu` | `attention/qsa_indexer` | gfx1030 BF16 6h×256: **4 warps**. **unvalidated** |
-| Flash-Next QSA store/compress/MQA | `qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | `VLLM_RDNA_QSA_HIP` default **off**. Eager Triton serves (`8cf0dedb`). **unvalidated** |
+| Flash-Next QSA store/compress/MQA | `qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | `VLLM_RDNA_QSA_HIP` default **off**. Eager Triton serves (`8cf0dedb`). Dest @ `e45dd5cb`: empty QSA ring prefix hits. **unvalidated** |
 | Sparse MLA decode / prefill | `sparse_mla_rdna2.cu` | `attention/dsa_nope` | **unvalidated** |
 | M-RoPE / Flash-Next HC / PLE / fused glue | `mrope_rdna2.cu`, `hc_rdna2.cu`, `ple_short_conv_rdna2.cu`, `rdna_fused_glue.cu` | — | Product HIP. HC/PLE default off (S6 revert `9c9509b3`); wrappers @ `d0d577f1`; isolated HC @ `8960a3bc`; `_contig()` cache @ `50120e13` (gate still off). Stay extras. **unvalidated** |
 | W8A16 / FP8 / MXFP4 / gfx1100 WMMA / skinny GEMM / RMSNorm | `moe_w8a16*.cu`, `mxfp4_dot2_*.cu`, `q_gemm_rdna3_wmma.cu`, `skinny_gemms*.cu`, `layernorm.cu` | — | No tile. WMMA is Later overlay. Do not reintroduce leapdragon `gemv_f16`. **unvalidated** |
@@ -135,8 +136,10 @@ keepalive, GDN arenas, `eager_break_during_capture`), product serve
 (`qwen4_exp/**`, TunableOp, PLE offload), skinny GEMM, ConfigH, V1
 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, Qwen4Exp HIP gates /
 wrappers / HC compute / `_contig()` cache, seq cap 6, Flash-Next
-PIECEWISE launcher (`3bddd3c9`), vision-on stopgap (`31003ff`), GDN
-`zero_()` wipe, dest-reverted wvSplitK (`5c4ab989`), a17t PR **#3**,
+PIECEWISE launcher (`3bddd3c9` / vision-on `0dd38115`), GDN
+`zero_()` wipe, dest-reverted wvSplitK (`5c4ab989`), QSA prefix-ring
+(`e45dd5cb`), recovered extras ops (`c59a23f6`), mamba spec-decode
+`req_idx` (`741e5bc3`), a17t PR **#3**,
 closed **#5/#11**, explore **#9/#10**, draft PR **#12** (Intel CPU PLE /
 V620 MTP — no kernels; do not copy FULL→PIECEWISE narrowing). Produce
 (`-cb 3inst`, AWQ pack) stays outside hippihx.
