@@ -7,11 +7,11 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `3b59ee16e553` (2026-09-18 00:46 UTC). Dest default
+`rdna_extras` @ `9c602943be70` (2026-09-18 13:36 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**. Merged **#13**. **No**
-`torch.ops.hippihx.*`.
+squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**, draft **#14**.
+Merged **#13**. **No** `torch.ops.hippihx.*`.
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs.
@@ -26,7 +26,8 @@ FULL→PIECEWISE · `849292ec` / `4d25a048` custom AR · `f5cbbdfe` /
 HC `_contig()` cache · `31003ff` / `0dd38115` vision-on launcher ·
 `5c4ab989` wvSplitK gfx1030 revert · `e45dd5cb` QSA prefix-ring hits ·
 `c59a23f6` recovered extras ops · `741e5bc3` mamba spec-decode
-`req_idx` · `3b59ee16` T44b `rdna_ar` (still opt-in; dest `MAX_KB` 64).
+`req_idx` · `3b59ee16` T44b `rdna_ar` (still opt-in; dest `MAX_KB` 64) ·
+`9c60294` Flash-Next `--enable-prompt-tokens-details`.
 Live dest bugs (do not copy): W4 scale-baked ZP, unaligned K-split, GDN
 HIP-on-BF16, ConfigH, GDN batched-decode n≥8, Flash-Next
 FULL_AND_PIECEWISE one-request corruption at c=8.
@@ -143,5 +144,7 @@ PIECEWISE launcher (`3bddd3c9` / vision-on `0dd38115`), GDN
 `req_idx` (`741e5bc3`), dest T44b `rdna_ar` (`3b59ee16`; still opt-in;
 do not pick Cursor squash), a17t PR **#3**, closed **#5/#11/#13**,
 explore **#9/#10**, draft PR **#12** (Intel CPU PLE / V620 MTP — no
-kernels; do not copy FULL→PIECEWISE narrowing). Produce (`-cb 3inst`,
+kernels; do not copy FULL→PIECEWISE narrowing), draft PR **#14**
+(V620 Triton MoE JSON / ROCR amdsmi / PLE fp8 gather — serve-only;
+HIP MoE ignores the JSON; do not pick). Produce (`-cb 3inst`,
 AWQ pack) stays outside hippihx.
