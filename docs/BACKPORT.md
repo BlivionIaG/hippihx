@@ -45,8 +45,11 @@ Other dest-fixed ISA (keep in tile locks, not a dump): GDN prefill `o`
 Open extras PRs **#2** (GLM Later) and **#3** (a17t WIP). Draft **#9/#10**
 sdot — skip. Closed extras **#11** wvSplitK dest-picked as `c350fa218`,
 then dest-reverted @ `5c4ab989` — **no zoo tile**. Draft **#12** Intel
-CPU PLE / V620 MTP startup — serve-only, no kernels.
-`rdna_extras_wip_20260910` is not dest.
+CPU PLE / V620 MTP startup — serve-only, no kernels. Draft **#13**
+leap T44b `rdna_ar` — **not dest**. Cursor-authored rewrite; `VLLM_RDNA_AR`
+stays **0**; would drop `VLLM_RDNA_AR_MAX_KB` default 512→64. Zoo
+`AR_MAX_KB` stays **512**. Do not pick this PR. `rdna_extras_wip_20260910`
+is not dest.
 
 ## Action
 
@@ -59,7 +62,7 @@ CPU PLE / V620 MTP startup — serve-only, no kernels.
 | leapdragon `rdna_ar` + PIX helpers | **Later** `comm.pcie`. Still opt-in (`VLLM_RDNA_AR=1`). Hop class is `hippihx.comm.fabric`; `lspci`/ACS stay extras. |
 | PR **#2** GLM-5.3 KDA/DSA | **Later** `kda_scan` / `dsa_nope` / `qsa_indexer`. Do not name tiles `glm5_*`. |
 | GDN arenas, `rdna2_graph_keepalive.cuh`, breakable cudagraphs, Hybrid W4 gfx10, Flash-Next HC/QSA/PLE/M-RoPE HIP, skinny GEMM / `gemv_f16_rdna2`, PLE schema, W4 MoE oracle, `new_zeros`/`zeros_like`, V1 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, seq cap 6, Flash-Next launcher knobs, HC `_contig()` cache, QSA prefix-ring hits, mamba spec-decode `req_idx`, recovered extras probes, `qwen4_exp/**` | **Stay extras.** Product gates default off (S6 revert). No new V1 op until dest locks a class. |
-| PR **#3** a17t / explore **#9/#10** sdot / PR **#12** | **Skip.** Second W4 family, not dest, serve-only. |
+| PR **#3** a17t / explore **#9/#10** sdot / PR **#12** / PR **#13** | **Skip.** Second W4 family, not dest, serve-only, Cursor T44b rewrite. |
 | PR **#5** / **#8** Flash-Next, extras **#11** wvSplitK | **Closed.** Dest reverted the wvSplitK gfx1030 port (`5c4ab989`). Do not re-merge. Do not grow `gemv_f16`. |
 
 Bodies stay in extras because every dest HIP file includes `torch/all.h`.
@@ -171,4 +174,5 @@ This review is documentation, not a kernel migrate.
 | PR #3 a17t unique W4 (`d53572644`, later Simon Siebert) | **Not taken** | If dest ever locks that family, pick **their** commits |
 | Explore PRs **#9/#10** sdot | **Not taken** | Not dest |
 | extras PR **#12** CPU PLE / MTP startup | **Not taken** | Serve-only. Foreign: George Muravei-Alkhavoi. No HIP body. |
+| extras PR **#13** leap T44b `rdna_ar` | **Not taken** | Draft. Cursor Agent rewrite (`aad7d828`). `VLLM_RDNA_AR` still **0**. Would default `MAX_KB` **64**. Zoo lock **512**. Pick unique Aron Hsiao if dest-locks T44b — not this PR. |
 | extras mamba spec-decode `req_idx` (`741e5bc3`) | **Not taken** | Serve-only. Author **Karl0007**. Keep **their** Author if dest-locks a pick. No HIP body. |

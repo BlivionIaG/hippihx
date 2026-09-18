@@ -43,6 +43,9 @@ forward. Do not dump `custom_all_reduce.py`. Do not copy tok/s.
 
 **Later (not in dest squash):** leapdragon `3cfe000` moves host-coherent
 flags **beside each receiving GPU’s uncached staging** (PCIe ordering /
-poll traffic). PR #1 excluded it because it mixed PLE work. Port the AR
-layout separately; keep dest opt-in until TP4 eager + graph-replay are
-measured. Do not pick the mixed PLE commit.
+poll traffic). extras draft [PR **#13**](https://github.com/opengfx1030/vllm-rdna/pull/13)
+is a Cursor-authored T44b port of that layout plus a wedge check.
+**Not dest.** Do not pick that PR. `VLLM_RDNA_AR` stays opt-in.
+`VLLM_RDNA_AR_MAX_KB` zoo lock stays **512** (the draft would default
+**64**). If dest locks T44b, pick unique Aron Hsiao commits — not the
+Cursor rewrite. Do not dump the ATen `.cu`.

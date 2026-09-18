@@ -10,7 +10,7 @@ Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
 `rdna_extras` @ `741e5bc31ae5` (2026-09-17 22:16 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**. **No**
+squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**, draft **#13**. **No**
 `torch.ops.hippihx.*`.
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
@@ -115,7 +115,7 @@ stay extras (no D2H under capture in the zoo).
 | `VLLM_RDNA_AR` | `"0"` (dest extras; merged PR **#1**) | leapdragon push AR (opt-in; communicator gate, not the stale “enabled by default” docstring) |
 | `VLLM_RDNA_AR_BLOCKS` | auto | AR block cap |
 | `VLLM_RDNA_AR_PACE` | `0` | AR store pace |
-| `VLLM_RDNA_AR_MAX_KB` | `512` | AR fast-path size cap |
+| `VLLM_RDNA_AR_MAX_KB` | `512` (dest extras). extras draft **#13** would default `64` — **not dest**; zoo lock stays **512** | AR fast-path size cap |
 | `VLLM_USE_BREAKABLE_CUDAGRAPH` | `0` (auto-on in some configs) | capture dispatcher |
 | `VLLM_LOG_GDN_PTRS` / `VLLM_GDN_DBG` / `VLLM_EXL3_*_DBG` / `VLLM_CONV1D_DEBUG` / `DBG_VLLM_STEP_TIMING` | off | probes |
 
@@ -139,7 +139,8 @@ wrappers / HC compute / `_contig()` cache, seq cap 6, Flash-Next
 PIECEWISE launcher (`3bddd3c9` / vision-on `0dd38115`), GDN
 `zero_()` wipe, dest-reverted wvSplitK (`5c4ab989`), QSA prefix-ring
 (`e45dd5cb`), recovered extras ops (`c59a23f6`), mamba spec-decode
-`req_idx` (`741e5bc3`), a17t PR **#3**,
+`req_idx` (`741e5bc3`), extras draft **#13** T44b `rdna_ar` (Cursor
+rewrite; still opt-in; do not pick; zoo `AR_MAX_KB=512`), a17t PR **#3**,
 closed **#5/#11**, explore **#9/#10**, draft PR **#12** (Intel CPU PLE /
 V620 MTP — no kernels; do not copy FULL→PIECEWISE narrowing). Produce
 (`-cb 3inst`, AWQ pack) stays outside hippihx.

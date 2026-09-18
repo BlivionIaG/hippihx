@@ -157,6 +157,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "torch.ops.hippihx" in extras or "torch.ops.hippihx" in bp
     assert "wvSplitK" in extras
     assert "PR **#12**" in extras or "PR **#12**" in bp
+    assert "PR **#13**" in extras or "PR **#13**" in bp
     contrib = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
     assert "388a61" in contrib
     assert "50120e1" in contrib
