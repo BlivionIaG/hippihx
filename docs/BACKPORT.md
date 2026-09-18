@@ -35,7 +35,7 @@ until a body migrates and extras binds it.
 | `5c4ab9891910` | dest-reverted gfx1030 wvSplitK decode port | extras dense GEMM. Kernel asserts on gfx1030 under capture. Keeps `gemv_f16_rdna2` for decode `M<=8`. **No zoo tile.** Do not reintroduce `gemv_f16`. |
 | `e45dd5cb2de8` | QSA `CircularBufferManager` empty-ring prefix hits | extras v1 core. Observe `attention/qsa_indexer`. Empty compression-group ring is valid. Do not copy tok/s. |
 | `c59a23f625e0` | recovered extras probes / benches / HC Triton WIP | extras ops. HC Triton + graph-keepalive diagnostics **not** on the serve path. Do not dump. |
-| `ae5c7edc` / `37345ee9` / `aaa4775a` / `0dd38115` / `657bdba8` / `9c602943` / `609c9c0d` | Flash-Next launcher serve knobs | extras scripts. Dest tip `609c9c0d` is FULL_AND_PIECEWISE (ROCm executes as PIECEWISE). Stay extras. Do not copy tok/s. |
+| `ae5c7edc` / `37345ee9` / `aaa4775a` / `0dd38115` / `657bdba8` / `9c602943` / `609c9c0d` | Flash-Next launcher serve knobs | extras scripts. `609c9c0d` is FULL_AND_PIECEWISE (ROCm executes as PIECEWISE). Stay extras. Do not copy tok/s. |
 | `741e5bc31ae5` | mamba spec-decode tables index by `req_idx` | extras worker (upstream vLLM #55506 port; Author Karl0007). Persistent per-request-slot tables. V1 `req_idx == batch_idx`. Stay extras. |
 | `3b59ee16e553` | extras PR **#13** squash (T44b `rdna_ar` VRAM flags + wedge) | Later `comm.pcie`. Still opt-in (`VLLM_RDNA_AR=0`). Dest extras `MAX_KB` default **64**. Zoo lock **512**. Do **not** pick squash (Cursor rewrite). |
 | `dbb1e7764aba` | extras PR **#14** merge (V620 Triton MoE JSON / ROCR amdsmi / PLE fp8) | Stay extras. HIP MoE ignores the JSON. Cursor rewrite — do not pick. |
