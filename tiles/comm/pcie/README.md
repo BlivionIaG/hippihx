@@ -25,24 +25,18 @@ IBGDA, not PEX switch DMA.
 extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
 (`cursor/leapdragon-cherry-d2a4`) squash-merged onto dest `rdna_extras`
 @ `a4060647cfbb` (2026-09-08). Sources are now dest *presence*
-(`csrc/rocm/rdna_allreduce.{cu,cuh}`): Uncached+push, host-coherent
-flags, boot self-test, `VLLM_RDNA_AR_BLOCKS` / `_PACE` / `_MAX_KB`.
-**Authorship of unique HIP is Aron Hsiao** `<leapdragon@gmail.com>` —
-Author **and** Committer on every unique commit. Keep
-`Co-Authored-By: Claude Fable 5`. Do not add Blivion/Cursor trailers.
-Do **not** pick dest squash `a4060647` (Author BlivionIaG). **AR default
-stays off** (`getenv("VLLM_RDNA_AR", "0") == "1"`). Occupancy pin stays
-closed. `VLLM_RDNA_AR_MAX_KB` zoo lock **512**. C consume id:
-`HIPPIHX_V1_OP_COMM_PCIE` (`include/hippihx/v1.h`) — stub only; do not
-dump the ATen wrapper until extras rewires onto this V1 entry.
+(`csrc/rocm/rdna_allreduce.{cu,cuh}`): Uncached+push, boot self-test,
+`VLLM_RDNA_AR_BLOCKS` / `_PACE` / `_MAX_KB`. Dest extras @ `3b59ee16`
+(merged PR **#13**) moved flags into uncached VRAM and added the T44b
+wedge check. **AR default stays off.** Occupancy pin stays closed.
+`VLLM_RDNA_AR_MAX_KB` zoo lock **512** (dest extras default is now
+**64**). **Authorship of unique HIP is Aron Hsiao**
+`<leapdragon@gmail.com>` — Author **and** Committer on unique commits.
+Do **not** pick dest squash `a4060647` or `3b59ee16` (Cursor rewrite).
+C consume id: `HIPPIHX_V1_OP_COMM_PCIE` — stub only; do not dump the
+ATen wrapper until extras rewires onto this V1 entry.
 
 Dest extras @ `849292ec` / `4d25a048` made **vLLM/ROCm** custom AR
 (not this Uncached+push tile) cudagraph-correct and default-on in the
 gfx1030 launcher. That stay extras. Never `empty_like` on a real
 forward. Do not dump `custom_all_reduce.py`. Do not copy tok/s.
-
-**Later (not in dest squash):** leapdragon `3cfe000` moves host-coherent
-flags **beside each receiving GPU’s uncached staging** (PCIe ordering /
-poll traffic). PR #1 excluded it because it mixed PLE work. Port the AR
-layout separately; keep dest opt-in until TP4 eager + graph-replay are
-measured. Do not pick the mixed PLE commit.

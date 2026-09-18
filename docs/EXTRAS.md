@@ -7,11 +7,11 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `388a61b6f75f` (2026-09-16 22:57 UTC). Dest default
+`rdna_extras` @ `4425834a26ac` (2026-09-18 15:44 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**. **No**
-`torch.ops.hippihx.*`.
+squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**. Merged **#13**,
+**#14**. **No** `torch.ops.hippihx.*`.
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs.
@@ -22,8 +22,18 @@ FULL→PIECEWISE · `849292ec` / `4d25a048` custom AR · `f5cbbdfe` /
 `7e70e240` `bench_report.py` · `cb0d4418` / `9c9509b3` S6 revert ·
 `d0d577f1` wrappers · `8960a3bc` HC compute · `d1b200b1` FA GQA O ·
 `cd1231fd` GDN prefill opt-in · `b78006a4` seq cap 6 · `388a61b6` GDN
-`zero_()` wipe. Live dest bugs (do not copy): W4 scale-baked ZP,
-unaligned K-split, GDN HIP-on-BF16, ConfigH, GDN batched-decode n≥8.
+`zero_()` wipe · `3bddd3c9` Flash-Next PIECEWISE launcher · `50120e13`
+HC `_contig()` cache · `31003ff` / `0dd38115` vision-on launcher ·
+`5c4ab989` wvSplitK gfx1030 revert · `e45dd5cb` QSA prefix-ring hits ·
+`c59a23f6` recovered extras ops · `741e5bc3` mamba spec-decode
+`req_idx` · `3b59ee16` T44b `rdna_ar` (still opt-in; dest `MAX_KB` 64) ·
+`9c60294` Flash-Next `--enable-prompt-tokens-details` · `dbb1e776`
+PR **#14** (V620 Triton MoE JSON / ROCR amdsmi / PLE fp8) · `609c9c0d`
+Flash-Next FULL_AND_PIECEWISE launcher (ROCm executes as PIECEWISE) ·
+`4425834` ROCm platform/worker startup.
+Live dest bugs (do not copy): W4 scale-baked ZP, unaligned K-split, GDN
+HIP-on-BF16, ConfigH, GDN batched-decode n≥8. Dest retraces Flash-Next
+FULL_AND_PIECEWISE c=8 to probe artifacts (`609c9c0d`).
 
 Status: **extras** = live on dest tip · **Later** = side branch ·
 **skip** = do not take · **stub** = hippihx contract only.
@@ -44,9 +54,9 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | GDN prefill chain | `gdn_prefill_*_rdna2.cu` | `attention/gdn_scan` | **Opt-in** (`VLLM_GDN_HIP_PREFILL=1`; default Triton/FLA @ `cd1231fd`). `o` varlen `i_t_local` dest-fixed. Dispatch still misses dtype. **unvalidated** |
 | causal_conv1d update + fwd | `causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA. FIR on pre-shift then shift. BF16: fp32 mul, **not** `fdot2.bf16`. **unvalidated** |
 | Paged MQA indexer | `indexer_paged_mqa_rdna2.cu` | `attention/qsa_indexer` | gfx1030 BF16 6h×256: **4 warps**. **unvalidated** |
-| Flash-Next QSA store/compress/MQA | `qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | `VLLM_RDNA_QSA_HIP` default **off**. Eager Triton serves (`8cf0dedb`). **unvalidated** |
+| Flash-Next QSA store/compress/MQA | `qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | `VLLM_RDNA_QSA_HIP` default **off**. Eager Triton serves (`8cf0dedb`). Dest @ `e45dd5cb`: empty QSA ring prefix hits. **unvalidated** |
 | Sparse MLA decode / prefill | `sparse_mla_rdna2.cu` | `attention/dsa_nope` | **unvalidated** |
-| M-RoPE / Flash-Next HC / PLE / fused glue | `mrope_rdna2.cu`, `hc_rdna2.cu`, `ple_short_conv_rdna2.cu`, `rdna_fused_glue.cu` | — | Product HIP. HC/PLE default off (S6 revert `9c9509b3`); wrappers @ `d0d577f1`; isolated HC @ `8960a3bc`. Stay extras. **unvalidated** |
+| M-RoPE / Flash-Next HC / PLE / fused glue | `mrope_rdna2.cu`, `hc_rdna2.cu`, `ple_short_conv_rdna2.cu`, `rdna_fused_glue.cu` | — | Product HIP. HC/PLE default off (S6 revert `9c9509b3`); wrappers @ `d0d577f1`; isolated HC @ `8960a3bc`; `_contig()` cache @ `50120e13` (gate still off). Stay extras. **unvalidated** |
 | W8A16 / FP8 / MXFP4 / gfx1100 WMMA / skinny GEMM / RMSNorm | `moe_w8a16*.cu`, `mxfp4_dot2_*.cu`, `q_gemm_rdna3_wmma.cu`, `skinny_gemms*.cu`, `layernorm.cu` | — | No tile. WMMA is Later overlay. Do not reintroduce leapdragon `gemv_f16`. **unvalidated** |
 | GLM-5.3 KDA / DSA | `glm5_*.cu` (PR **#2**) | `kda_scan` / `dsa_nope` / `qsa_indexer` | Later. Drop `glm5_` name. **unvalidated** |
 | leapdragon push AR | `rdna_allreduce.{cu,cuh}` (merged PR **#1**) | `comm/pcie` | Dest extras, default **off**. Occupancy pin closed. **unvalidated** |
@@ -66,10 +76,10 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | FA spec/MTP gate | opt-in abort on verify-shaped batches | **off** | serve |
 | MLA sparse HIP | indexer + sparse MLA | `VLLM_USE_RDNA2_MLA=1` | indexer / `dsa_nope` |
 | causal conv HIP | update + fwd | on unless set `0` | `causal_conv` |
-| Flash-Next HC/QSA/PLE HIP | dest scaffolding | **off**; S6 default-on reverted; wrappers @ `d0d577f1`; isolated HC @ `8960a3bc` | extras until dest-on |
+| Flash-Next HC/QSA/PLE HIP | dest scaffolding | **off**; S6 default-on reverted; wrappers @ `d0d577f1`; isolated HC @ `8960a3bc`; `_contig()` cache @ `50120e13` (same-shape clobber still live) | extras until dest-on |
 | Hybrid W4A16 gfx10 | extras linear backend | ungated; RDNA2 W4 auto on gfx1030 | not a second W4 family |
-| gfx1030 wvSplitK n≤5 | extras dense GEMM (`c350fa218`) | dest-on for n≤5 FP16/BF16 decode | **no tile** |
-| V1 FULL_AND_PIECEWISE | dest maps FULL→PIECEWISE + persist keepalive | extras runner (`1ff73596`) | serve |
+| gfx1030 wvSplitK n≤5 | extras dense GEMM (`c350fa218`) | **dest-reverted** (`5c4ab989`); decode stays `gemv_f16_rdna2` `M<=8` | **no tile** |
+| V1 FULL_AND_PIECEWISE | dest maps FULL→PIECEWISE + persist keepalive | extras runner (`1ff73596`); Flash-Next production launcher now FULL_AND_PIECEWISE (`609c9c0d`; ROCm executes as PIECEWISE) | serve |
 | Custom AR (vLLM/ROCm) | force custom all-reduce on PCIe | **on** in dest gfx1030 launcher (`4d25a048`); `envs.py` still False; cudagraph-correct @ `849292ec` | serve |
 | leapdragon `rdna_ar` | size-gated Uncached+push | **off** (`VLLM_RDNA_AR=0`) | `comm/pcie` Later |
 
@@ -100,7 +110,7 @@ stay extras (no D2H under capture in the zoo).
 | `VLLM_ROCM_MOE_SKINNY` | `1` | MoE skinny |
 | `VLLM_FA_RDNA2_GQA_MODE` | `subgroup` | FA GQA-subgroup prefill |
 | `VLLM_RDNA_HC_PREFILL_HIP` / `VLLM_RDNA_QSA_HIP` / `VLLM_RDNA_PLE_CONV_HIP` | `"0"` | Flash-Next product HIP (opt-in) |
-| `VLLM_RDNA_FUSED_HC` / `VLLM_RDNA_FUSED_SE` | `"1"` | fused decode glue |
+| `VLLM_RDNA_FUSED_HC` / `VLLM_RDNA_FUSED_SE` | `"1"` (Flash-Next production launcher sets fused HC `0` @ `3bddd3c9`) | fused decode glue |
 | `VLLM_ROCM_USE_AITER` | `False` | AITER (CDNA; not dest gfx1030) |
 | `VLLM_ROCM_USE_AITER_CUSTOM_AR` | `True` | AITER AR (CDNA) |
 | `VLLM_FORCE_CUSTOM_ALL_REDUCE` | envs.py `False`; dest gfx1030 launcher default `"1"` (`4d25a048`) | force custom AR without full P2P |
@@ -110,7 +120,7 @@ stay extras (no D2H under capture in the zoo).
 | `VLLM_RDNA_AR` | `"0"` (dest extras; merged PR **#1**) | leapdragon push AR (opt-in; communicator gate, not the stale “enabled by default” docstring) |
 | `VLLM_RDNA_AR_BLOCKS` | auto | AR block cap |
 | `VLLM_RDNA_AR_PACE` | `0` | AR store pace |
-| `VLLM_RDNA_AR_MAX_KB` | `512` | AR fast-path size cap |
+| `VLLM_RDNA_AR_MAX_KB` | dest extras **64** (`3b59ee16`). zoo lock **512** | AR fast-path size cap |
 | `VLLM_USE_BREAKABLE_CUDAGRAPH` | `0` (auto-on in some configs) | capture dispatcher |
 | `VLLM_LOG_GDN_PTRS` / `VLLM_GDN_DBG` / `VLLM_EXL3_*_DBG` / `VLLM_CONV1D_DEBUG` / `DBG_VLLM_STEP_TIMING` | off | probes |
 
@@ -122,7 +132,7 @@ stay extras (no D2H under capture in the zoo).
 | Custom all-reduce (vLLM/ROCm) | `VLLM_FORCE_CUSTOM_ALL_REDUCE` | **on** in dest gfx1030 launcher (`4d25a048`); envs.py still False | serve |
 | AITER custom AR | `VLLM_ROCM_USE_AITER_CUSTOM_AR` | on in envs, AITER itself off | CDNA, not gfx1030 dest |
 | Quick-reduce / symm-mem AR | `VLLM_ROCM_QUICK_REDUCE_*` / `VLLM_ALLREDUCE_USE_SYMM_MEM` | unset / on | serve |
-| leapdragon `rdna_ar` Uncached+push | dest extras (merged PR **#1** @ `a4060647`) | **off** | `comm/pcie` Later. Unique HIP: Aron Hsiao. Occupancy pin closed. INT8/Q8 wire preferred; no Finegrained. Pick unique commits, not the dest squash. |
+| leapdragon `rdna_ar` Uncached+push | dest extras (PR **#1** @ `a4060647`; T44b @ `3b59ee16`) | **off** | `comm/pcie` Later. Unique HIP: Aron Hsiao. Do not pick Cursor squash. |
 
 ### Not taken / leave in extras
 
@@ -130,7 +140,13 @@ Capture plumbing (`torch.zeros` / `new_zeros` / `zeros_like`, persist
 keepalive, GDN arenas, `eager_break_during_capture`), product serve
 (`qwen4_exp/**`, TunableOp, PLE offload), skinny GEMM, ConfigH, V1
 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, Qwen4Exp HIP gates /
-wrappers / HC compute, seq cap 6, GDN `zero_()` wipe, a17t PR **#3**,
-closed **#5/#11**, explore **#9/#10**, draft PR **#12** (Intel CPU PLE /
-V620 MTP — no kernels; do not copy FULL→PIECEWISE narrowing). Produce
-(`-cb 3inst`, AWQ pack) stays outside hippihx.
+wrappers / HC compute / `_contig()` cache, seq cap 6, Flash-Next
+PIECEWISE launcher (`3bddd3c9` / vision-on `0dd38115` / FPP
+`609c9c0d`), GDN `zero_()` wipe, dest-reverted wvSplitK (`5c4ab989`),
+QSA prefix-ring (`e45dd5cb`), recovered extras ops (`c59a23f6`), mamba
+spec-decode `req_idx` (`741e5bc3`), dest T44b `rdna_ar` (`3b59ee16`;
+still opt-in; do not pick Cursor squash), dest PR **#14** (`dbb1e776`;
+stay extras; HIP MoE ignores the JSON; do not pick), a17t PR **#3**,
+closed **#5/#11/#13/#14**, explore **#9/#10**, draft PR **#12** (Intel
+CPU PLE / V620 MTP — no kernels), dest ROCm platform/worker init
+(`4425834`). Produce (`-cb 3inst`, AWQ pack) stays outside hippihx.
