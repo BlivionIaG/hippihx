@@ -7,7 +7,7 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `4425834a26ac` (2026-09-18 15:44 UTC). Dest default
+`rdna_extras` @ `3d6df9ed617a` (2026-09-18 17:44 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
 squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**. Merged **#13**,
@@ -30,7 +30,8 @@ HC `_contig()` cache · `31003ff` / `0dd38115` vision-on launcher ·
 `9c60294` Flash-Next `--enable-prompt-tokens-details` · `dbb1e776`
 PR **#14** (V620 Triton MoE JSON / ROCR amdsmi / PLE fp8) · `609c9c0d`
 Flash-Next FULL_AND_PIECEWISE launcher (ROCm executes as PIECEWISE) ·
-`4425834` ROCm platform/worker startup.
+`4425834` ROCm platform/worker startup · `3d6df9ed` extras
+EXL3 `__HIP__RDNA__` docker arch-guard.
 Live dest bugs (do not copy): W4 scale-baked ZP, unaligned K-split, GDN
 HIP-on-BF16, ConfigH, GDN batched-decode n≥8. Dest retraces Flash-Next
 FULL_AND_PIECEWISE c=8 to probe artifacts (`609c9c0d`).
@@ -149,4 +150,6 @@ still opt-in; do not pick Cursor squash), dest PR **#14** (`dbb1e776`;
 stay extras; HIP MoE ignores the JSON; do not pick), a17t PR **#3**,
 closed **#5/#11/#13/#14**, explore **#9/#10**, draft PR **#12** (Intel
 CPU PLE / V620 MTP — no kernels), dest ROCm platform/worker init
-(`4425834`). Produce (`-cb 3inst`, AWQ pack) stays outside hippihx.
+(`4425834`), dest extras EXL3 docker arch-guard (`3d6df9ed`; zoo still
+one `--offload-arch` per fatbin; gfx1150 / gfx12xx not dest). Produce
+(`-cb 3inst`, AWQ pack) stays outside hippihx.
