@@ -1,7 +1,7 @@
 # extras → hippihx backport review
 
 Lock: [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `9c602943be70` (2026-09-18 13:36 UTC). Dest **default
+`rdna_extras` @ `609c9c0d0229` (2026-09-18 15:14 UTC). Dest **default
 branch is `rdna_extras`**, not `main` (`c00091e02670` upstream vLLM — no
 dest HIP). **No** `torch.ops.hippihx.*`. Observe only: no `.cu` dump, no
 tok/s, no extras maxdiff.
@@ -35,9 +35,10 @@ until a body migrates and extras binds it.
 | `5c4ab9891910` | dest-reverted gfx1030 wvSplitK decode port | extras dense GEMM. Kernel asserts on gfx1030 under capture. Keeps `gemv_f16_rdna2` for decode `M<=8`. **No zoo tile.** Do not reintroduce `gemv_f16`. |
 | `e45dd5cb2de8` | QSA `CircularBufferManager` empty-ring prefix hits | extras v1 core. Observe `attention/qsa_indexer`. Empty compression-group ring is valid. Do not copy tok/s. |
 | `c59a23f625e0` | recovered extras probes / benches / HC Triton WIP | extras ops. HC Triton + graph-keepalive diagnostics **not** on the serve path. Do not dump. |
-| `ae5c7edc` / `37345ee9` / `aaa4775a` / `0dd38115` / `657bdba8` / `9c602943` | Flash-Next launcher serve knobs | extras scripts. Vision-on + native 262k + tool parser `qwen3_coder` + served-name + `--enable-prompt-tokens-details`. Stay extras. Do not copy tok/s. |
+| `ae5c7edc` / `37345ee9` / `aaa4775a` / `0dd38115` / `657bdba8` / `9c602943` / `609c9c0d` | Flash-Next launcher serve knobs | extras scripts. Dest tip `609c9c0d` is FULL_AND_PIECEWISE (ROCm executes as PIECEWISE). Stay extras. Do not copy tok/s. |
 | `741e5bc31ae5` | mamba spec-decode tables index by `req_idx` | extras worker (upstream vLLM #55506 port; Author Karl0007). Persistent per-request-slot tables. V1 `req_idx == batch_idx`. Stay extras. |
 | `3b59ee16e553` | extras PR **#13** squash (T44b `rdna_ar` VRAM flags + wedge) | Later `comm.pcie`. Still opt-in (`VLLM_RDNA_AR=0`). Dest extras `MAX_KB` default **64**. Zoo lock **512**. Do **not** pick squash (Cursor rewrite). |
+| `dbb1e7764aba` | extras PR **#14** merge (V620 Triton MoE JSON / ROCR amdsmi / PLE fp8) | Stay extras. HIP MoE ignores the JSON. Cursor rewrite — do not pick. |
 
 Other dest-fixed ISA (keep in tile locks, not a dump): GDN prefill `o`
 `i_t_local`; causal_conv FIR pre-shift then shift; ConfigH
@@ -47,9 +48,9 @@ Open extras PRs **#2** (GLM Later) and **#3** (a17t WIP). Draft **#9/#10**
 sdot — skip. Closed extras **#11** wvSplitK dest-picked as `c350fa218`,
 then dest-reverted @ `5c4ab989` — **no zoo tile**. Draft **#12** Intel
 CPU PLE / V620 MTP startup — serve-only, no kernels. Merged extras
-**#13** T44b — dest *presence*, observe, do not pick. Draft **#14**
-V620 Triton MoE JSON / ROCR amdsmi / PLE fp8 gather — **not dest**.
-HIP MoE ignores the JSON. `rdna_extras_wip_20260910` is not dest.
+**#13** T44b — dest *presence*, observe, do not pick. Merged extras
+**#14** — dest *presence*, stay extras, do not pick. `rdna_extras_wip_20260910`
+is not dest.
 
 ## Action
 
@@ -61,16 +62,16 @@ HIP MoE ignores the JSON. `rdna_extras_wip_20260910` is not dest.
 | GDN decode fp16 SSM state | **Later** `attention/gdn_scan`. Recurrence stays 16 fp32 VGPR. |
 | leapdragon `rdna_ar` + PIX helpers + dest T44b (`3b59ee16`) | **Later** `comm.pcie`. Still opt-in. Dest extras `MAX_KB` **64**; zoo **512**. Do not pick squash. |
 | PR **#2** GLM-5.3 KDA/DSA | **Later** `kda_scan` / `dsa_nope` / `qsa_indexer`. Do not name tiles `glm5_*`. |
-| GDN arenas, `rdna2_graph_keepalive.cuh`, breakable cudagraphs, Hybrid W4 gfx10, Flash-Next HC/QSA/PLE/M-RoPE HIP, skinny GEMM / `gemv_f16_rdna2`, PLE schema, W4 MoE oracle, `new_zeros`/`zeros_like`, V1 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, seq cap 6, Flash-Next launcher knobs, HC `_contig()` cache, QSA prefix-ring hits, mamba spec-decode `req_idx`, T44b wedge check, recovered extras probes, `qwen4_exp/**` | **Stay extras.** Product gates default off (S6 revert). No new V1 op until dest locks a class. |
-| PR **#3** a17t / explore **#9/#10** sdot / PR **#12** / PR **#14** | **Skip.** Second W4 family, not dest, serve-only. |
-| PR **#5** / **#8** Flash-Next, extras **#11** wvSplitK, extras **#13** T44b | **Closed.** Dest-landed T44b is observe-only. Dest reverted wvSplitK (`5c4ab989`). Do not re-merge. Do not grow `gemv_f16`. |
+| GDN arenas, `rdna2_graph_keepalive.cuh`, breakable cudagraphs, Hybrid W4 gfx10, Flash-Next HC/QSA/PLE/M-RoPE HIP, skinny GEMM / `gemv_f16_rdna2`, PLE schema, W4 MoE oracle, `new_zeros`/`zeros_like`, V1 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, seq cap 6, Flash-Next launcher knobs, HC `_contig()` cache, QSA prefix-ring hits, mamba spec-decode `req_idx`, T44b wedge check, V620 Triton MoE JSON / ROCR amdsmi / PLE fp8 gather, recovered extras probes, `qwen4_exp/**` | **Stay extras.** Product gates default off (S6 revert). No new V1 op until dest locks a class. |
+| PR **#3** a17t / explore **#9/#10** sdot / PR **#12** | **Skip.** Second W4 family, not dest, serve-only. |
+| PR **#5** / **#8** Flash-Next, extras **#11** wvSplitK, extras **#13** T44b, extras **#14** | **Closed.** Dest-landed T44b / #14 are observe-only. Dest reverted wvSplitK (`5c4ab989`). Do not re-merge. Do not grow `gemv_f16`. |
 
 Bodies stay in extras because every dest HIP file includes `torch/all.h`.
 A dump is not a migrate. CONTRIBUTING: do not edit extras from this repo.
 
 ## Dest file → tile
 
-Observed at `9c602943be70`. Numbers are extras observations, not dest
+Observed at `609c9c0d0229`. Numbers are extras observations, not dest
 locks. Fill tile READMEs.
 
 | extras path | hippihx tile | Notes |
@@ -99,7 +100,7 @@ extras consume.
    journals FPP13 16k c=8 green via serve arenas — still extras.
 2. Tile README LDS / `__launch_bounds__` / wave / DOT unit are filled.
 3. hippihx ships one HIP entry extras can bind. **Started:** V1
-   `plan`/`run`. `run` is `NOT_READY`. extras @ `9c602943be70` has no
+   `plan`/`run`. `run` is `NOT_READY`. extras @ `609c9c0d0229` has no
    `torch.ops.hippihx.*`.
 4. extras is rewired **in extras**. The extras copy is then deleted.
 
@@ -108,10 +109,10 @@ Until then: observe, lock numbers, keep stubs. Tracker:
 
 ## Dest extras defects
 
-Dest tip `9c602943be70`. Live dest bugs / rolled-back paths — hippihx
+Dest tip `609c9c0d0229`. Live dest bugs / rolled-back paths — hippihx
 must not reproduce them.
 
-| Defect | Where | Status @ `9c60294` | Zoo lock |
+| Defect | Where | Status @ `609c9c0d` | Zoo lock |
 |---|---|---|---|
 | `llvm.amdgcn.fdot2.bf16.bf16` ISel abort | Hybrid W4 gfx10 + bf16. Dest HIP has **no** `fdot2.bf16`. | **Serve-mitigated** (`59237b3`). | Never `fdot2.bf16`. DOT + GDN HIP = **fp16 act**. |
 | Scale-baked W4 zero-point | `qdq_4_rdna2.cuh` `prep_zero_scale_fp16`: `0xE400 \| zero` then `scale * (-1024 - zero)` in `half`. | **Still live** | Integer `q - zero`, then `* scale`. |
@@ -132,7 +133,7 @@ must not reproduce them.
 | HC `_contig()` graph-stale temps | `hc_rdna2.py` per-call `.contiguous()` | **Dest-fixed isolated** (`50120e13`) per-shape cache. Gate still **off**. Same-shape clobber still live. | Stay extras. Serve zeros. Per-call-site scratch from `plan`, not a shared shape cache. |
 | GDN one-shot `zero_()` state wipe | First `gdn_decode_rdna2` after prefill | **Dest-fixed (serve)** (`388a61b6`) | Zeros **once at allocation**. |
 | GDN batched-decode n≥8 | Corrupts recurrent state | **Still live.** Launchers cap `max-num-seqs` 6 (`b78006a4`, `3bddd3c9`). | Stay extras. No serve seq-cap in tiles. |
-| Flash-Next FULL_AND_PIECEWISE one-request corruption | `compilation-config` FULL_AND_PIECEWISE at c=8 even with seq cap 6 | **Still live** on FULL. Dest production launcher uses PIECEWISE (`3bddd3c9`). | Stay extras. Zoo does not own graph mode. |
+| Flash-Next FULL_AND_PIECEWISE one-request corruption | `compilation-config` FULL_AND_PIECEWISE at c=8 even with seq cap 6 | Dest serve @ `609c9c0d`: production launcher now FULL_AND_PIECEWISE (ROCm executes as PIECEWISE). Dest retraces the c=8 report to probe artifacts, not graphs. | Stay extras. Zoo does not own graph mode. |
 | gfx1030 wvSplitK decode (`n<=5`) | `wvSplitK_hf_big_` device `assert(false)` under cudagraph capture | **Dest-reverted** (`5c4ab989`; was `c350fa218`). Decode stays `gemv_f16_rdna2` `M<=8`. | **No zoo tile.** Do not grow `gemv_f16`. |
 | QSA prefix cache always-zero | `CircularBufferManager.find_longest_cache_hit` returned 0 at empty group ring | **Dest-fixed (serve)** (`e45dd5cb`) | Stay extras. Empty ring at group boundary is valid. |
 | Mamba spec-decode batch-row tables | captured `data_ptrs` indexed by batch row under deferred postprocess | **Dest-fixed (serve)** (`741e5bc3`). V1 unchanged. | Stay extras. Persistent per-request-slot tables; index by `req_idx`. |
@@ -175,5 +176,5 @@ This review is documentation, not a kernel migrate.
 | Explore PRs **#9/#10** sdot | **Not taken** | Not dest |
 | extras PR **#12** CPU PLE / MTP startup | **Not taken** | Serve-only. Foreign: George Muravei-Alkhavoi. No HIP body. |
 | extras PR **#13** leap T44b `rdna_ar` | dest squash `3b59ee16` | Dest *presence*. Cursor rewrite. `VLLM_RDNA_AR` still **0**. Dest extras `MAX_KB` **64**. Zoo **512**. Do **not** pick squash `3b59ee16` / `aad7d828`. Pick unique Aron Hsiao if migrating. |
-| extras PR **#14** V620 MoE JSON / ROCR amdsmi / PLE fp8 | **Not taken** | Draft. Serve-only. Cursor rewrite (`b8354ff9`). Triton JSON + platform + PLE CPU gather. HIP MoE ignores the JSON. No HIP body. |
+| extras PR **#14** V620 MoE JSON / ROCR amdsmi / PLE fp8 | dest merge `dbb1e776` | Dest *presence*. Cursor rewrite. Stay extras. HIP MoE ignores the JSON. Do **not** pick `dbb1e776` / `b8354ff9` / `16695b2`. Pick unique Aron Hsiao if migrating. No HIP body. |
 | extras mamba spec-decode `req_idx` (`741e5bc3`) | **Not taken** | Serve-only. Author **Karl0007**. Keep **their** Author if dest-locks a pick. No HIP body. |

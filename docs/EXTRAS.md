@@ -7,11 +7,11 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `9c602943be70` (2026-09-18 13:36 UTC). Dest default
+`rdna_extras` @ `609c9c0d0229` (2026-09-18 15:14 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**, draft **#14**.
-Merged **#13**. **No** `torch.ops.hippihx.*`.
+squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**. Merged **#13**,
+**#14**. **No** `torch.ops.hippihx.*`.
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs.
@@ -27,10 +27,12 @@ HC `_contig()` cache · `31003ff` / `0dd38115` vision-on launcher ·
 `5c4ab989` wvSplitK gfx1030 revert · `e45dd5cb` QSA prefix-ring hits ·
 `c59a23f6` recovered extras ops · `741e5bc3` mamba spec-decode
 `req_idx` · `3b59ee16` T44b `rdna_ar` (still opt-in; dest `MAX_KB` 64) ·
-`9c60294` Flash-Next `--enable-prompt-tokens-details`.
+`9c60294` Flash-Next `--enable-prompt-tokens-details` · `dbb1e776`
+PR **#14** (V620 Triton MoE JSON / ROCR amdsmi / PLE fp8) · `609c9c0d`
+Flash-Next FULL_AND_PIECEWISE launcher (ROCm executes as PIECEWISE).
 Live dest bugs (do not copy): W4 scale-baked ZP, unaligned K-split, GDN
-HIP-on-BF16, ConfigH, GDN batched-decode n≥8, Flash-Next
-FULL_AND_PIECEWISE one-request corruption at c=8.
+HIP-on-BF16, ConfigH, GDN batched-decode n≥8. Dest retraces Flash-Next
+FULL_AND_PIECEWISE c=8 to probe artifacts (`609c9c0d`).
 
 Status: **extras** = live on dest tip · **Later** = side branch ·
 **skip** = do not take · **stub** = hippihx contract only.
@@ -76,7 +78,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | Flash-Next HC/QSA/PLE HIP | dest scaffolding | **off**; S6 default-on reverted; wrappers @ `d0d577f1`; isolated HC @ `8960a3bc`; `_contig()` cache @ `50120e13` (same-shape clobber still live) | extras until dest-on |
 | Hybrid W4A16 gfx10 | extras linear backend | ungated; RDNA2 W4 auto on gfx1030 | not a second W4 family |
 | gfx1030 wvSplitK n≤5 | extras dense GEMM (`c350fa218`) | **dest-reverted** (`5c4ab989`); decode stays `gemv_f16_rdna2` `M<=8` | **no tile** |
-| V1 FULL_AND_PIECEWISE | dest maps FULL→PIECEWISE + persist keepalive | extras runner (`1ff73596`); Flash-Next production launcher uses PIECEWISE (`3bddd3c9`) because FULL still corrupts one request at c=8 | serve |
+| V1 FULL_AND_PIECEWISE | dest maps FULL→PIECEWISE + persist keepalive | extras runner (`1ff73596`); Flash-Next production launcher now FULL_AND_PIECEWISE (`609c9c0d`; ROCm executes as PIECEWISE) | serve |
 | Custom AR (vLLM/ROCm) | force custom all-reduce on PCIe | **on** in dest gfx1030 launcher (`4d25a048`); `envs.py` still False; cudagraph-correct @ `849292ec` | serve |
 | leapdragon `rdna_ar` | size-gated Uncached+push | **off** (`VLLM_RDNA_AR=0`) | `comm/pcie` Later |
 
@@ -138,13 +140,12 @@ keepalive, GDN arenas, `eager_break_during_capture`), product serve
 (`qwen4_exp/**`, TunableOp, PLE offload), skinny GEMM, ConfigH, V1
 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, Qwen4Exp HIP gates /
 wrappers / HC compute / `_contig()` cache, seq cap 6, Flash-Next
-PIECEWISE launcher (`3bddd3c9` / vision-on `0dd38115`), GDN
-`zero_()` wipe, dest-reverted wvSplitK (`5c4ab989`), QSA prefix-ring
-(`e45dd5cb`), recovered extras ops (`c59a23f6`), mamba spec-decode
-`req_idx` (`741e5bc3`), dest T44b `rdna_ar` (`3b59ee16`; still opt-in;
-do not pick Cursor squash), a17t PR **#3**, closed **#5/#11/#13**,
-explore **#9/#10**, draft PR **#12** (Intel CPU PLE / V620 MTP — no
-kernels; do not copy FULL→PIECEWISE narrowing), draft PR **#14**
-(V620 Triton MoE JSON / ROCR amdsmi / PLE fp8 gather — serve-only;
-HIP MoE ignores the JSON; do not pick). Produce (`-cb 3inst`,
-AWQ pack) stays outside hippihx.
+PIECEWISE launcher (`3bddd3c9` / vision-on `0dd38115` / FPP
+`609c9c0d`), GDN `zero_()` wipe, dest-reverted wvSplitK (`5c4ab989`),
+QSA prefix-ring (`e45dd5cb`), recovered extras ops (`c59a23f6`), mamba
+spec-decode `req_idx` (`741e5bc3`), dest T44b `rdna_ar` (`3b59ee16`;
+still opt-in; do not pick Cursor squash), dest PR **#14** (`dbb1e776`;
+stay extras; HIP MoE ignores the JSON; do not pick), a17t PR **#3**,
+closed **#5/#11/#13/#14**, explore **#9/#10**, draft PR **#12** (Intel
+CPU PLE / V620 MTP — no kernels). Produce (`-cb 3inst`, AWQ pack)
+stays outside hippihx.
