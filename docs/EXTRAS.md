@@ -16,26 +16,9 @@ squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**. Merged **#13**,
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs.
 
-Observed SHAs (action in BACKPORT): `1046782` AWQ prefill delete ·
-`820465` QSA tracker · `02adbfd4` GDN fp16 SSM · `1ff73596` V1
-FULL→PIECEWISE · `849292ec` / `4d25a048` custom AR · `f5cbbdfe` /
-`7e70e240` `bench_report.py` · `cb0d4418` / `9c9509b3` S6 revert ·
-`d0d577f1` wrappers · `8960a3bc` HC compute · `d1b200b1` FA GQA O ·
-`cd1231fd` GDN prefill opt-in · `b78006a4` seq cap 6 · `388a61b6` GDN
-`zero_()` wipe · `3bddd3c9` Flash-Next PIECEWISE launcher · `50120e13`
-HC `_contig()` cache · `31003ff` / `0dd38115` vision-on launcher ·
-`5c4ab989` wvSplitK gfx1030 revert · `e45dd5cb` QSA prefix-ring hits ·
-`c59a23f6` recovered extras ops · `741e5bc3` mamba spec-decode
-`req_idx` · `3b59ee16` T44b `rdna_ar` (still opt-in; dest `MAX_KB` 64) ·
-`9c60294` Flash-Next `--enable-prompt-tokens-details` · `dbb1e776`
-PR **#14** (V620 Triton MoE JSON / ROCR amdsmi / PLE fp8) · `609c9c0d`
-Flash-Next FULL_AND_PIECEWISE launcher (ROCm executes as PIECEWISE) ·
-`4425834` ROCm platform/worker startup · `3d6df9ed` extras
-EXL3 `__HIP__RDNA__` docker arch-guard · `ed94e3f3` Qwen4Exp MTP
-proposer / skinny `w2_zp` · `b33f9b66` amdsmi `get_device_name`
-torch fallback.
-Live dest bugs (do not copy): W4 scale-baked ZP, unaligned K-split, GDN
-HIP-on-BF16, ConfigH, GDN batched-decode n≥8. Dest retraces Flash-Next
+Observed SHAs and actions live in [`BACKPORT.md`](BACKPORT.md). Live dest
+bugs (do not copy): W4 scale-baked ZP, unaligned K-split, GDN HIP-on-BF16,
+ConfigH, GDN batched-decode n≥8. Dest retraces Flash-Next
 FULL_AND_PIECEWISE c=8 to probe artifacts (`609c9c0d`).
 
 Status: **extras** = live on dest tip · **Later** = side branch ·
@@ -144,16 +127,13 @@ keepalive, GDN arenas, `eager_break_during_capture`), product serve
 (`qwen4_exp/**`, TunableOp, PLE offload), skinny GEMM, ConfigH, V1
 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, Qwen4Exp HIP gates /
 wrappers / HC compute / `_contig()` cache, seq cap 6, Flash-Next
-PIECEWISE launcher (`3bddd3c9` / vision-on `0dd38115` / FPP
-`609c9c0d`), GDN `zero_()` wipe, dest-reverted wvSplitK (`5c4ab989`),
-QSA prefix-ring (`e45dd5cb`), recovered extras ops (`c59a23f6`), mamba
-spec-decode `req_idx` (`741e5bc3`), dest T44b `rdna_ar` (`3b59ee16`;
-still opt-in; do not pick Cursor squash), dest PR **#14** (`dbb1e776`;
-stay extras; HIP MoE ignores the JSON; do not pick), a17t PR **#3**,
-closed **#5/#11/#13/#14**, explore **#9/#10**, draft PR **#12** (Intel
-CPU PLE / V620 MTP — no kernels), dest ROCm platform/worker init
-(`4425834`), dest extras EXL3 docker arch-guard (`3d6df9ed`; zoo still
-one `--offload-arch` per fatbin; gfx1150 / gfx12xx not dest), Qwen4Exp
-MTP proposer / skinny `w2_zp` (`ed94e3f3`; MTP still not dest), amdsmi
-`get_device_name` torch fallback (`b33f9b66`). Produce (`-cb 3inst`,
-AWQ pack) stays outside hippihx.
+launcher knobs, dest-reverted wvSplitK, QSA prefix-ring, recovered
+extras ops, mamba spec-decode `req_idx`, dest T44b `rdna_ar` (still
+opt-in; do not pick Cursor squash), dest PR **#14** (HIP MoE ignores
+the JSON; do not pick), a17t PR **#3**, closed **#5/#11/#13/#14**,
+explore **#9/#10**, draft PR **#12** (Intel CPU PLE / V620 MTP — no
+kernels), ROCm platform/worker init, extras EXL3 docker arch-guard
+(zoo still one `--offload-arch` per fatbin; gfx1150 / gfx12xx not dest),
+Qwen4Exp MTP proposer / skinny `w2_zp` (MTP still not dest), amdsmi
+`get_device_name` torch fallback. Produce (`-cb 3inst`, AWQ pack) stays
+outside hippihx.
