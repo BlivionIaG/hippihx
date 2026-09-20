@@ -165,6 +165,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "PR **#12**" in extras or "PR **#12**" in bp
     assert "PR **#13**" in extras or "PR **#13**" in bp
     assert "PR **#14**" in extras or "PR **#14**" in bp
+    assert "PR **#15**" in extras or "PR **#15**" in bp
     contrib = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
     assert "b33f9b66" in contrib
     assert "a4060647" in contrib

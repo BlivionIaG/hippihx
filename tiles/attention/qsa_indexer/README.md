@@ -24,5 +24,7 @@ the 2-warp prefill spill as that abort. Dest since then: eager QSA
 break (`8cf0dedb`) serves; dest V1 maps FULL→PIECEWISE (`1ff73596`).
 HIP `qsa_rdna2.cu` is still scaffolding, not dest-on. Dest @ `e45dd5cb`
 fixed extras prefix hits when the QSA compression ring is empty at a
-group boundary — stay extras. Do not dump Triton QSA. The 4-warp
-occupancy row is a gfx1030 observation, not a tok/s claim.
+group boundary — stay extras. extras draft PR **#15** bounds Triton
+prefill scoring to live context — Python only, **not dest**, no HIP
+body. Do not dump Triton QSA. Do not copy tok/s. The 4-warp occupancy
+row is a gfx1030 observation, not a tok/s claim.
