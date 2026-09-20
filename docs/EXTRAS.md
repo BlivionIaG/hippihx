@@ -7,11 +7,11 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `b33f9b66eb2b` (2026-09-18 18:53 UTC). Dest default
+`rdna_extras` @ `f3dd65fa7063` (2026-09-20 20:29 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2–#3**, **#15**. Closed **#12**
-(superseded by **#15**). Merged **#13**, **#14**. **No**
+squash is `a4060647cfbb`. Open **#2–#3**. Closed **#12** (superseded
+by **#15**). Merged **#13**, **#14**, **#15**. **No**
 `torch.ops.hippihx.*`.
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
@@ -41,7 +41,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | GDN prefill chain | `gdn_prefill_*_rdna2.cu` | `attention/gdn_scan` | **Opt-in** (`VLLM_GDN_HIP_PREFILL=1`; default Triton/FLA @ `cd1231fd`). `o` varlen `i_t_local` dest-fixed. Dispatch still misses dtype. **unvalidated** |
 | causal_conv1d update + fwd | `causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA. FIR on pre-shift then shift. BF16: fp32 mul, **not** `fdot2.bf16`. **unvalidated** |
 | Paged MQA indexer | `indexer_paged_mqa_rdna2.cu` | `attention/qsa_indexer` | gfx1030 BF16 6h×256: **4 warps**. **unvalidated** |
-| Flash-Next QSA store/compress/MQA | `qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | `VLLM_RDNA_QSA_HIP` default **off**. Eager Triton serves (`8cf0dedb`). Dest @ `e45dd5cb`: empty QSA ring prefix hits. **unvalidated** |
+| Flash-Next QSA store/compress/MQA | `qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | `VLLM_RDNA_QSA_HIP` default **off**. Eager Triton serves (`8cf0dedb`). Dest @ `e45dd5cb`: empty QSA ring prefix hits. Dest @ `f3dd65fa`: live-context prefill scoring bound (Triton). **unvalidated** |
 | Sparse MLA decode / prefill | `sparse_mla_rdna2.cu` | `attention/dsa_nope` | **unvalidated** |
 | M-RoPE / Flash-Next HC / PLE / fused glue | `mrope_rdna2.cu`, `hc_rdna2.cu`, `ple_short_conv_rdna2.cu`, `rdna_fused_glue.cu` | — | Product HIP. HC/PLE default off (S6 revert `9c9509b3`); wrappers @ `d0d577f1`; isolated HC @ `8960a3bc`; `_contig()` cache @ `50120e13` (gate still off). Stay extras. **unvalidated** |
 | W8A16 / FP8 / MXFP4 / gfx1100 WMMA / skinny GEMM / RMSNorm | `moe_w8a16*.cu`, `mxfp4_dot2_*.cu`, `q_gemm_rdna3_wmma.cu`, `skinny_gemms*.cu`, `layernorm.cu` | — | No tile. WMMA is Later overlay. Do not reintroduce leapdragon `gemv_f16`. **unvalidated** |
@@ -66,7 +66,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | Flash-Next HC/QSA/PLE HIP | dest scaffolding | **off**; S6 default-on reverted; wrappers @ `d0d577f1`; isolated HC @ `8960a3bc`; `_contig()` cache @ `50120e13` (same-shape clobber still live) | extras until dest-on |
 | Hybrid W4A16 gfx10 | extras linear backend | ungated; RDNA2 W4 auto on gfx1030 | not a second W4 family |
 | gfx1030 wvSplitK n≤5 | extras dense GEMM (`c350fa218`) | **dest-reverted** (`5c4ab989`); decode stays `gemv_f16_rdna2` `M<=8` | **no tile** |
-| V1 FULL_AND_PIECEWISE | dest maps FULL→PIECEWISE + persist keepalive | extras runner (`1ff73596`); Flash-Next production launcher now FULL_AND_PIECEWISE (`609c9c0d`; ROCm executes as PIECEWISE) | serve |
+| V1 FULL_AND_PIECEWISE | dest maps FULL→PIECEWISE + persist keepalive | extras runner (`1ff73596`); dest @ `f3dd65fa` only redirects FULL when compiled + piecewise; Flash-Next launcher FULL_AND_PIECEWISE (`609c9c0d`) | serve |
 | Custom AR (vLLM/ROCm) | force custom all-reduce on PCIe | **on** in dest gfx1030 launcher (`4d25a048`); `envs.py` still False; cudagraph-correct @ `849292ec` | serve |
 | leapdragon `rdna_ar` | size-gated Uncached+push | **off** (`VLLM_RDNA_AR=0`) | `comm/pcie` Later |
 
@@ -131,11 +131,11 @@ wrappers / HC compute / `_contig()` cache, seq cap 6, Flash-Next
 launcher knobs, dest-reverted wvSplitK, QSA prefix-ring, recovered
 extras ops, mamba spec-decode `req_idx`, dest T44b `rdna_ar` (still
 opt-in; do not pick Cursor squash), dest PR **#14** (HIP MoE ignores
-the JSON; do not pick), a17t PR **#3**, closed **#5/#11/#13/#14**,
-explore **#9/#10**, closed PR **#12** (superseded by **#15**), open
-PR **#15** (QSA live-context bound + folded **#12** CPU PLE / MTP /
-graph-redirect — Python/serve, no HIP; not dest; no tok/s), ROCm
-platform/worker init, extras EXL3 docker arch-guard (zoo still one
+the JSON; do not pick), a17t PR **#3**, closed **#5/#11/#13/#14/#15**,
+explore **#9/#10**, closed PR **#12** (superseded by **#15**), dest
+PR **#15** (`f3dd65fa`; QSA live-context + folded **#12** — Python/serve,
+no HIP; do not pick; no tok/s), ROCm platform/worker init, extras EXL3
+docker arch-guard (zoo still one
 `--offload-arch` per fatbin; gfx1150 /
 gfx12xx not dest), Qwen4Exp MTP proposer / skinny `w2_zp` (MTP still
 not dest), amdsmi `get_device_name` torch fallback. Produce (`-cb 3inst`,
