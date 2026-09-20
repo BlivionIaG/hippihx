@@ -26,5 +26,6 @@ HIP `qsa_rdna2.cu` is still scaffolding, not dest-on. Dest @ `e45dd5cb`
 fixed extras prefix hits when the QSA compression ring is empty at a
 group boundary — stay extras. extras draft PR **#15** bounds Triton
 prefill scoring to live context — Python only, **not dest**, no HIP
-body. Do not dump Triton QSA. Do not copy tok/s. The 4-warp occupancy
-row is a gfx1030 observation, not a tok/s claim.
+body. That PR also folds extras **#12** CPU PLE / MTP / graph-redirect
+(serve, not this tile). Do not dump Triton QSA. Do not copy tok/s. The
+4-warp occupancy row is a gfx1030 observation, not a tok/s claim.

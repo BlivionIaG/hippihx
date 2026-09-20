@@ -132,8 +132,9 @@ extras ops, mamba spec-decode `req_idx`, dest T44b `rdna_ar` (still
 opt-in; do not pick Cursor squash), dest PR **#14** (HIP MoE ignores
 the JSON; do not pick), a17t PR **#3**, closed **#5/#11/#13/#14**,
 explore **#9/#10**, draft PR **#12** (Intel CPU PLE / V620 MTP — no
-kernels), draft PR **#15** (QSA live-context bound — Python/Triton,
-no HIP; not dest; no tok/s), ROCm platform/worker init, extras EXL3
+kernels), draft PR **#15** (QSA live-context bound + folded **#12**
+CPU PLE / MTP / graph-redirect — Python/serve, no HIP; not dest;
+no tok/s), ROCm platform/worker init, extras EXL3
 docker arch-guard (zoo still one `--offload-arch` per fatbin; gfx1150 /
 gfx12xx not dest), Qwen4Exp MTP proposer / skinny `w2_zp` (MTP still
 not dest), amdsmi `get_device_name` torch fallback. Produce (`-cb 3inst`,
