@@ -10,8 +10,9 @@ Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
 `rdna_extras` @ `b33f9b66eb2b` (2026-09-18 18:53 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2–#3**, draft **#12**, **#15**. Merged
-**#13**, **#14**. **No** `torch.ops.hippihx.*`.
+squash is `a4060647cfbb`. Open **#2–#3**, **#15**. Closed **#12**
+(superseded by **#15**). Merged **#13**, **#14**. **No**
+`torch.ops.hippihx.*`.
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs.
@@ -131,11 +132,11 @@ launcher knobs, dest-reverted wvSplitK, QSA prefix-ring, recovered
 extras ops, mamba spec-decode `req_idx`, dest T44b `rdna_ar` (still
 opt-in; do not pick Cursor squash), dest PR **#14** (HIP MoE ignores
 the JSON; do not pick), a17t PR **#3**, closed **#5/#11/#13/#14**,
-explore **#9/#10**, draft PR **#12** (Intel CPU PLE / V620 MTP — no
-kernels), draft PR **#15** (QSA live-context bound + folded **#12**
-CPU PLE / MTP / graph-redirect — Python/serve, no HIP; not dest;
-no tok/s), ROCm platform/worker init, extras EXL3
-docker arch-guard (zoo still one `--offload-arch` per fatbin; gfx1150 /
+explore **#9/#10**, closed PR **#12** (superseded by **#15**), open
+PR **#15** (QSA live-context bound + folded **#12** CPU PLE / MTP /
+graph-redirect — Python/serve, no HIP; not dest; no tok/s), ROCm
+platform/worker init, extras EXL3 docker arch-guard (zoo still one
+`--offload-arch` per fatbin; gfx1150 /
 gfx12xx not dest), Qwen4Exp MTP proposer / skinny `w2_zp` (MTP still
 not dest), amdsmi `get_device_name` torch fallback. Produce (`-cb 3inst`,
 AWQ pack) stays outside hippihx.

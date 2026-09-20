@@ -49,10 +49,9 @@ Other dest-fixed ISA (keep in tile locks, not a dump): GDN prefill `o`
 
 Open extras PRs **#2** (GLM Later) and **#3** (a17t WIP). Draft **#9/#10**
 sdot — skip. Closed extras **#11** wvSplitK dest-picked as `c350fa218`,
-then dest-reverted @ `5c4ab989` — **no zoo tile**. Draft **#12** Intel
-CPU PLE / V620 MTP startup — serve-only, no kernels. Draft **#15**
-QSA live-context prefill bound — Python/Triton scoring, no HIP body,
-**not dest**; now also folds **#12** CPU PLE / MTP / graph-redirect.
+then dest-reverted @ `5c4ab989` — **no zoo tile**. Closed extras **#12**
+(Intel CPU PLE / MTP; superseded, folded into **#15**). Open **#15**
+QSA live-context + folded **#12** — Python/serve, no HIP, **not dest**.
 Do not copy tok/s. Zoo does not own graph mode. Merged extras
 **#13** T44b — dest *presence*, observe, do not pick. Merged extras
 **#14** — dest *presence*, stay extras, do not pick. `rdna_extras_wip_20260910`
@@ -69,7 +68,7 @@ is not dest.
 | leapdragon `rdna_ar` + PIX helpers + dest T44b (`3b59ee16`) | **Later** `comm.pcie`. Still opt-in. Dest extras `MAX_KB` **64**; zoo **512**. Do not pick squash. |
 | PR **#2** GLM-5.3 KDA/DSA | **Later** `kda_scan` / `dsa_nope` / `qsa_indexer`. Do not name tiles `glm5_*`. |
 | GDN arenas, `rdna2_graph_keepalive.cuh`, breakable cudagraphs, Hybrid W4 gfx10, Flash-Next HC/QSA/PLE/M-RoPE HIP, skinny GEMM / `gemv_f16_rdna2`, PLE schema, W4 MoE oracle, `new_zeros`/`zeros_like`, V1 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, seq cap 6, Flash-Next launcher knobs, HC `_contig()` cache, QSA prefix-ring, mamba spec-decode, T44b wedge, V620 MoE JSON / amdsmi / PLE fp8, ROCm platform init, extras EXL3 docker arch-guard, Qwen4Exp MTP, recovered extras probes, `qwen4_exp/**` | **Stay extras.** Product gates default off (S6 revert). No new V1 op until dest locks a class. |
-| PR **#3** a17t / explore **#9/#10** sdot / PR **#12** / PR **#15** | **Skip.** Second W4 family, not dest, serve-only. QSA live-context bound is Python/Triton, no HIP. |
+| PR **#3** a17t / explore **#9/#10** sdot / closed **#12** / open **#15** | **Skip.** Second W4 family, not dest, serve-only. **#12** superseded (folded into **#15**). QSA live-context bound is Python/Triton, no HIP. |
 | PR **#5** / **#8** Flash-Next, extras **#11** wvSplitK, extras **#13** T44b, extras **#14** | **Closed.** Dest-landed T44b / #14 are observe-only. Dest reverted wvSplitK (`5c4ab989`). Do not re-merge. Do not grow `gemv_f16`. |
 
 Bodies stay in extras because every dest HIP file includes `torch/all.h`.
@@ -180,8 +179,8 @@ This review is documentation, not a kernel migrate.
 | PR #2 `glm5_kda_*` / `glm5_dsa_*` | BlivionIaG | BlivionIaG; rename off `glm5_` in a follow-up hippihx commit |
 | PR #3 a17t unique W4 (`d53572644`, later Simon Siebert) | **Not taken** | If dest ever locks that family, pick **their** commits |
 | Explore PRs **#9/#10** sdot | **Not taken** | Not dest |
-| extras PR **#12** CPU PLE / MTP startup | **Not taken** | Serve-only. Foreign: George Muravei-Alkhavoi. No HIP body. |
-| extras PR **#15** QSA live-context prefill bound | **Not taken** | Draft. Python/Triton scoring. Now also folds **#12** CPU PLE / MTP / graph-redirect. Foreign: George Muravei-Alkhavoi. No HIP body. Do not copy tok/s. |
+| extras PR **#12** CPU PLE / MTP startup | **Not taken** | Closed unmerged. Superseded by **#15**. Foreign: George Muravei-Alkhavoi. No HIP body. |
+| extras PR **#15** QSA live-context + folded **#12** | **Not taken** | Open, ready. Python/Triton/serve. Foreign: George Muravei-Alkhavoi. No HIP body. Do not copy tok/s. |
 | extras PR **#13** leap T44b `rdna_ar` | dest squash `3b59ee16` | Dest *presence*. Cursor rewrite. `VLLM_RDNA_AR` still **0**. Dest extras `MAX_KB` **64**. Zoo **512**. Do **not** pick squash `3b59ee16` / `aad7d828`. Pick unique Aron Hsiao if migrating. |
 | extras PR **#14** V620 MoE JSON / ROCR amdsmi / PLE fp8 | dest merge `dbb1e776` | Dest *presence*. Cursor rewrite. Stay extras. HIP MoE ignores the JSON. Do **not** pick `dbb1e776` / `b8354ff9` / `16695b2`. Pick unique Aron Hsiao if migrating. No HIP body. |
 | extras mamba spec-decode `req_idx` (`741e5bc3`) | **Not taken** | Serve-only. Author **Karl0007**. Keep **their** Author if dest-locks a pick. No HIP body. |
