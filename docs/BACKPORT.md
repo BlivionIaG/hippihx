@@ -49,11 +49,10 @@ Other dest-fixed ISA (keep in tile locks, not a dump): GDN prefill `o`
 (`K_STEP=64`) reverted. Live dest bugs: [Dest extras defects](#dest-extras-defects).
 
 Open extras PRs **#2** (GLM Later) and **#3** (a17t WIP). Draft **#9/#10**
-sdot — skip. Draft **#16** resident MoE / TP4 serve — skip, not dest.
-Foreign George + Codex. Do not dump. Do not copy tok/s. Closed **#11**
-dest-reverted wvSplitK — **no zoo tile**. Closed **#12** superseded by
-dest **#15**. Merged **#13/#14/#15** dest *presence*, observe, do not
-pick. `rdna_extras_wip_20260910` is not dest.
+sdot — skip. Closed **#11** dest-reverted wvSplitK — **no zoo tile**.
+Closed **#12** superseded by dest **#15**. Closed **#16** unmerged
+(resident MoE / TP4 serve — not dest). Merged **#13/#14/#15** dest
+*presence*, observe, do not pick. `rdna_extras_wip_20260910` is not dest.
 
 ## Action
 
@@ -66,7 +65,7 @@ pick. `rdna_extras_wip_20260910` is not dest.
 | leapdragon `rdna_ar` + PIX helpers + dest T44b (`3b59ee16`) | **Later** `comm.pcie`. Still opt-in. Dest extras `MAX_KB` **64**; zoo **512**. Do not pick squash. |
 | PR **#2** GLM-5.3 KDA/DSA | **Later** `kda_scan` / `dsa_nope` / `qsa_indexer`. Do not name tiles `glm5_*`. |
 | GDN arenas, `rdna2_graph_keepalive.cuh`, breakable cudagraphs, Hybrid W4 gfx10, Flash-Next HC/QSA/PLE/M-RoPE HIP, skinny GEMM / `gemv_f16_rdna2`, PLE schema, W4 MoE oracle, `new_zeros`/`zeros_like`, V1 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, seq cap 6, Flash-Next launcher knobs, HC `_contig()` cache, QSA Triton bounds, mamba spec-decode, T44b wedge, V620 MoE JSON / amdsmi / PLE, ROCm platform init, extras EXL3 docker arch-guard, Qwen4Exp MTP, recovered extras probes, `qwen4_exp/**` | **Stay extras.** Product gates default off (S6 revert). No new V1 op until dest locks a class. |
-| PR **#3** a17t / explore **#9/#10** sdot / closed **#12** / draft **#16** | **Skip.** Second W4 family, not dest, serve-only. **#12** superseded (folded into dest **#15**). **#16** resident MoE skinny + TP4 serve; gates default **off**. Dest `VLLM_RDNA_AR` still **0**. Do not dump. Do not copy tok/s. |
+| PR **#3** a17t / explore **#9/#10** sdot / closed **#12** / closed **#16** | **Skip.** Second W4 family, not dest, serve-only. **#12** superseded (folded into dest **#15**). **#16** unmerged resident MoE / TP4 serve. Do not dump. Do not copy tok/s. |
 | PR **#5** / **#8** Flash-Next, extras **#11** wvSplitK, extras **#13** T44b, extras **#14**, extras **#15** | **Closed.** Dest-landed T44b / #14 / #15 are observe-only. Dest reverted wvSplitK (`5c4ab989`). Do not re-merge. Do not grow `gemv_f16`. |
 
 Bodies stay in extras because every dest HIP file includes `torch/all.h`.
@@ -178,4 +177,4 @@ This review is documentation, not a kernel migrate.
 | PR #3 a17t unique W4 (`d53572644`, later Simon Siebert) | **Not taken** | If dest ever locks that family, pick **their** commits |
 | Explore PRs **#9/#10** sdot | **Not taken** | Not dest |
 | extras dest-presence serve (**#13** T44b / **#14** / **#15** / mamba `741e5bc3` / closed **#12**) | observe | Python/Triton/serve. No HIP migrate. Do not pick Cursor/George/Codex/Karl rewrites. Unique Aron Hsiao `rdna_ar` still pickable. Do not copy tok/s. |
-| extras draft **#16** resident MoE / TP4 serve | **Not taken** | Not dest. Foreign George + Codex. ATen HIP (`moe_resident_decode.cu`). Do not dump. Do not pick. Do not copy tok/s. |
+| extras closed **#16** resident MoE / TP4 serve | **Not taken** | Closed unmerged. Not dest. Foreign George + Codex. Do not dump. Do not pick. Do not copy tok/s. |
