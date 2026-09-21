@@ -128,15 +128,12 @@ keepalive, GDN arenas, `eager_break_during_capture`), product serve
 (`qwen4_exp/**`, TunableOp, PLE offload), skinny GEMM, ConfigH, V1
 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, Qwen4Exp HIP gates /
 wrappers / HC compute / `_contig()` cache, seq cap 6, Flash-Next
-launcher knobs, dest-reverted wvSplitK, QSA prefix-ring, recovered
+launcher knobs, dest-reverted wvSplitK, QSA Triton bounds, recovered
 extras ops, mamba spec-decode `req_idx`, dest T44b `rdna_ar` (still
 opt-in; do not pick Cursor squash), dest PR **#14** (HIP MoE ignores
 the JSON; do not pick), a17t PR **#3**, closed **#5/#11/#13/#14/#15**,
-explore **#9/#10**, closed PR **#12** (superseded by **#15**), dest
-PR **#15** (`f3dd65fa`; QSA live-context + folded **#12** — Python/serve,
-no HIP; do not pick; no tok/s), ROCm platform/worker init, extras EXL3
-docker arch-guard (zoo still one
-`--offload-arch` per fatbin; gfx1150 /
-gfx12xx not dest), Qwen4Exp MTP proposer / skinny `w2_zp` (MTP still
-not dest), amdsmi `get_device_name` torch fallback. Produce (`-cb 3inst`,
-AWQ pack) stays outside hippihx.
+explore **#9/#10**, closed PR **#12** (superseded by **#15**), ROCm
+platform init, extras EXL3 docker arch-guard (one `--offload-arch` per
+fatbin; gfx1150 / gfx12xx not dest), Qwen4Exp MTP (not dest), amdsmi
+`get_device_name` fallback. Produce (`-cb 3inst`, AWQ pack) stays
+outside hippihx.

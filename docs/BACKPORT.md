@@ -19,7 +19,7 @@ until a body migrates and extras binds it.
 | `1046782fb8c4` | deleted `q_gemm_rdna2_awq_prefill.cu` | one W4 family; leftover `_awq_prefill_available` is extras dead code |
 | `820465315bde` | Flash-Next QSA abort tracker | extras Triton; HIP `qsa_rdna2` / `VLLM_RDNA_QSA_HIP` still opt-in |
 | `02adbfd4` | GDN decode fp16 SSM state | observe `attention/gdn_scan`; activations stay fp16 |
-| `1ff73596d81a` | V1 FULL→PIECEWISE + persist keepalive | extras runner. Dest @ `f3dd65fa` (extras **#15**) only redirects FULL when compiled + piecewise. Stay extras. Zoo does not own graph mode. |
+| `1ff73596d81a` | V1 FULL→PIECEWISE + persist keepalive | extras runner. Dest @ `f3dd65fa`: FULL redirect only when compiled + piecewise. Zoo does not own graph mode. |
 | `849292ec` | vLLM custom AR cudagraph-correct | extras serve, not leapdragon `rdna_ar` |
 | `4d25a0483912` | gfx1030 launcher `VLLM_FORCE_CUSTOM_ALL_REDUCE=1` | extras; `envs.py` still False; `VLLM_RDNA_AR` still **0** |
 | `f5cbbdfec494` / `7e70e2400542` | `bench_report.py` / newest-by-mtime | extras ops |
@@ -49,13 +49,9 @@ Other dest-fixed ISA (keep in tile locks, not a dump): GDN prefill `o`
 (`K_STEP=64`) reverted. Live dest bugs: [Dest extras defects](#dest-extras-defects).
 
 Open extras PRs **#2** (GLM Later) and **#3** (a17t WIP). Draft **#9/#10**
-sdot — skip. Closed extras **#11** wvSplitK dest-picked as `c350fa218`,
-then dest-reverted @ `5c4ab989` — **no zoo tile**. Closed extras **#12**
-(superseded, folded into **#15**). Merged extras **#13** T44b / **#14**
-/ **#15** — dest *presence*, observe, do not pick. **#15** is
-Python/serve (QSA live-context + PLE/MTP/graph-redirect). No HIP.
-Do not copy tok/s. Zoo does not own graph mode.
-`rdna_extras_wip_20260910` is not dest.
+sdot — skip. Closed **#11** dest-reverted wvSplitK — **no zoo tile**.
+Closed **#12** superseded by dest **#15**. Merged **#13/#14/#15** dest
+*presence*, observe, do not pick. `rdna_extras_wip_20260910` is not dest.
 
 ## Action
 
@@ -67,7 +63,7 @@ Do not copy tok/s. Zoo does not own graph mode.
 | GDN decode fp16 SSM state | **Later** `attention/gdn_scan`. Recurrence stays 16 fp32 VGPR. |
 | leapdragon `rdna_ar` + PIX helpers + dest T44b (`3b59ee16`) | **Later** `comm.pcie`. Still opt-in. Dest extras `MAX_KB` **64**; zoo **512**. Do not pick squash. |
 | PR **#2** GLM-5.3 KDA/DSA | **Later** `kda_scan` / `dsa_nope` / `qsa_indexer`. Do not name tiles `glm5_*`. |
-| GDN arenas, `rdna2_graph_keepalive.cuh`, breakable cudagraphs, Hybrid W4 gfx10, Flash-Next HC/QSA/PLE/M-RoPE HIP, skinny GEMM / `gemv_f16_rdna2`, PLE schema, W4 MoE oracle, `new_zeros`/`zeros_like`, V1 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, seq cap 6, Flash-Next launcher knobs, HC `_contig()` cache, QSA prefix-ring / live-context bound, mamba spec-decode, T44b wedge, V620 MoE JSON / amdsmi / PLE fp8, ROCm platform init, extras EXL3 docker arch-guard, Qwen4Exp MTP, CPU PLE materialize, recovered extras probes, `qwen4_exp/**` | **Stay extras.** Product gates default off (S6 revert). No new V1 op until dest locks a class. |
+| GDN arenas, `rdna2_graph_keepalive.cuh`, breakable cudagraphs, Hybrid W4 gfx10, Flash-Next HC/QSA/PLE/M-RoPE HIP, skinny GEMM / `gemv_f16_rdna2`, PLE schema, W4 MoE oracle, `new_zeros`/`zeros_like`, V1 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, seq cap 6, Flash-Next launcher knobs, HC `_contig()` cache, QSA Triton bounds, mamba spec-decode, T44b wedge, V620 MoE JSON / amdsmi / PLE, ROCm platform init, extras EXL3 docker arch-guard, Qwen4Exp MTP, recovered extras probes, `qwen4_exp/**` | **Stay extras.** Product gates default off (S6 revert). No new V1 op until dest locks a class. |
 | PR **#3** a17t / explore **#9/#10** sdot / closed **#12** | **Skip.** Second W4 family, not dest, serve-only. **#12** superseded (folded into dest **#15**). |
 | PR **#5** / **#8** Flash-Next, extras **#11** wvSplitK, extras **#13** T44b, extras **#14**, extras **#15** | **Closed.** Dest-landed T44b / #14 / #15 are observe-only. Dest reverted wvSplitK (`5c4ab989`). Do not re-merge. Do not grow `gemv_f16`. |
 
@@ -117,7 +113,7 @@ Until then: observe, lock numbers, keep stubs. Tracker:
 Dest tip `f3dd65fa7063`. Live dest bugs / rolled-back paths — hippihx
 must not reproduce them.
 
-| Defect | Where | Status @ `b33f9b6` | Zoo lock |
+| Defect | Where | Status @ `f3dd65fa` | Zoo lock |
 |---|---|---|---|
 | `llvm.amdgcn.fdot2.bf16.bf16` ISel abort | Hybrid W4 gfx10 + bf16. Dest HIP has **no** `fdot2.bf16`. | **Serve-mitigated** (`59237b3`). | Never `fdot2.bf16`. DOT + GDN HIP = **fp16 act**. |
 | Scale-baked W4 zero-point | `qdq_4_rdna2.cuh` `prep_zero_scale_fp16`: `0xE400 \| zero` then `scale * (-1024 - zero)` in `half`. | **Still live** | Integer `q - zero`, then `* scale`. |
@@ -179,8 +175,4 @@ This review is documentation, not a kernel migrate.
 | PR #2 `glm5_kda_*` / `glm5_dsa_*` | BlivionIaG | BlivionIaG; rename off `glm5_` in a follow-up hippihx commit |
 | PR #3 a17t unique W4 (`d53572644`, later Simon Siebert) | **Not taken** | If dest ever locks that family, pick **their** commits |
 | Explore PRs **#9/#10** sdot | **Not taken** | Not dest |
-| extras PR **#12** CPU PLE / MTP startup | **Not taken** | Closed unmerged. Superseded by **#15**. Foreign: George Muravei-Alkhavoi. No HIP body. |
-| extras PR **#15** QSA live-context + folded **#12** | dest merge `f3dd65fa` | Dest *presence*. Python/Triton/serve. Foreign: George Muravei-Alkhavoi. No HIP body. Do **not** pick `f3dd65fa` / `9a91ff64` / `b2584f01`. Do not copy tok/s. |
-| extras PR **#13** leap T44b `rdna_ar` | dest squash `3b59ee16` | Dest *presence*. Cursor rewrite. `VLLM_RDNA_AR` still **0**. Dest extras `MAX_KB` **64**. Zoo **512**. Do **not** pick squash `3b59ee16` / `aad7d828`. Pick unique Aron Hsiao if migrating. |
-| extras PR **#14** V620 MoE JSON / ROCR amdsmi / PLE fp8 | dest merge `dbb1e776` | Dest *presence*. Cursor rewrite. Stay extras. HIP MoE ignores the JSON. Do **not** pick `dbb1e776` / `b8354ff9` / `16695b2`. Pick unique Aron Hsiao if migrating. No HIP body. |
-| extras mamba spec-decode `req_idx` (`741e5bc3`) | **Not taken** | Serve-only. Author **Karl0007**. Keep **their** Author if dest-locks a pick. No HIP body. |
+| extras dest-presence serve (**#13** T44b / **#14** / **#15** / mamba `741e5bc3` / closed **#12**) | observe | Python/Triton/serve. No HIP migrate. Do not pick Cursor/George/Codex/Karl rewrites. Unique Aron Hsiao `rdna_ar` still pickable. Do not copy tok/s. |
