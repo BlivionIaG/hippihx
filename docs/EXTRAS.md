@@ -10,9 +10,9 @@ Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
 `rdna_extras` @ `f3dd65fa7063` (2026-09-20 20:29 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2**, **#18**. Draft **#17**. Closed
-**#3** (unmerged). Closed **#12** (superseded by **#15**). Closed **#16**
-(unmerged). Merged **#13**, **#14**, **#15**. **No**
+squash is `a4060647cfbb`. Open **#2**, **#18**, **#19**. Draft **#17**.
+Closed **#3** (unmerged). Closed **#12** (superseded by **#15**). Closed
+**#16** (unmerged). Merged **#13**, **#14**, **#15**. **No**
 `torch.ops.hippihx.*`.
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
@@ -137,7 +137,9 @@ launcher knobs, dest-reverted wvSplitK, QSA Triton bounds, recovered
 extras ops, mamba spec-decode `req_idx`, dest T44b `rdna_ar` (still
 opt-in; do not pick Cursor squash), dest PR **#14** (HIP MoE ignores
 the JSON; do not pick), a17t PR **#3** (closed unmerged), PR **#18**
-(GPTQ `BLOCK_KN_SIZE` 256 — not dest DOT W4), closed **#5/#11/#13/#14/#15**,
+(GPTQ `BLOCK_KN_SIZE` 256 — not dest DOT W4), PR **#19** (MTP
+unquantized-weight detect — Python only, MTP still not dest), closed
+**#5/#11/#13/#14/#15**,
 explore **#9/#10**, closed PR **#12** (superseded by **#15**), closed
 PR **#16** (unmerged), draft PR **#17** (resident MoE / TP4 serve —
 not dest), ROCm platform init,
