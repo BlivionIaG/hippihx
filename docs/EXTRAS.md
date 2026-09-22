@@ -10,8 +10,8 @@ Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
 `rdna_extras` @ `f3dd65fa7063` (2026-09-20 20:29 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2**. Draft **#17**. Closed **#3**
-(unmerged). Closed **#12** (superseded by **#15**). Closed **#16**
+squash is `a4060647cfbb`. Open **#2**, **#18**. Draft **#17**. Closed
+**#3** (unmerged). Closed **#12** (superseded by **#15**). Closed **#16**
 (unmerged). Merged **#13**, **#14**, **#15**. **No**
 `torch.ops.hippihx.*`.
 
@@ -49,6 +49,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | GLM-5.3 KDA / DSA | `glm5_*.cu` (PR **#2**) | `kda_scan` / `dsa_nope` / `qsa_indexer` | Later. Drop `glm5_` name. **unvalidated** |
 | leapdragon push AR | `rdna_allreduce.{cu,cuh}` (merged PR **#1**) | `comm/pcie` | Dest extras, default **off**. Occupancy pin closed. **unvalidated** |
 | a17t extra AWQ GEMM / GEMV | `awq_gemm_rdna2.cu` etc. (closed PR **#3**) | — | **skip** — closed unmerged, second W4 family |
+| GPTQ exllama `BLOCK_KN_SIZE` 256 | `q_gemm.cu` (PR **#18**) | — | **skip** — not dest DOT W4. Do not dump. Do not copy tok/s. |
 | Explore W4A8 sdot4 / W4A4 sdot8 | extras PRs **#9/#10** | — | **skip** — not dest |
 | Resident W4A16 MoE skinny decode | `moe_resident_decode.cu` (draft PR **#17**) | — | **skip** — not dest. Opt-in `VLLM_RDNA_MOE_RESIDENT*`. Closed **#16** unmerged. Do not dump. |
 
@@ -135,7 +136,8 @@ wrappers / HC compute / `_contig()` cache, seq cap 6, Flash-Next
 launcher knobs, dest-reverted wvSplitK, QSA Triton bounds, recovered
 extras ops, mamba spec-decode `req_idx`, dest T44b `rdna_ar` (still
 opt-in; do not pick Cursor squash), dest PR **#14** (HIP MoE ignores
-the JSON; do not pick), a17t PR **#3** (closed unmerged), closed **#5/#11/#13/#14/#15**,
+the JSON; do not pick), a17t PR **#3** (closed unmerged), PR **#18**
+(GPTQ `BLOCK_KN_SIZE` 256 — not dest DOT W4), closed **#5/#11/#13/#14/#15**,
 explore **#9/#10**, closed PR **#12** (superseded by **#15**), closed
 PR **#16** (unmerged), draft PR **#17** (resident MoE / TP4 serve —
 not dest), ROCm platform init,
