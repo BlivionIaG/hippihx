@@ -7,12 +7,13 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `48c56efbe80b` (2026-09-24 08:22 UTC). Dest default
+`rdna_extras` @ `68a635ed8d78` (2026-09-24 17:49 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2**, **#18**, **#19**, **#20**, draft
-**#21**. Closed **#3/#16** unmerged; **#12** superseded by **#15**.
-Merged **#13**, **#14**, **#15**, **#17**. **No** `torch.ops.hippihx.*`.
+squash is `a4060647cfbb`. Open **#2**, **#18**, **#19**. Closed
+**#3/#16** unmerged; **#21** dest-integrated unmerged; **#12**
+superseded by **#15**. Merged **#13**, **#14**, **#15**, **#17**,
+**#20**. **No** `torch.ops.hippihx.*`.
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs.
@@ -68,7 +69,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | Flash-Next HC/QSA/PLE HIP | dest scaffolding | **off**; S6 default-on reverted; wrappers @ `d0d577f1`; isolated HC @ `8960a3bc`; `_contig()` cache @ `50120e13` (same-shape clobber still live) | extras until dest-on |
 | Hybrid W4A16 gfx10 | extras linear backend | ungated; RDNA2 W4 auto on gfx1030 | not a second W4 family |
 | gfx1030 wvSplitK n≤5 | extras dense GEMM (`c350fa218`) | **dest-reverted** (`5c4ab989`); decode stays `gemv_f16_rdna2` `M<=8` | **no tile** |
-| V1 FULL_AND_PIECEWISE | dest maps FULL→PIECEWISE + persist keepalive | extras runner (`1ff73596`); dest @ `f3dd65fa` only redirects FULL when compiled + piecewise; Flash-Next launcher FULL_AND_PIECEWISE (`609c9c0d`) | serve |
+| V1 FULL_AND_PIECEWISE | dest captures FULL + piecewise | extras runner (`1ff73596`); dest @ `68a635ed` keeps FULL decode graphs; piecewise for mixed/prefill | serve |
 | Custom AR (vLLM/ROCm) | force custom all-reduce on PCIe | **on** in dest gfx1030 launcher (`4d25a048`); `envs.py` still False; cudagraph-correct @ `849292ec` | serve |
 | leapdragon `rdna_ar` | size-gated Uncached+push | **off** (`VLLM_RDNA_AR=0`) | `comm/pcie` Later |
 | Resident W4A16 MoE | native shuffled layout + skinny GEMV | **off** (dest **#17** @ `e1315629`) | extras |
@@ -136,11 +137,11 @@ launcher knobs, dest-reverted wvSplitK, QSA Triton bounds, recovered
 extras ops, mamba spec-decode `req_idx`, dest T44b `rdna_ar` (still
 opt-in; do not pick Cursor squash), dest PR **#14** (HIP MoE ignores
 the JSON; do not pick), dest **#17** (resident MoE ATen HIP; do not
-dump; do not pick), a17t PR **#3** (closed unmerged), PR **#18**
+dump; do not pick), dest PR **#20** / dest-integrated PR **#21** (FULL+PIECEWISE
+serve; zoo does not own graph mode; do not pick; do not copy tok/s),
+a17t PR **#3** (closed unmerged), PR **#18**
 (GPTQ `BLOCK_KN_SIZE` 256), PR **#19** (MTP unquantized-weight detect),
-PR **#20** (compiled PIECEWISE serve; zoo does not own graph mode),
-PR **#21** (keep FULL decode graphs; not dest),
-closed **#5/#11/#13/#14/#15/#17**, explore **#9/#10**, closed PR **#12**
+closed **#5/#11/#13/#14/#15/#17/#20/#21**, explore **#9/#10**, closed PR **#12**
 (superseded by **#15**), closed PR **#16**, ROCm platform init, extras
 EXL3 docker arch-guard (one `--offload-arch` per fatbin; gfx1150 /
 gfx12xx not dest), Qwen4Exp MTP (not dest), amdsmi `get_device_name`
