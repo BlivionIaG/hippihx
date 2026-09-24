@@ -32,9 +32,9 @@ until a body migrates and extras binds it.
 | `3bddd3c9a5d1` | Flash-Next production launcher (`serve_gfx1030_flashnext.sh`) | extras scripts. PIECEWISE + seq cap 6. leapdragon `VLLM_RDNA_AR` unset (still **0**). Zoo still no Finegrained. |
 | `50120e13b468` | HC `_contig()` capture-safe per-shape cache | extras product Python. Gate still **off**. Remaining same-shape clobber. No V1 op. |
 | `5c4ab9891910` | dest-reverted gfx1030 wvSplitK decode port | extras dense GEMM. Kernel asserts on gfx1030 under capture. Keeps `gemv_f16_rdna2` for decode `M<=8`. **No zoo tile.** Do not reintroduce `gemv_f16`. |
-| `e45dd5cb2de8` | QSA `CircularBufferManager` empty-ring prefix hits | extras v1 core. Observe `attention/qsa_indexer`. Empty compression-group ring is valid. Do not copy tok/s. |
+| `e45dd5cb2de8` | QSA `CircularBufferManager` empty-ring prefix hits | extras v1 core. Observe `attention/qsa_indexer`. Empty compression-group ring is valid. |
 | `c59a23f625e0` | recovered extras probes / benches / HC Triton WIP | extras ops. HC Triton + graph-keepalive diagnostics **not** on the serve path. Do not dump. |
-| `31003ff` / `ae5c7edc` / `37345ee9` / `aaa4775a` / `0dd38115` / `657bdba8` / `9c602943` / `609c9c0d` | Flash-Next launcher serve knobs | extras scripts. Vision-on, then `609c9c0d` FULL_AND_PIECEWISE (ROCm executes as PIECEWISE). Stay extras. Do not copy tok/s. |
+| `31003ff` / `ae5c7edc` / `37345ee9` / `aaa4775a` / `0dd38115` / `657bdba8` / `9c602943` / `609c9c0d` | Flash-Next launcher serve knobs | extras scripts. Vision-on, then `609c9c0d` FULL_AND_PIECEWISE (ROCm executes as PIECEWISE). Stay extras. |
 | `741e5bc31ae5` | mamba spec-decode tables index by `req_idx` | extras worker (upstream vLLM #55506 port; Author Karl0007). Persistent per-request-slot tables. V1 `req_idx == batch_idx`. Stay extras. |
 | `3b59ee16e553` | extras PR **#13** squash (T44b `rdna_ar` VRAM flags + wedge) | Later `comm.pcie`. Still opt-in (`VLLM_RDNA_AR=0`). Dest extras `MAX_KB` default **64**. Zoo lock **512**. Do **not** pick squash (Cursor rewrite). |
 | `dbb1e7764aba` | extras PR **#14** merge (V620 Triton MoE JSON / ROCR amdsmi / PLE fp8) | Stay extras. HIP MoE ignores the JSON. Cursor rewrite — do not pick. |
@@ -42,17 +42,17 @@ until a body migrates and extras binds it.
 | `3d6df9ed617a` | extras `exl3_dot2_*` `__HIP__RDNA__` guard for docker multi-arch | Stay extras. Zoo still one `--offload-arch` per fatbin. gfx1150 / gfx12xx not dest. Do not dump. |
 | `ed94e3f3d299` | Qwen4Exp MTP proposer allowlist + skinny `w2_zp` | Stay extras. MTP still not dest. No HIP body. |
 | `b33f9b66eb2b` | `get_device_name` torch fallback when amdsmi has no handles | Stay extras. Platform only. |
-| `f3dd65fa7063` | extras PR **#15** merge (QSA live-context bound + folded **#12** PLE/MTP/graph-redirect) | Stay extras. Python/Triton/serve. No HIP body. Foreign George + Codex. Do not pick merge. Do not copy tok/s. |
-| `e131562936f9` | extras PR **#17** merge (resident W4A16 MoE / Mamba #55450 retire) | Stay extras. ATen HIP (`moe_resident_decode.cu`). `VLLM_RDNA_MOE_RESIDENT*` default **off**. Dest `VLLM_RDNA_AR` still **0**. Foreign George + Codex. Do not pick merge. Do not dump. Do not copy tok/s. |
-| `48c56efbe80b` | pin `AttentionConfig.backend = RDNA_ATTN` when `VLLM_USE_RDNA2_FA=1` | Stay extras. Python platform (`vllm/platforms/rocm.py`). API-server env; workers inherit config. Dest `VLLM_RDNA_AR` still **0**. Unique Blivion. No HIP. Do not copy tok/s. |
-| `68a635ed8d78` | extras **#20** capture + dest-integrated **#21** FULL+PIECEWISE | Stay extras. Python/serve. Keeps FULL decode graphs; piecewise for mixed/prefill. Foreign Waldecir + Cursor. Do not pick merges. Do not copy tok/s. Dest `VLLM_RDNA_AR` still **0**. Zoo does not own graph mode. |
-| `2a5e89368272` | extras PR **#19** merge (MTP unquantized-weight detect) | Stay extras. Python only (`qwen3_5_mtp.py`). MTP still not dest. Foreign a17t + opencode. Do not pick merge. Do not copy tok/s. Dest `VLLM_RDNA_AR` still **0**. |
+| `f3dd65fa7063` | extras PR **#15** merge (QSA live-context bound + folded **#12** PLE/MTP/graph-redirect) | Stay extras. Python/Triton/serve. Foreign George + Codex. Do not pick. |
+| `e131562936f9` | extras PR **#17** merge (resident W4A16 MoE / Mamba #55450 retire) | Stay extras. ATen HIP. `VLLM_RDNA_MOE_RESIDENT*` default **off**. Foreign George + Codex. Do not pick. |
+| `48c56efbe80b` | pin `AttentionConfig.backend = RDNA_ATTN` when `VLLM_USE_RDNA2_FA=1` | Stay extras. Python platform. Unique Blivion. |
+| `68a635ed8d78` | extras **#20** capture + dest-integrated **#21** FULL+PIECEWISE | Stay extras. Keeps FULL decode graphs; piecewise mixed/prefill. Foreign Waldecir + Cursor. Zoo does not own graph mode. |
+| `2a5e89368272` | extras PR **#19** merge (MTP unquantized-weight detect) | Stay extras. Python only. MTP still not dest. Foreign a17t + opencode. Do not pick. |
 
 Other dest-fixed ISA (keep in tile locks, not a dump): GDN prefill `o`
 `i_t_local`; causal_conv FIR pre-shift then shift; ConfigH
 (`K_STEP=64`) reverted. Live dest bugs: [Dest extras defects](#dest-extras-defects).
 
-Open extras PRs **#2** (GLM Later), **#18**. Draft **#9/#10**
+Open extras PRs **#2** (GLM Later), **#18**, **#22**. Draft **#9/#10**
 sdot — skip. Closed **#3/#16** unmerged, **#21** dest-integrated
 unmerged, **#11** dest-reverted wvSplitK (**no zoo tile**), **#12**
 superseded by dest **#15**. Merged **#13/#14/#15/#17/#19/#20** dest
@@ -70,7 +70,7 @@ superseded by dest **#15**. Merged **#13/#14/#15/#17/#19/#20** dest
 | leapdragon `rdna_ar` + PIX helpers + dest T44b (`3b59ee16`) | **Later** `comm.pcie`. Still opt-in. Dest extras `MAX_KB` **64**; zoo **512**. Do not pick squash. |
 | PR **#2** GLM-5.3 KDA/DSA | **Later** `kda_scan` / `dsa_nope` / `qsa_indexer`. Do not name tiles `glm5_*`. |
 | GDN arenas, `rdna2_graph_keepalive.cuh`, breakable cudagraphs, Hybrid W4 gfx10, Flash-Next HC/QSA/PLE/M-RoPE HIP, skinny GEMM / `gemv_f16_rdna2`, PLE schema, W4 MoE oracle, `new_zeros`/`zeros_like`, V1 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, seq cap 6, Flash-Next launcher knobs, HC `_contig()` cache, QSA Triton bounds, mamba spec-decode, T44b wedge, V620 MoE JSON / amdsmi / PLE, ROCm platform init, extras EXL3 docker arch-guard, Qwen4Exp MTP, recovered extras probes, resident MoE, FA RDNA_ATTN pin, `qwen4_exp/**` | **Stay extras.** Product gates default off (S6 revert). No new V1 op until dest locks a class. |
-| PR **#3** a17t / explore **#9/#10** sdot / closed **#12** / closed **#16** / PR **#18** | **Skip.** Second W4 family, not dest, serve-only. **#16** unmerged. **#18** GPTQ `BLOCK_KN_SIZE` 256. |
+| PR **#3** a17t / explore **#9/#10** sdot / closed **#12** / closed **#16** / PR **#18** / PR **#22** | **Skip.** Second W4 family, not dest, serve-only. **#16** unmerged. **#18** GPTQ `BLOCK_KN_SIZE` 256. **#22** two-shot `rdna_ar` (Cursor; library still **0**; zoo **512**; do not dump). |
 | PR **#5** / **#8** Flash-Next, extras **#11** wvSplitK, extras **#13** T44b, extras **#14**, extras **#15**, extras **#17**, extras **#19**, extras **#20**, extras **#21** | **Closed.** Dest-landed T44b / #14 / #15 / #17 / #19 / #20 / dest-integrated #21 are observe-only. Dest reverted wvSplitK (`5c4ab989`). Do not re-merge. Do not grow `gemv_f16`. |
 
 Bodies stay in extras because every dest HIP file includes `torch/all.h`.
@@ -183,4 +183,4 @@ This review is documentation, not a kernel migrate.
 | PR #3 a17t unique W4 (`d53572644`, later Simon Siebert) | **Not taken** | Closed unmerged. If dest ever locks that family, pick **their** commits |
 | Explore PRs **#9/#10** sdot | **Not taken** | Not dest |
 | extras dest-presence serve (**#13** T44b / **#14** / **#15** / **#17** / **#19** / **#20** / dest-integrated **#21** / mamba `741e5bc3` / closed **#12**) | observe | Python/Triton/serve + dest-landed ATen HIP. No HIP migrate. Do not pick Cursor/George/Codex/Karl/Waldecir/a17t rewrites. Unique Aron Hsiao `rdna_ar` still pickable. |
-| extras not dest (**#16** closed / **#18**) | **Not taken** | GPTQ `BLOCK_KN_SIZE` 256. |
+| extras not dest (**#16** closed / **#18** / **#22**) | **Not taken** | GPTQ `BLOCK_KN_SIZE` 256. Two-shot `rdna_ar`. |
