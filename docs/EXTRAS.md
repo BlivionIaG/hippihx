@@ -7,13 +7,13 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `68a635ed8d78` (2026-09-24 17:49 UTC). Dest default
+`rdna_extras` @ `2a5e89368272` (2026-09-24 21:52 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2**, **#18**, **#19**. Closed
-**#3/#16** unmerged; **#21** dest-integrated unmerged; **#12**
-superseded by **#15**. Merged **#13**, **#14**, **#15**, **#17**,
-**#20**. **No** `torch.ops.hippihx.*`.
+squash is `a4060647cfbb`. Open **#2**, **#18**. Closed **#3/#16**
+unmerged; **#21** dest-integrated unmerged; **#12** superseded by
+**#15**. Merged **#13**, **#14**, **#15**, **#17**, **#19**, **#20**.
+**No** `torch.ops.hippihx.*`.
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs.
@@ -139,9 +139,10 @@ opt-in; do not pick Cursor squash), dest PR **#14** (HIP MoE ignores
 the JSON; do not pick), dest **#17** (resident MoE ATen HIP; do not
 dump; do not pick), dest PR **#20** / dest-integrated PR **#21** (FULL+PIECEWISE
 serve; zoo does not own graph mode; do not pick; do not copy tok/s),
-a17t PR **#3** (closed unmerged), PR **#18**
-(GPTQ `BLOCK_KN_SIZE` 256), PR **#19** (MTP unquantized-weight detect),
-closed **#5/#11/#13/#14/#15/#17/#20/#21**, explore **#9/#10**, closed PR **#12**
+dest PR **#19** (MTP unquantized-weight detect; MTP still not dest;
+do not pick a17t/opencode), a17t PR **#3** (closed unmerged), PR **#18**
+(GPTQ `BLOCK_KN_SIZE` 256),
+closed **#5/#11/#13/#14/#15/#17/#19/#20/#21**, explore **#9/#10**, closed PR **#12**
 (superseded by **#15**), closed PR **#16**, ROCm platform init, extras
 EXL3 docker arch-guard (one `--offload-arch` per fatbin; gfx1150 /
 gfx12xx not dest), Qwen4Exp MTP (not dest), amdsmi `get_device_name`
