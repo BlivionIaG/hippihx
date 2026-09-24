@@ -10,9 +10,9 @@ Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
 `rdna_extras` @ `e131562936f9` (2026-09-23 20:31 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2**, **#18**, **#19**, **#20**. Closed
-**#3/#16** unmerged; **#12** superseded by **#15**. Merged **#13**,
-**#14**, **#15**, **#17**. **No** `torch.ops.hippihx.*`.
+squash is `a4060647cfbb`. Open **#2**, **#18**, **#19**, **#20**, draft
+**#21**. Closed **#3/#16** unmerged; **#12** superseded by **#15**.
+Merged **#13**, **#14**, **#15**, **#17**. **No** `torch.ops.hippihx.*`.
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs.
@@ -139,6 +139,7 @@ the JSON; do not pick), dest **#17** (resident MoE ATen HIP; do not
 dump; do not pick), a17t PR **#3** (closed unmerged), PR **#18**
 (GPTQ `BLOCK_KN_SIZE` 256), PR **#19** (MTP unquantized-weight detect),
 PR **#20** (compiled PIECEWISE serve; zoo does not own graph mode),
+draft **#21** (keep FULL decode graphs; not dest),
 closed **#5/#11/#13/#14/#15/#17**, explore **#9/#10**, closed PR **#12**
 (superseded by **#15**), closed PR **#16**, ROCm platform init, extras
 EXL3 docker arch-guard (one `--offload-arch` per fatbin; gfx1150 /
