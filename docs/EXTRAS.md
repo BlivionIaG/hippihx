@@ -139,7 +139,7 @@ the JSON; do not pick), dest **#17** (resident MoE ATen HIP; do not
 dump; do not pick), a17t PR **#3** (closed unmerged), PR **#18**
 (GPTQ `BLOCK_KN_SIZE` 256), PR **#19** (MTP unquantized-weight detect),
 PR **#20** (compiled PIECEWISE serve; zoo does not own graph mode),
-draft **#21** (keep FULL decode graphs; not dest),
+PR **#21** (keep FULL decode graphs; not dest),
 closed **#5/#11/#13/#14/#15/#17**, explore **#9/#10**, closed PR **#12**
 (superseded by **#15**), closed PR **#16**, ROCm platform init, extras
 EXL3 docker arch-guard (one `--offload-arch` per fatbin; gfx1150 /
