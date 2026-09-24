@@ -7,7 +7,7 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `e131562936f9` (2026-09-23 20:31 UTC). Dest default
+`rdna_extras` @ `48c56efbe80b` (2026-09-24 08:22 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
 squash is `a4060647cfbb`. Open **#2**, **#18**, **#19**, **#20**, draft
@@ -61,7 +61,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | EXL3 codebook / memory / prefill | `cb==0` 3inst produce; `full` int16 trellis | 3inst dest; `VLLM_EXL3_PREFILL_DECODE=1` | consume only |
 | GDN decode HIP | packed HIP vs Triton/FLA | on unless `VLLM_GDN_DECODE_RDNA2=0`; fires on fp16 SSM @ `02adbfd4` | `gdn_scan` |
 | GDN prefill HIP | 5-kernel chain | **opt-in** (`=1`); default Triton/FLA (`cd1231fd`) | `gdn_scan` |
-| FA backend / GQA prefill | `RDNA_ATTN` when gfx10x | `VLLM_USE_RDNA2_FA`; GQA **`subgroup`** | `fa_fdot2` |
+| FA backend / GQA prefill | `RDNA_ATTN` when gfx10x | `VLLM_USE_RDNA2_FA`; dest @ `48c56ef` pins `AttentionConfig` when env is `1` and backend unset; GQA **`subgroup`** | `fa_fdot2` |
 | FA spec/MTP gate | opt-in abort on verify-shaped batches | **off** | serve |
 | MLA sparse HIP | indexer + sparse MLA | `VLLM_USE_RDNA2_MLA=1` | indexer / `dsa_nope` |
 | causal conv HIP | update + fwd | on unless set `0` | `causal_conv` |
@@ -80,7 +80,7 @@ stay extras (no D2H under capture in the zoo).
 
 | Env | Default (as read in extras) | Role |
 |---|---|---|
-| `VLLM_USE_RDNA2_FA` | envs.py `False`; `rdna_attn` treats missing as `"1"` | FA-RDNA2 / `RDNA_ATTN` |
+| `VLLM_USE_RDNA2_FA` | envs.py `False`; dest @ `48c56ef` pins `RDNA_ATTN` in `check_and_update_config` when `"1"` | FA-RDNA2 / `RDNA_ATTN` |
 | `VLLM_USE_RDNA2_MLA` | off unless `"1"` | sparse MLA + paged MQA HIP |
 | `VLLM_FARDNA2_ENABLE_SPEC_GATE` | `"0"` | MTP-verify abort (opt-in) |
 | `VLLM_FARDNA2_SPEC_VERIFY_Q_LEN` | `"3"` | spec-gate q len |
@@ -144,4 +144,5 @@ closed **#5/#11/#13/#14/#15/#17**, explore **#9/#10**, closed PR **#12**
 (superseded by **#15**), closed PR **#16**, ROCm platform init, extras
 EXL3 docker arch-guard (one `--offload-arch` per fatbin; gfx1150 /
 gfx12xx not dest), Qwen4Exp MTP (not dest), amdsmi `get_device_name`
-fallback. Produce (`-cb 3inst`, AWQ pack) stays outside hippihx.
+fallback, dest FA `RDNA_ATTN` pin (`48c56ef`). Produce (`-cb 3inst`,
+AWQ pack) stays outside hippihx.
