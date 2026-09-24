@@ -179,4 +179,4 @@ This review is documentation, not a kernel migrate.
 | PR #3 a17t unique W4 (`d53572644`, later Simon Siebert) | **Not taken** | Closed unmerged. If dest ever locks that family, pick **their** commits |
 | Explore PRs **#9/#10** sdot | **Not taken** | Not dest |
 | extras dest-presence serve (**#13** T44b / **#14** / **#15** / **#17** / mamba `741e5bc3` / closed **#12**) | observe | Python/Triton/serve + dest-landed ATen HIP. No HIP migrate. Do not pick Cursor/George/Codex/Karl rewrites. Unique Aron Hsiao `rdna_ar` still pickable. |
-| extras not dest (**#16** closed / **#18** / **#19** / **#20** / draft **#21**) | **Not taken** | GPTQ `BLOCK_KN_SIZE` 256, MTP detect, compiled PIECEWISE serve. |
+| extras not dest (**#16** closed / **#18** / **#19** / **#20** / PR **#21**) | **Not taken** | GPTQ `BLOCK_KN_SIZE` 256, MTP detect, compiled PIECEWISE serve. |
