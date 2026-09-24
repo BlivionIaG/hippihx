@@ -7,12 +7,12 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `f3dd65fa7063` (2026-09-20 20:29 UTC). Dest default
+`rdna_extras` @ `48c56efbe80b` (2026-09-24 08:22 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2**, **#17**, **#18**, **#19**.
-Closed **#3/#16** unmerged; **#12** superseded by **#15**. Merged
-**#13**, **#14**, **#15**. **No** `torch.ops.hippihx.*`.
+squash is `a4060647cfbb`. Open **#2**, **#18**, **#19**, **#20**, draft
+**#21**. Closed **#3/#16** unmerged; **#12** superseded by **#15**.
+Merged **#13**, **#14**, **#15**, **#17**. **No** `torch.ops.hippihx.*`.
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs.
@@ -35,7 +35,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | W4A16 dense decode | `q_gemm_rdna2.cu` | `gemm/w4a16_fdot2` | GPTQ + AWQ = pack/zeros, one GEMM. Dest ZP is scale-baked `half` — zoo uses integer `q-zero` then scale. **unvalidated** |
 | W4A16 prefill | `q_gemm_rdna2_prefill.cu` | `gemm/w4a16_fdot2` | Unified GPTQ+AWQ. ConfigA for `M>256`. Dest reverted ConfigH. Dest can pick K=640→16×40; zoo requires equal ×32. **unvalidated** |
 | W4A16 AWQ high-M prefill | ~~`q_gemm_rdna2_awq_prefill.cu`~~ | `gemm/w4a16_fdot2` | **Dest-deleted** @ `1046782`. Do not reintroduce. |
-| W4A16 MoE | `moe_q_gemm_rdna2.cu` | `moe/routed` | Same W4 family. moe_align prealloc is extras. **unvalidated** |
+| W4A16 MoE | `moe_q_gemm_rdna2.cu` | `moe/routed` | Same W4 family. Dest @ `e1315629` dequant/eight-row stay extras. moe_align prealloc is extras. **unvalidated** |
 | EXL3 dense / MoE / dequant / Hadamard / trellis decode | `exl3_dot2_*.cu` | `gemm/exl3_3inst` | Consume `-cb 3inst`. Produce outside. UNC-26. **unvalidated** |
 | GDN packed decode | `gdn_decode_rdna2.cu` | `attention/gdn_scan` | Dest @ `02adbfd4`: SSM **fp16 or fp32**. Dest @ `388a61b6`: no one-shot `zero_()` wipe. **fp16 act only.** **unvalidated** |
 | GDN prefill chain | `gdn_prefill_*_rdna2.cu` | `attention/gdn_scan` | **Opt-in** (`VLLM_GDN_HIP_PREFILL=1`; default Triton/FLA @ `cd1231fd`). `o` varlen `i_t_local` dest-fixed. Dispatch still misses dtype. **unvalidated** |
@@ -50,7 +50,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | a17t extra AWQ GEMM / GEMV | `awq_gemm_rdna2.cu` etc. (closed PR **#3**) | — | **skip** — closed unmerged, second W4 family |
 | GPTQ exllama `BLOCK_KN_SIZE` 256 | `q_gemm.cu` (PR **#18**) | — | **skip** — not dest DOT W4 |
 | Explore W4A8 sdot4 / W4A4 sdot8 | extras PRs **#9/#10** | — | **skip** — not dest |
-| Resident W4A16 MoE skinny decode | `moe_resident_decode.cu` (PR **#17**) | — | **skip** — not dest. Opt-in `VLLM_RDNA_MOE_RESIDENT*`. Closed **#16** unmerged |
+| Resident W4A16 MoE skinny decode | `moe_resident_decode.cu` (dest **#17** @ `e1315629`) | `moe/routed` (watch) | Stay extras. Opt-in `VLLM_RDNA_MOE_RESIDENT*`. ATen HIP. Do not dump. Closed **#16** unmerged. **unvalidated** |
 
 ### Modes / dispatch
 
@@ -61,7 +61,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | EXL3 codebook / memory / prefill | `cb==0` 3inst produce; `full` int16 trellis | 3inst dest; `VLLM_EXL3_PREFILL_DECODE=1` | consume only |
 | GDN decode HIP | packed HIP vs Triton/FLA | on unless `VLLM_GDN_DECODE_RDNA2=0`; fires on fp16 SSM @ `02adbfd4` | `gdn_scan` |
 | GDN prefill HIP | 5-kernel chain | **opt-in** (`=1`); default Triton/FLA (`cd1231fd`) | `gdn_scan` |
-| FA backend / GQA prefill | `RDNA_ATTN` when gfx10x | `VLLM_USE_RDNA2_FA`; GQA **`subgroup`** | `fa_fdot2` |
+| FA backend / GQA prefill | `RDNA_ATTN` when gfx10x | `VLLM_USE_RDNA2_FA`; dest @ `48c56ef` pins `AttentionConfig` when env is `1` and backend unset; GQA **`subgroup`** | `fa_fdot2` |
 | FA spec/MTP gate | opt-in abort on verify-shaped batches | **off** | serve |
 | MLA sparse HIP | indexer + sparse MLA | `VLLM_USE_RDNA2_MLA=1` | indexer / `dsa_nope` |
 | causal conv HIP | update + fwd | on unless set `0` | `causal_conv` |
@@ -71,7 +71,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | V1 FULL_AND_PIECEWISE | dest maps FULL→PIECEWISE + persist keepalive | extras runner (`1ff73596`); dest @ `f3dd65fa` only redirects FULL when compiled + piecewise; Flash-Next launcher FULL_AND_PIECEWISE (`609c9c0d`) | serve |
 | Custom AR (vLLM/ROCm) | force custom all-reduce on PCIe | **on** in dest gfx1030 launcher (`4d25a048`); `envs.py` still False; cudagraph-correct @ `849292ec` | serve |
 | leapdragon `rdna_ar` | size-gated Uncached+push | **off** (`VLLM_RDNA_AR=0`) | `comm/pcie` Later |
-| Resident W4A16 MoE | native shuffled layout + skinny GEMV | **off** (PR **#17**) | extras |
+| Resident W4A16 MoE | native shuffled layout + skinny GEMV | **off** (dest **#17** @ `e1315629`) | extras |
 
 ### Env (extras-added / extras-used)
 
@@ -80,7 +80,7 @@ stay extras (no D2H under capture in the zoo).
 
 | Env | Default (as read in extras) | Role |
 |---|---|---|
-| `VLLM_USE_RDNA2_FA` | envs.py `False`; `rdna_attn` treats missing as `"1"` | FA-RDNA2 / `RDNA_ATTN` |
+| `VLLM_USE_RDNA2_FA` | envs.py `False`; dest @ `48c56ef` pins `RDNA_ATTN` in `check_and_update_config` when `"1"` | FA-RDNA2 / `RDNA_ATTN` |
 | `VLLM_USE_RDNA2_MLA` | off unless `"1"` | sparse MLA + paged MQA HIP |
 | `VLLM_FARDNA2_ENABLE_SPEC_GATE` | `"0"` | MTP-verify abort (opt-in) |
 | `VLLM_FARDNA2_SPEC_VERIFY_Q_LEN` | `"3"` | spec-gate q len |
@@ -98,7 +98,7 @@ stay extras (no D2H under capture in the zoo).
 | `VLLM_EXL3_FOLDED_CACHE` | unset | folded-weight cache dir |
 | `VLLM_ROCM_USE_SKINNY_GEMM` | `True` | skinny GEMM |
 | `VLLM_ROCM_MOE_SKINNY` | `1` | MoE skinny |
-| `VLLM_RDNA_MOE_RESIDENT` / `VLLM_RDNA_MOE_RESIDENT_SKINNY` | `"0"` (PR **#17**) | resident W4A16 MoE layout / skinny decode |
+| `VLLM_RDNA_MOE_RESIDENT` / `VLLM_RDNA_MOE_RESIDENT_SKINNY` | `"0"` (dest **#17** @ `e1315629`) | resident W4A16 MoE layout / skinny decode |
 | `VLLM_FA_RDNA2_GQA_MODE` | `subgroup` | FA GQA-subgroup prefill |
 | `VLLM_RDNA_HC_PREFILL_HIP` / `VLLM_RDNA_QSA_HIP` / `VLLM_RDNA_PLE_CONV_HIP` | `"0"` | Flash-Next product HIP (opt-in) |
 | `VLLM_RDNA_FUSED_HC` / `VLLM_RDNA_FUSED_SE` | `"1"` (Flash-Next production launcher sets fused HC `0` @ `3bddd3c9`) | fused decode glue |
@@ -135,11 +135,14 @@ wrappers / HC compute / `_contig()` cache, seq cap 6, Flash-Next
 launcher knobs, dest-reverted wvSplitK, QSA Triton bounds, recovered
 extras ops, mamba spec-decode `req_idx`, dest T44b `rdna_ar` (still
 opt-in; do not pick Cursor squash), dest PR **#14** (HIP MoE ignores
-the JSON; do not pick), a17t PR **#3** (closed unmerged), PR **#18**
+the JSON; do not pick), dest **#17** (resident MoE ATen HIP; do not
+dump; do not pick), a17t PR **#3** (closed unmerged), PR **#18**
 (GPTQ `BLOCK_KN_SIZE` 256), PR **#19** (MTP unquantized-weight detect),
-closed **#5/#11/#13/#14/#15**, explore **#9/#10**, closed PR **#12**
-(superseded by **#15**), closed PR **#16**, PR **#17** (resident
-MoE), ROCm platform init, extras EXL3 docker arch-guard (one
-`--offload-arch` per fatbin; gfx1150 / gfx12xx not dest), Qwen4Exp MTP
-(not dest), amdsmi `get_device_name` fallback. Produce (`-cb 3inst`,
+PR **#20** (compiled PIECEWISE serve; zoo does not own graph mode),
+PR **#21** (keep FULL decode graphs; not dest),
+closed **#5/#11/#13/#14/#15/#17**, explore **#9/#10**, closed PR **#12**
+(superseded by **#15**), closed PR **#16**, ROCm platform init, extras
+EXL3 docker arch-guard (one `--offload-arch` per fatbin; gfx1150 /
+gfx12xx not dest), Qwen4Exp MTP (not dest), amdsmi `get_device_name`
+fallback, dest FA `RDNA_ATTN` pin (`48c56ef`). Produce (`-cb 3inst`,
 AWQ pack) stays outside hippihx.
