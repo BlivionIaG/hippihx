@@ -200,7 +200,7 @@ One V1 id per tile (`HIPPIHX_V1_OP_*`). Serve wraps as
 `torch.ops.hippihx.<op>` — never a second Triton path in this library.
 Python mirror: `hippihx.v1` (`V1OpId`, `ABI_REVISION`). Caps include
 optional activation `dtype` (revision **2**). Qualnames `attention.*`
-(revision **3**; ids unchanged). Dest extras tip `f3dd65fa7063` still
+(revision **3**; ids unchanged). Dest extras tip `2a5e89368272` still
 has no `torch.ops.hippihx.*` rewire — see [`BACKPORT.md`](BACKPORT.md).
 Do not edit `opengfx1030/vllm-rdna` from this tree.
 
