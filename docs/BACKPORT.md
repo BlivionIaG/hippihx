@@ -53,7 +53,7 @@ Other dest-fixed ISA (keep in tile locks, not a dump): GDN prefill `o`
 `i_t_local`; causal_conv FIR pre-shift then shift; ConfigH
 (`K_STEP=64`) reverted. Live dest bugs: [Dest extras defects](#dest-extras-defects).
 
-Open extras PRs **#2** (GLM Later), **#18**, **#22**. Draft **#9/#10**
+Open extras PRs **#2** (GLM Later), **#18**, **#22**, **#24**. Draft **#9/#10**
 sdot, **#23** PCIe P2P KV — skip. Closed **#3/#16** unmerged, **#21** dest-integrated
 unmerged, **#11** dest-reverted wvSplitK (**no zoo tile**), **#12**
 superseded by dest **#15**. Merged **#13/#14/#15/#17/#19/#20** dest
@@ -71,7 +71,7 @@ superseded by dest **#15**. Merged **#13/#14/#15/#17/#19/#20** dest
 | leapdragon `rdna_ar` + PIX helpers + dest T44b (`3b59ee16`) | **Later** `comm.pcie`. Still opt-in. Dest extras `MAX_KB` **64**; zoo **512**. Do not pick squash. |
 | PR **#2** GLM-5.3 KDA/DSA | **Later** `kda_scan` / `dsa_nope` / `qsa_indexer`. Do not name tiles `glm5_*`. |
 | GDN arenas, `rdna2_graph_keepalive.cuh`, breakable cudagraphs, Hybrid W4 gfx10, Flash-Next HC/QSA/PLE/M-RoPE HIP, skinny GEMM / `gemv_f16_rdna2`, PLE schema, W4 MoE oracle, `new_zeros`/`zeros_like`, V1 FULL→PIECEWISE, vLLM custom AR, `bench_report.py`, seq cap 6, Flash-Next launcher knobs, HC `_contig()` cache, QSA Triton bounds, mamba spec-decode, T44b wedge, V620 MoE JSON / amdsmi / PLE, ROCm platform init, extras EXL3 docker arch-guard, Qwen4Exp MTP, recovered extras probes, resident MoE, FA RDNA_ATTN pin, `qwen4_exp/**` | **Stay extras.** Product gates default off (S6 revert). No new V1 op until dest locks a class. |
-| PR **#3** a17t / explore **#9/#10** sdot / closed **#12** / closed **#16** / PR **#18** / PR **#22** / PR **#23** | **Skip.** Second W4 family, not dest, serve-only. **#16** unmerged. **#18** GPTQ `BLOCK_KN_SIZE` 256. **#22** two-shot `rdna_ar` (Cursor; library still **0**; zoo **512**; do not dump). **#23** PCIe P2P KV (Cursor; HIP IPC SDMA; zoo `comm.pcie` is AR, not KV disagg). |
+| PR **#3** a17t / explore **#9/#10** sdot / closed **#12** / closed **#16** / PR **#18** / PR **#22** / PR **#23** / PR **#24** | **Skip.** Second W4 family, not dest, serve-only. **#16** unmerged. **#18** GPTQ `BLOCK_KN_SIZE` 256. **#22** two-shot `rdna_ar` (Cursor; library still **0**; zoo **512**; do not dump). **#23** PCIe P2P KV (Cursor; HIP IPC SDMA; zoo `comm.pcie` is AR, not KV disagg). **#24** RAM KV offload (George/Codex; no HIP). |
 | PR **#5** / **#8** Flash-Next, extras **#11** wvSplitK, extras **#13** T44b, extras **#14**, extras **#15**, extras **#17**, extras **#19**, extras **#20**, extras **#21** | **Closed.** Dest-landed T44b / #14 / #15 / #17 / #19 / #20 / dest-integrated #21 are observe-only. Dest reverted wvSplitK (`5c4ab989`). Do not re-merge. Do not grow `gemv_f16`. |
 
 Bodies stay in extras because every dest HIP file includes `torch/all.h`.
@@ -184,4 +184,4 @@ This review is documentation, not a kernel migrate.
 | PR #3 a17t unique W4 (`d53572644`, later Simon Siebert) | **Not taken** | Closed unmerged. If dest ever locks that family, pick **their** commits |
 | Explore PRs **#9/#10** sdot | **Not taken** | Not dest |
 | extras dest-presence serve (**#13** T44b / **#14** / **#15** / **#17** / **#19** / **#20** / dest-integrated **#21** / mamba `741e5bc3` / closed **#12**) | observe | Python/Triton/serve + dest-landed ATen HIP. No HIP migrate. Do not pick Cursor/George/Codex/Karl/Waldecir/a17t rewrites. Unique Aron Hsiao `rdna_ar` still pickable. |
-| extras not dest (**#16** closed / **#18** / **#22** / **#23**) | **Not taken** | GPTQ `BLOCK_KN_SIZE` 256. Two-shot `rdna_ar`. PCIe P2P KV. |
+| extras not dest (**#16** closed / **#18** / **#22** / **#23** / **#24**) | **Not taken** | GPTQ `BLOCK_KN_SIZE` 256. Two-shot `rdna_ar`. PCIe P2P KV. RAM KV offload. |
