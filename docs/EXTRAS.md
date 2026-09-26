@@ -10,7 +10,7 @@ Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
 `rdna_extras` @ `700753d9add5` (2026-09-25 05:48 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2**, **#18**, **#22**. Draft **#23**.
+squash is `a4060647cfbb`. Open **#2**, **#18**, **#22**, **#24**. Draft **#23**.
 Closed **#3/#16** unmerged; **#21** dest-integrated unmerged; **#12**
 superseded by **#15**. Merged **#13**, **#14**, **#15**, **#17**, **#19**,
 **#20**.
@@ -53,6 +53,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | GPTQ exllama `BLOCK_KN_SIZE` 256 | `q_gemm.cu` (PR **#18**) | — | **skip** — not dest DOT W4 |
 | two-shot `rdna_ar` | `rdna_allreduce.{cu,cuh}` (PR **#22**) | — | **skip** — not dest. Library `VLLM_RDNA_AR` still `"0"`. Zoo `AR_MAX_KB` **512**. Do not dump |
 | PCIe P2P KV disagg | `PcieP2pConnector` (draft PR **#23**) | — | **skip** — not dest. HIP IPC SDMA. Zoo `comm.pcie` is AR, not KV. Do not dump |
+| RAM KV offload | offloading connector (PR **#24**) | — | **skip** — not dest. George/Codex. Serve only. No HIP. Do not pick |
 | Explore W4A8 sdot4 / W4A4 sdot8 | extras PRs **#9/#10** | — | **skip** — not dest |
 | Resident W4A16 MoE skinny decode | `moe_resident_decode.cu` (dest **#17** @ `e1315629`) | `moe/routed` (watch) | Stay extras. Opt-in `VLLM_RDNA_MOE_RESIDENT*`. ATen HIP. Do not dump. Closed **#16** unmerged. **unvalidated** |
 
@@ -140,5 +141,6 @@ ROCm platform init, extras EXL3 docker arch-guard. Skip: a17t PR **#3**,
 PR **#18** GPTQ `BLOCK_KN_SIZE` 256, PR **#22** two-shot `rdna_ar`
 (Cursor; library `VLLM_RDNA_AR` still `"0"`; zoo `AR_MAX_KB` **512**;
 do not dump), draft PR **#23** PCIe P2P KV (Cursor; HIP IPC SDMA; do not
-dump), explore **#9/#10**, closed PR **#12**, closed PR **#16**,
+dump), PR **#24** RAM KV offload (George/Codex; no HIP; do not pick),
+explore **#9/#10**, closed PR **#12**, closed PR **#16**,
 closed **#5/#11**. Produce stays outside hippihx.
