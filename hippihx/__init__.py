@@ -1,8 +1,10 @@
-"""hippihx — HIP/FlyDSL op zoo for RDNA.
+"""hippihx — Mojo/MAX authoring zoo for RDNA.
 
-b12x-shaped library: ``hippihx.<group>.<op>`` owns plan/bind/run. HIP
-fatbins live in ``tiles/``. FlyDSL kernels live in ``hippihx.flydsl``.
-``rdna_extras`` is thin serve wiring.
+``mojo/`` is the authoring center. ``hippihx.<group>.<op>`` owns
+plan/bind/run. HIP fatbins in ``tiles/`` stay the dest produce path
+(hipcc 7.14 / ``hipModuleLoad``). FlyDSL kernels live in
+``hippihx.flydsl``. ``rdna_extras`` is thin serve wiring. Mojo objects
+are not dest-ready.
 
 Import is cheap and torch-free. Device libraries load later, per fatbin.
 """

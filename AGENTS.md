@@ -9,7 +9,7 @@ HIP/RDNA op zoo. Methodology from
 
 | Layer | Owns |
 |---|---|
-| **this repo** | Tile contracts, HIP fatbins, FlyDSL atoms, catalog, V1 ABI |
+| **this repo** | Mojo/MAX authoring center, tile contracts, HIP fatbins, FlyDSL atoms, catalog, V1 ABI |
 | **`opengfx1030/vllm-rdna` `rdna_extras`** | `torch.ops`, envs, graphs, model hooks |
 | **produce** | AWQ / EXL3 `-cb 3inst` packers |
 

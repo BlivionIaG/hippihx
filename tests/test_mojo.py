@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from hippihx._lib.backend import is_dest_backend, is_v1_consume_backend, is_zoo_backend
+from hippihx._lib.catalog import OPS
 from hippihx._lib.fatbin import DOT_ARCHES
 from hippihx.attention import dsa_nope, fa_fdot2, gdn_scan, kda_scan, qsa_indexer
 from hippihx.isa import (
@@ -28,7 +29,9 @@ from hippihx.isa import (
 )
 from hippihx.moe import leftover_bf16, routed
 from hippihx.mojo import (
+    AUTHORING_QUALNAMES,
     FA_FDOT2_MOJO,
+    FAMILIES_MOJO,
     HOOKS,
     ISA_MOJO,
     LEFT_WITHOUT_NEW_BRIEF,
@@ -36,7 +39,9 @@ from hippihx.mojo import (
     MOJO_DEST_READY,
     MOJO_PRODUCE,
     MOJO_V1_CONSUME,
+    REFUSE_MOJO,
     SOURCE_ROOT,
+    authoring_source,
     preferred_explore,
     ranked_explore,
     refuse_produce,
@@ -71,6 +76,8 @@ def test_mojo_plan_bind_refuses_run() -> None:
     assert plan.meta["backend"] == "mojo"
     assert plan.meta["arch_switch"] == "dot"
     assert plan.meta["produce"] is False
+    assert plan.meta["mojo_registered"] is True
+    assert plan.meta["authoring"] == "mojo/zoo/fa_fdot2.mojo"
     assert plan.meta["explore"] == ("decode", "prefill")
     assert plan.meta["wave"] == 32
     binding = fa_fdot2.bind(plan, scratch=None)
@@ -201,8 +208,70 @@ def test_family_hooks_on_bind() -> None:
     assert LEFT_WITHOUT_NEW_BRIEF == ("attention.kda_scan", "attention.dsa_nope")
     assert kda_scan.FAMILY_HOOKS == ()
     assert dsa_nope.FAMILY_HOOKS == ()
+    kda_plan = kda_scan.plan(Caps(backend="mojo"))
+    assert kda_plan.meta["mojo_registered"] is False
+    assert kda_plan.meta["authoring"] == "catalog-stub"
+    assert dsa_nope.plan(Caps(backend="mojo")).meta["authoring"] == "catalog-stub"
+    with pytest.raises(KeyError, match="no Mojo registration"):
+        authoring_source("attention.kda_scan")
     with pytest.raises(ValueError, match="not a bind hook"):
         kda_scan.bind(kda_scan.plan(Caps()), family="qwen.gdn")
+
+
+def test_mojo_registry_covers_catalog_except_stubs() -> None:
+    """Authoring center is mojo/zoo. KDA and DSA stay catalog stubs."""
+    assert AUTHORING_QUALNAMES == tuple(
+        spec.qualname for spec in OPS if spec.qualname not in LEFT_WITHOUT_NEW_BRIEF
+    )
+    registry = (SOURCE_ROOT / "zoo" / "__init__.mojo").read_text(encoding="utf-8")
+    refuse = REFUSE_MOJO.read_text(encoding="utf-8")
+    assert "hipModuleLoad" in refuse
+    assert "not_produce" in refuse
+    assert "refuse_dot_on_gfx900" in refuse
+    families = FAMILIES_MOJO.read_text(encoding="utf-8")
+    assert "HOOK_HYBRID_HEAP_CALLER_OWNED = True" in families
+    assert families.count("alias HOOK_") >= 6
+    for hook in HOOKS:
+        assert f'"{hook.name}"' in families
+        for tensor in hook.tensors:
+            assert tensor.name in families
+            assert tensor.dtype in families
+    assert "attention.kda_scan,attention.dsa_nope" in families
+    dot_qualnames = {spec.qualname for spec in OPS if spec.dot}
+    for qualname in AUTHORING_QUALNAMES:
+        path = authoring_source(qualname)
+        assert path.is_file(), qualname
+        text = path.read_text(encoding="utf-8")
+        stem = qualname.split(".", 1)[1]
+        assert f"from zoo.{stem} import" in registry
+        assert f'alias QUALNAME = "{qualname}"' in text
+        assert "alias PRODUCE = False" in text
+        assert "alias WAVE = 32" in text
+        assert '@extensibility.register' in text
+        assert 'arch="gfx1030"' in text
+        assert "hipModuleLoad" in text
+        assert "enqueue_function" not in text
+        assert "not_produce" in text
+        if qualname in dot_qualnames:
+            assert 'arch="gfx900"' in text
+            assert "refuse_dot_on_gfx900" in text
+            assert "mad_mix" in text
+        else:
+            assert 'arch="gfx900"' not in text
+        caps = Caps(arch="gfx1030", backend="mojo")
+        op = __import__("hippihx." + qualname, fromlist=["plan", "run", "bind"])
+        plan = op.plan(caps)
+        assert plan.meta["produce"] is False
+        assert plan.meta["mojo_registered"] is True
+        assert plan.meta["authoring"] == f"mojo/zoo/{stem}.mojo"
+        with pytest.raises(MojoNotProduce):
+            op.run(op.bind(plan))
+    for qualname in LEFT_WITHOUT_NEW_BRIEF:
+        stem = qualname.split(".", 1)[1]
+        assert not (SOURCE_ROOT / "zoo" / f"{stem}.mojo").exists()
+        assert f"from zoo.{stem} import" not in registry
+    cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
+    assert ".mojo" not in cmake
 
 
 def test_mojo_sources_match_isa_and_are_not_fatbin() -> None:
