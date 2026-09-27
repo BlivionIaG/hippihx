@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hippihx/isa.hpp"
+
 // Compile-time arch contract for hippihx fatbins.
 //
 // Built DOT (same tile source, separate --offload-arch objects):

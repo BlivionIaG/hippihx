@@ -24,6 +24,8 @@ Same *shape* as b12x (`<group>.<op>` + `api.py`), HIP objects:
 | `tiles/<group>/<op>/kernel.hip` | HIP ISA (dest). Torch-free |
 | `include/hippihx/v1.h` | C consume ABI extras wraps as `torch.ops` |
 | `hippihx/flydsl/` | FlyDSL compiler atoms + kernel contracts |
+| `hippihx/isa.py` | Packed DOT, LDS banks, wave32 gate, arch switch |
+| `mojo/` | Mojo/MAX authoring package (not a fatbin input) |
 | `hippihx/comm/fabric.py` | PCIe/PLX hop class (PIX/PXB/PHB × 88096/8749) |
 
 Group rename **`attn` → `attention`** (V1 ABI rev **3**; ids unchanged). ISA
@@ -51,6 +53,12 @@ is valid. Do not port ROCm/FlyDSL MFMA/WMMA GEMM/MoE/FA into `tiles/` or
 `hippihx.flydsl`. FlyDSL is an optional extra, not a required dependency.
 extras FlyDSL consume waits on `FLYDSL_V1_CONSUME` (graph-safe JIT). See
 [`FLYDSL.md`](FLYDSL.md).
+
+Mojo/MAX (`mojo/`, `Caps(backend="mojo")`) is the maintainability
+**authoring** surface. It is not dest-ready. Dest produce stays hipcc
+7.14 / `hipModuleLoad` / `libamdhip64` until a documented HIP re-emit or
+MAX-serve soak exists. The ABI gap is MAX `execute` versus
+`hippihx_v1_*` (rev 3). `MOJO_DEST_READY` is false. See [`MOJO.md`](MOJO.md).
 
 
 ```
@@ -208,6 +216,9 @@ Do not edit `opengfx1030/vllm-rdna` from this tree.
 
 - Importing or forking b12x CUDA / CuTe / CE / NVFP4 / WMMA sources
 - Porting ROCm/FlyDSL MFMA/WMMA GEMM/MoE/FA (see [`FLYDSL.md`](FLYDSL.md))
+- Treating a Mojo object as the vllm-rdna produce pin (re-emit HIP, or
+  choose a MAX serve path explicitly — see [`MOJO.md`](MOJO.md))
+- Porting Modular CDNA MFMA attention into `mojo/` or `tiles/`
 - A serve stack, model registry, or vLLM plugin inside this repo
 - PRs against upstream vLLM
 - Editing `opengfx1030/vllm-rdna` from this tree

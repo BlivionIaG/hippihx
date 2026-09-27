@@ -1,4 +1,4 @@
-from .api import META, Caps, bind, is_supported, plan, run
 from . import policy
+from .api import FAMILY_HOOKS, META, Caps, bind, is_supported, plan, run
 
-__all__ = ["META", "Caps", "bind", "is_supported", "plan", "policy", "run"]
+__all__ = ["FAMILY_HOOKS", "META", "Caps", "bind", "is_supported", "plan", "policy", "run"]

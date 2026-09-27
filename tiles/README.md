@@ -20,3 +20,6 @@ Deck gfx1033 is **wave32** RDNA2. gfx1013 (Cyan Skillfish / BC-250) is
 `smoke.hip` is a CMake link stub only.
 
 FlyDSL kernel contracts live in `hippihx/flydsl/`, not under `tiles/`.
+Mojo/MAX authoring lives in `mojo/` and is not a fatbin input
+([`docs/MOJO.md`](../docs/MOJO.md)). ISA contracts are
+[`docs/ISA.md`](../docs/ISA.md).

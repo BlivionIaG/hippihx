@@ -10,6 +10,8 @@
 | PCIe/PLX hop class (PIX/PXB/PHB, 88096/8749) | **this repo** (`hippihx/comm/fabric.py`) |
 | C V1 consume ABI (`hippihx_v1_*`) | **this repo** (`include/hippihx/v1.h`) |
 | Fatbin / CMake / ROCm pin | **this repo** |
+| ISA contracts (packed DOT, LDS banks, wave32, arch switch) | **this repo** (`hippihx/isa.py`, `include/hippihx/isa.hpp`) |
+| Mojo/MAX authoring (`mojo/`, family bind hooks, explore shapes) | **this repo** — not a fatbin, not V1 produce |
 | Observed extras LDS / launch numbers (no body dump) | **this repo** (tile READMEs) |
 | extras HIP body migrate | **this repo**, only after extras can consume one V1 op |
 | Dest extras HIP (this lab) | **BlivionIaG** `<kev29lt@gmail.com>` — Author **and** Committer |
@@ -20,7 +22,11 @@
 
 Do not copy CUDA, CuTe, CE, or NVFP4 objects from
 `local-inference-lab/b12x`. Copy the **plan / bind / run** verbs only.
-Do not copy FlyDSL MFMA/WMMA kernels from `ROCm/FlyDSL`.
+Do not copy FlyDSL MFMA/WMMA kernels from `ROCm/FlyDSL`. Do not copy
+Modular CDNA MFMA attention into `mojo/`. A Mojo schedule is not produce
+until it is re-emitted with `hipcc` 7.14 (`hipModuleLoad` /
+`libamdhip64`) or an explicit MAX serve path is chosen
+([`docs/MOJO.md`](docs/MOJO.md)).
 
 `list_ops()` must stay in lockstep with `hippihx/_lib/catalog.py` and
 `tiles/` class directories. Add an op in the catalog first.
