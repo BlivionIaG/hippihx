@@ -80,8 +80,9 @@ replaces Author with the picker.
 ## ROCm / arch
 
 - V620 = **gfx1030**, **wave32**, **ROCm 7.14**.
-- **gfx1100/1101/1102** are first-class DOT consumers of the **same** FA /
-  EXL3 / AWQ / `moe.shared` source. One `--offload-arch` per fatbin.
+- **gfx1100/1101/1102** and **gfx1200** are first-class DOT consumers of
+  the **same** FA / EXL3 / AWQ / `moe.shared` source. One `--offload-arch`
+  per fatbin. gfx1200 is not the V620 dest pin and is not a WMMA path.
 - gfx900 is a Vega stub (`mad_mix` / `pk_fma`). It does **not** load DOT
   tiles.
 - **BC-250 is gfx1013** (Cyan Skillfish): **Later**. It is **not true

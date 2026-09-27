@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from hippihx.attention import fa_fdot2
+from hippihx.isa import ArchSwitch, arch_switch, refuse_dot_on_mad_mix
 from hippihx.protocol import (
     BIND_KEYS_ON_ARCH_AND_WAVE,
     DEFAULT_ARCH,
@@ -111,9 +112,31 @@ def test_bind_rejects_foreign_plan() -> None:
         fa_fdot2.bind(plan, scratch=None)
 
 
+def test_gfx1030_gfx1100_gfx1200_are_dot_slots() -> None:
+    """Required DOT fatbins. One arch each. wave32. No WMMA gate."""
+    assert NO_WMMA_ON_SHARED_DOT
+    for arch in ("gfx1030", "gfx1100", "gfx1200"):
+        assert arch in DOT_ARCHES
+        assert arch in KNOWN_ARCHES
+        assert arch not in UNOPTIMIZED_DOT_ARCHES
+        assert require_single_arch(arch) == arch
+        caps = Caps(arch=arch)
+        assert caps.wave == 32
+        assert arch_switch(arch) is ArchSwitch.DOT
+        assert refuse_dot_on_mad_mix(arch) == arch
+        assert fa_fdot2.is_supported(caps)
+        plan = fa_fdot2.plan(caps)
+        assert plan.arch == arch
+        assert plan.meta["arch_switch"] == "dot"
+    assert "gfx1201" not in KNOWN_ARCHES
+    assert "gfx1150" not in KNOWN_ARCHES
+    with pytest.raises(ValueError, match="one fatbin"):
+        require_single_arch("gfx1030,gfx1100,gfx1200")
+
+
 def test_caps_rejects_unknown_and_later() -> None:
     with pytest.raises(ValueError, match="unknown arch"):
-        Caps(arch="gfx1200")
+        Caps(arch="gfx908")
     with pytest.raises(ValueError, match="Vega20/MI50") as gfx906:
         Caps(arch="gfx906")
     assert "not BC-250" in str(gfx906.value).lower() or "Not BC-250" in str(

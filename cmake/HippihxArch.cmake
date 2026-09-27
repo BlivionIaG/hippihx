@@ -5,6 +5,7 @@
 # Built DOT (same dot.hpp source, separate --offload-arch objects):
 #   gfx1030              V620 dest, primary
 #   gfx1100/1101/1102    first-class DOT, no WMMA gate
+#   gfx1200              first-class DOT, wave32, same dot.hpp, no WMMA gate
 #   gfx1151              Strix Halo — portable/unoptimized, can run
 #   gfx1031..1036        Deck/mobile RDNA2 — portable/unoptimized, wave32
 #                        (Steam Deck gfx1033 is wave32, same class as gfx1030)
@@ -19,6 +20,7 @@
 set(HIPPIHX_KNOWN_ARCHES
   gfx1030
   gfx1100 gfx1101 gfx1102
+  gfx1200
   gfx1151
   gfx1031 gfx1032 gfx1033 gfx1035 gfx1036
   gfx900
@@ -26,6 +28,7 @@ set(HIPPIHX_KNOWN_ARCHES
 set(HIPPIHX_DOT_ARCHES
   gfx1030
   gfx1100 gfx1101 gfx1102
+  gfx1200
   gfx1151
   gfx1031 gfx1032 gfx1033 gfx1035 gfx1036
 )
@@ -97,7 +100,7 @@ elseif(HIPPIHX_ARCH STREQUAL "gfx900")
   set(HIPPIHX_IS_DOT_SLOT OFF)
 endif()
 
-# Shared DOT tiles never assume WMMA, including on gfx110x / gfx1151.
+# Shared DOT tiles never assume WMMA, including on gfx110x / gfx1200 / gfx1151.
 set(HIPPIHX_ASSUME_WMMA OFF)
 set(HIPPIHX_ASSUME_MFMA OFF)
 set(HIPPIHX_ASSUME_FP8_HW OFF)

@@ -72,16 +72,17 @@ MAX-serve soak exists. The ABI gap is MAX `execute` versus
                     run(binding)  # no D2H under capture
 ```
 
-## Shared DOT source (gfx1030 + gfx110x)
+## Shared DOT source (gfx1030, gfx110x, gfx1200)
 
 FA, EXL3, AWQ/W4A16, and `moe/shared` are **the same tile source**.
-gfx1100/1101/1102 are **first-class DOT consumers**, not a later port.
+gfx1100/1101/1102 and gfx1200 are **first-class DOT consumers**, not a
+later port. Each is its own `--offload-arch`.
 
 | Rule | Meaning |
 |---|---|
 | One source | `tiles/attention/fa_fdot2`, `tiles/gemm/w4a16_fdot2`, `tiles/gemm/exl3_3inst`, `tiles/moe/shared` |
 | Separate fatbins | one `--offload-arch` per CMake tree (every built DOT slot) |
-| No multi-arch object | Never `--offload-arch=gfx1030,gfx1100` in one `.a` / `.so` |
+| No multi-arch object | Never `--offload-arch=gfx1030,gfx1100,gfx1200` in one `.a` / `.so` |
 | No foreign ISA load | **Never** `HSA_OVERRIDE_GFX_VERSION` or load gfx1030 objects on another GFX |
 | No WMMA gate | **Never** `#ifdef WMMA` (or WMMA-only paths) in those files |
 | WMMA Later | gfx110x overlay, optional, never required for DOT |
@@ -97,6 +98,7 @@ list from the gfx900 archive.
 |---|---|---|---|
 | **gfx1030** | yes (primary) | — | V620 dest |
 | **gfx1100/1101/1102** | yes | **yes** (same `dot.hpp`, no WMMA gate) | separate fatbin |
+| **gfx1200** | yes | **yes** (same `dot.hpp`, wave32, no WMMA gate) | separate fatbin. Not the V620 dest pin |
 | **gfx1151** Strix Halo | yes (portable) | **yes** (same `dot.hpp`) | can run, not dest-tuned; not WMMA-gated |
 | **gfx1031/1032/1033/1035/1036** Deck/mobile | yes (portable) | **yes** (RDNA2 DOT, **wave32**) | Steam Deck is **gfx1033 / wave32**. Same gen as gfx1030; not dest-tuned |
 | **gfx1013** BC-250 | Later | **no** | Cyan Skillfish — **not true RDNA2**, not dest, not portable DOT. Not gfx906. Never `HSA_OVERRIDE` dest ISA onto it. |
@@ -111,7 +113,8 @@ the same stubs.
 **BC-250 is Later.** It is Cyan Skillfish **`gfx1013`** — not true RDNA2,
 not dest, not a portable DOT fatbin with gfx1030. It is **not**
 Vega20/`gfx906`. Never `HSA_OVERRIDE` a gfx1030 / gfx1033 object onto
-it. Own dest work stays gfx1030 / Deck gfx103x / gfx110x.
+it. Own dest work stays gfx1030 / Deck gfx103x / gfx110x. gfx1200 is a
+supported DOT fatbin on the same source, not the V620 dest pin.
 
 ## ROCm pin (V620)
 

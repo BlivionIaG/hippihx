@@ -12,8 +12,8 @@ Class directories (not product names). Each child README will lock LDS and
 | [`comm/`](comm/README.md) | `pcie` (Uncached+push; PIX on 88096) |
 
 **DOT tiles** (`fa_fdot2`, `w4a16_fdot2`, `exl3_3inst`, `moe/shared`) share
-one source compiled per `--offload-arch` (gfx1030, gfx110x, gfx1151,
-gfx103x). gfx1151 / Deck are portable — can run, not dest-tuned. Steam
+one source compiled per `--offload-arch` (gfx1030, gfx110x, gfx1200,
+gfx1151, gfx103x). gfx1151 / Deck are portable — can run, not dest-tuned. Steam
 Deck gfx1033 is **wave32** RDNA2. gfx1013 (Cyan Skillfish / BC-250) is
 **Later** — not true RDNA2, not dest DOT. gfx900 does not load them.
 

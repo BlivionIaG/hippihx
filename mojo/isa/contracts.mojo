@@ -23,7 +23,7 @@ alias ISA_FDOT2 = "v_dot2_f32_f16,v_dot2c_f32_f16"
 alias ISA_SDOT4 = "v_dot4_i32_i8,v_dot4c_i32_i8"
 
 # Same order as hippihx._lib.fatbin.DOT_ARCHES / isa.MAD_MIX_ARCHES.
-alias DOT_ARCHES = "gfx1030,gfx1100,gfx1101,gfx1102,gfx1151,gfx1031,gfx1032,gfx1033,gfx1035,gfx1036"
+alias DOT_ARCHES = "gfx1030,gfx1100,gfx1101,gfx1102,gfx1200,gfx1151,gfx1031,gfx1032,gfx1033,gfx1035,gfx1036"
 alias MAD_MIX_ARCHES = "gfx900,gfx906,gfx1013"
 
 
@@ -33,6 +33,8 @@ fn arch_switch(arch: StaticString) -> StaticString:
     The arch lists are ``DOT_ARCHES`` and ``MAD_MIX_ARCHES`` above.
     """
     if arch == "gfx1030" or arch == "gfx1100" or arch == "gfx1101" or arch == "gfx1102":
+        return "dot"
+    if arch == "gfx1200":
         return "dot"
     if arch == "gfx1151" or arch == "gfx1031" or arch == "gfx1032" or arch == "gfx1033":
         return "dot"

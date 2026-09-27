@@ -6,8 +6,8 @@ HIP / FlyDSL op zoo for RDNA. **plan / bind / run** live here so
 [`local-inference-lab/b12x`](https://github.com/local-inference-lab/b12x);
 ISA is HIP/RDNA, not CUDA/CuTe.
 
-**Dest:** gfx1030 (V620, wave32, ROCm **7.14**). gfx110x share the same
-DOT source, one fatbin per `--offload-arch`. Consume:
+**Dest:** gfx1030 (V620, wave32, ROCm **7.14**). gfx110x and gfx1200 share
+the same DOT source, one fatbin per `--offload-arch`. Consume:
 `include/hippihx/v1.h` (`hippihx_v1_plan` / `hippihx_v1_run`, ABI rev
 **3**, group `attention`). Kernel bodies stay in extras until extras
 wraps those symbols.
@@ -54,6 +54,7 @@ No PRs to upstream vLLM. Do not edit the extras fork from this tree.
 |---|---|---|
 | **gfx1030** | primary | V620 dest |
 | **gfx1100/1101/1102** | yes | first-class, separate fatbin |
+| **gfx1200** | yes | first-class, separate fatbin, wave32, no WMMA gate |
 | **gfx1151** | portable | can run, not dest-tuned |
 | **gfx1031–1036** | portable | Deck **gfx1033** is wave32 |
 | **gfx1013** | Later | BC-250 / Cyan Skillfish, **not true RDNA2**, not dest |
