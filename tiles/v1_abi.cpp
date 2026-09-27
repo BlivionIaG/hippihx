@@ -2,7 +2,17 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <memory>
+
+// Built as libhippihx_v1.so with HIP, this links libamdhip64 and loads code
+// objects. Without HIP (host stub, the link-smoke .a) the loader validates
+// images and returns HIPPIHX_V1_ERR_NO_HIP.
+#if defined(HIPPIHX_V1_WITH_HIP)
+#include <hip/hip_runtime_api.h>
+#endif
 
 namespace {
 
@@ -19,6 +29,7 @@ struct ArchRow {
   const char* name;
   int dot;
   int wave;  // default when caps.wave == 0
+  int mach;  // EF_AMDGPU_MACH of this slot's code object
 };
 
 struct ParamRow {
@@ -108,17 +119,17 @@ constexpr OpRow kOps[HIPPIHX_V1_OP_COUNT] = {
 };
 
 constexpr ArchRow kArches[HIPPIHX_V1_ARCH_COUNT] = {
-    {"gfx1030", 1, 32},
-    {"gfx1100", 1, 32},
-    {"gfx1101", 1, 32},
-    {"gfx1102", 1, 32},
-    {"gfx1151", 1, 32},
-    {"gfx1031", 1, 32},
-    {"gfx1032", 1, 32},
-    {"gfx1033", 1, 32},
-    {"gfx1035", 1, 32},
-    {"gfx1036", 1, 32},
-    {"gfx900", 0, 64},
+    {"gfx1030", 1, 32, 0x36},
+    {"gfx1100", 1, 32, 0x41},
+    {"gfx1101", 1, 32, 0x46},
+    {"gfx1102", 1, 32, 0x47},
+    {"gfx1151", 1, 32, 0x4A},
+    {"gfx1031", 1, 32, 0x37},
+    {"gfx1032", 1, 32, 0x38},
+    {"gfx1033", 1, 32, 0x39},
+    {"gfx1035", 1, 32, 0x3D},
+    {"gfx1036", 1, 32, 0x45},
+    {"gfx900", 0, 64, 0x2C},
 };
 
 constexpr ParamRow kParams[] = {
@@ -222,6 +233,16 @@ constexpr int kLinkWidths[] = {
 // hippihx:gen end v1_table
 
 bool valid_op(int op) { return op >= 0 && op < HIPPIHX_V1_OP_COUNT; }
+
+// One loaded code object per slot, for the process lifetime. Loads happen
+// at serve init, single-threaded, before any capture; plan and run only
+// read this table.
+struct LoadedSlot {
+  int loaded;
+  std::unique_ptr<unsigned char[]> image;  // kept alive for the module
+  void* module;                            // hipModule_t
+};
+LoadedSlot g_slots[HIPPIHX_V1_ARCH_COUNT];
 
 int find_arch(const char* arch) {
   if (arch == nullptr || arch[0] == '\0') {
@@ -439,7 +460,7 @@ int plan_into(hippihx_v1_op_id op, const hippihx_v1_caps& caps,
   out->arch = arch;
   out->wave = wave;
   out->dtype = caps.dtype;
-  out->ready = row.ready;
+  out->ready = row.ready && g_slots[arch].loaded;
   out->nparams = row.params_count;
   for (int i = 0; i < row.params_count; ++i) {
     out->params[i] = params[i];
@@ -454,6 +475,61 @@ int plan_into(hippihx_v1_op_id op, const hippihx_v1_caps& caps,
     }
   }
   return plan_scratch(row, params, out);
+}
+
+uint32_t read_le(const unsigned char* p, int nbytes) {
+  uint32_t v = 0;
+  for (int i = nbytes - 1; i >= 0; --i) {
+    v = (v << 8) | p[i];
+  }
+  return v;
+}
+
+// One raw AMDGPU HSA ELF (ELF64, little-endian, ET_DYN, EM_AMDGPU) whose
+// EF_AMDGPU_MACH is the slot's. Offload bundles and .o files are refused.
+int check_image(int slot, const unsigned char* image, size_t nbytes) {
+  constexpr unsigned kElfClass64 = 2;
+  constexpr unsigned kElfData2Lsb = 1;
+  constexpr unsigned kOsAbiAmdgpuHsa = 64;
+  constexpr uint32_t kEtDyn = 3;
+  constexpr uint32_t kEmAmdgpu = 224;
+  if (nbytes < 64 || std::memcmp(image, "\x7f" "ELF", 4) != 0 ||
+      image[4] != kElfClass64 || image[5] != kElfData2Lsb ||
+      image[7] != kOsAbiAmdgpuHsa || read_le(image + 16, 2) != kEtDyn ||
+      read_le(image + 18, 2) != kEmAmdgpu) {
+    return HIPPIHX_V1_ERR_CODE_OBJECT;
+  }
+  if (static_cast<int>(read_le(image + 48, 4) & 0xFF) != kArches[slot].mach) {
+    return HIPPIHX_V1_ERR_FOREIGN_ISA;  // never load arch A's object on B
+  }
+  return HIPPIHX_V1_OK;
+}
+
+bool hsa_override_set() {
+  const char* v = std::getenv("HSA_OVERRIDE_GFX_VERSION");
+  return v != nullptr && v[0] != '\0';
+}
+
+int load_slot(int slot, const unsigned char* image, size_t nbytes) {
+  const int rc = check_image(slot, image, nbytes);
+  if (rc != HIPPIHX_V1_OK || g_slots[slot].loaded) {
+    return rc;  // a second load of a slot is a no-op
+  }
+#if defined(HIPPIHX_V1_WITH_HIP)
+  // Keep a private copy alive for the module's lifetime.
+  std::unique_ptr<unsigned char[]> copy(new unsigned char[nbytes]);
+  std::memcpy(copy.get(), image, nbytes);
+  hipModule_t module = nullptr;
+  if (hipModuleLoadData(&module, copy.get()) != hipSuccess) {
+    return HIPPIHX_V1_ERR_CODE_OBJECT;
+  }
+  g_slots[slot].image = std::move(copy);
+  g_slots[slot].module = module;
+  g_slots[slot].loaded = 1;
+  return HIPPIHX_V1_OK;
+#else
+  return HIPPIHX_V1_ERR_NO_HIP;
+#endif
 }
 
 bool layout_ok(int layout, const hippihx_v1_tensor& t) {
@@ -539,6 +615,59 @@ extern "C" const char* hippihx_v1_op_tensor_name(hippihx_v1_op_id op, int index)
     return nullptr;
   }
   return kSlots[kOps[op].slots_first + index].name;
+}
+
+extern "C" int hippihx_v1_load_image(const char* arch, const void* image,
+                                     size_t nbytes) {
+  const int slot = find_arch(arch);
+  if (slot < 0) {
+    return HIPPIHX_V1_ERR_UNSUPPORTED_ARCH;
+  }
+  if (hsa_override_set()) {
+    return HIPPIHX_V1_ERR_FOREIGN_ISA;
+  }
+  if (image == nullptr) {
+    return HIPPIHX_V1_ERR_BAD_ARG;
+  }
+  return load_slot(slot, static_cast<const unsigned char*>(image), nbytes);
+}
+
+extern "C" int hippihx_v1_load(const char* arch, const char* path) {
+  const int slot = find_arch(arch);
+  if (slot < 0) {
+    return HIPPIHX_V1_ERR_UNSUPPORTED_ARCH;
+  }
+  if (hsa_override_set()) {
+    return HIPPIHX_V1_ERR_FOREIGN_ISA;
+  }
+  if (path == nullptr) {
+    return HIPPIHX_V1_ERR_BAD_ARG;
+  }
+  std::FILE* f = std::fopen(path, "rb");
+  if (f == nullptr) {
+    return HIPPIHX_V1_ERR_CODE_OBJECT;
+  }
+  long size = -1;
+  if (std::fseek(f, 0, SEEK_END) == 0) {
+    size = std::ftell(f);
+  }
+  if (size < 0 || std::fseek(f, 0, SEEK_SET) != 0) {
+    std::fclose(f);
+    return HIPPIHX_V1_ERR_CODE_OBJECT;
+  }
+  const size_t nbytes = static_cast<size_t>(size);
+  std::unique_ptr<unsigned char[]> image(new unsigned char[nbytes > 0 ? nbytes : 1]);
+  const size_t got = std::fread(image.get(), 1, nbytes, f);
+  std::fclose(f);
+  if (got != nbytes) {
+    return HIPPIHX_V1_ERR_CODE_OBJECT;
+  }
+  return load_slot(slot, image.get(), nbytes);
+}
+
+extern "C" int hippihx_v1_loaded(const char* arch) {
+  const int slot = find_arch(arch);
+  return slot >= 0 && g_slots[slot].loaded;
 }
 
 extern "C" int hippihx_v1_plan(hippihx_v1_op_id op, const hippihx_v1_caps* caps,

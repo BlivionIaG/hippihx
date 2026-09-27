@@ -122,6 +122,44 @@ set_target_properties(hippihx_smoke_host PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/fatbin/${HIPPIHX_ARCH}"
 )
 
+# Consume artifacts (docs/CONSUME.md). The static .a above stays the link
+# smoke.
+#   libhippihx_v1.so      V1 symbols + generated tables, no device code.
+#                         With HIP it links libamdhip64 and hippihx_v1_load
+#                         loads code objects; the host stub only validates.
+#   hippihx_<arch>.hsaco  this slot's device code: one raw AMDGPU ELF (one
+#                         --offload-arch, no offload bundle).
+add_library(hippihx_v1 SHARED tiles/v1_abi.cpp)
+target_include_directories(hippihx_v1 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set_target_properties(hippihx_v1 PROPERTIES
+  OUTPUT_NAME "hippihx_v1"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/fatbin/${HIPPIHX_ARCH}"
+  CXX_STANDARD 17
+  CXX_STANDARD_REQUIRED ON
+)
+
+if(HIPPIHX_HAS_HIP)
+  find_package(hip REQUIRED CONFIG)
+  target_link_libraries(hippihx_v1 PRIVATE hip::host)
+  target_compile_definitions(hippihx_v1 PRIVATE HIPPIHX_V1_WITH_HIP=1)
+
+  set(HIPPIHX_CODE_OBJECT
+      "${CMAKE_BINARY_DIR}/fatbin/${HIPPIHX_ARCH}/hippihx_${HIPPIHX_ARCH}.hsaco")
+  file(GLOB HIPPIHX_TILE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/hippihx/*.hpp")
+  add_custom_command(
+    OUTPUT "${HIPPIHX_CODE_OBJECT}"
+    COMMAND "${CMAKE_HIP_COMPILER}" -x hip "--offload-arch=${HIPPIHX_ARCH}"
+            --cuda-device-only --no-gpu-bundle-output -O3 -std=c++17
+            "-I${CMAKE_CURRENT_SOURCE_DIR}/include"
+            -o "${HIPPIHX_CODE_OBJECT}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tiles/code_object.hip"
+    DEPENDS tiles/code_object.hip ${HIPPIHX_TILE_SOURCES} ${HIPPIHX_TILE_HEADERS}
+    COMMENT "hippihx: ${HIPPIHX_ARCH} code object (one --offload-arch, raw ELF)"
+    VERBATIM
+  )
+  add_custom_target(hippihx_code_object ALL DEPENDS "${HIPPIHX_CODE_OBJECT}")
+endif()
+
 # Convenience: document slots without mixing them into this .a.
 add_custom_target(hippihx_list_fatbin_slots
   COMMAND ${CMAKE_COMMAND} -E echo

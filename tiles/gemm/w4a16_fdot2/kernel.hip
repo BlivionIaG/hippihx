@@ -6,4 +6,4 @@
 // Dest reverted ConfigH (K_STEP=64) — keep ConfigA K_STEP=32 for M>256.
 // ZP: integer (q - zero) * scale — do not bake scale*offset in fp16.
 // Prefill K-split: equal multiples of 32 (K_STEP). Produce stays outside.
-__global__ void hippihx_gemm_w4a16_fdot2_stub() {}
+extern "C" __global__ void hippihx_gemm_w4a16_fdot2_stub() {}

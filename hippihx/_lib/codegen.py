@@ -318,7 +318,8 @@ def render_v1_table() -> str:
         )
 
     arches = [
-        f'{{"{arch}", {int(arch in fatbin.DOT_ARCHES)}, {fatbin.default_wave(arch)}}}'
+        f'{{"{arch}", {int(arch in fatbin.DOT_ARCHES)}, {fatbin.default_wave(arch)}, '
+        f"0x{fatbin.ELF_MACH[arch]:02X}}}"
         for arch in fatbin.KNOWN_ARCHES
     ]
     ar_hops = [f"HIPPIHX_V1_HOP_{_c_ident(h)}" for h in fabric.CUSTOM_AR_HOPS]
@@ -481,6 +482,14 @@ def render_mojo_arch_switch() -> str:
     return _lines(lines)
 
 
+def render_code_object_tiles() -> str:
+    lines = [f'#include "{spec.tile}/kernel.hip"' for spec in OPS if not spec.dot]
+    lines.append("#if defined(HIPPIHX_DOT_SLOT)")
+    lines += [f'#include "{spec.tile}/kernel.hip"' for spec in OPS if spec.dot]
+    lines.append("#endif")
+    return _lines(lines)
+
+
 BLOCKS: tuple[Block, ...] = (
     Block("include/hippihx/v1.h", "v1_status", "//", render_v1_status),
     Block("include/hippihx/v1.h", "v1_limits", "//", render_v1_limits),
@@ -491,6 +500,7 @@ BLOCKS: tuple[Block, ...] = (
     Block("include/hippihx/v1.h", "v1_schema", "//", render_v1_schema),
     Block("include/hippihx/v1.h", "v1_revision", "//", render_v1_revision),
     Block("tiles/v1_abi.cpp", "v1_table", "//", render_v1_table),
+    Block("tiles/code_object.hip", "code_object_tiles", "//", render_code_object_tiles),
     Block("include/hippihx/isa.hpp", "isa_macros", "//", render_isa_macros),
     Block("include/hippihx/arch.hpp", "arch_macros", "//", render_arch_macros),
     Block("cmake/HippihxArch.cmake", "arch_lists", "#", render_cmake_arches),

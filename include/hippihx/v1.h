@@ -5,7 +5,13 @@
 // One V1 entry family per op. Serve wraps these as torch.ops.hippihx.* —
 // hippihx itself stays torch-free, and this header stays HIP-free.
 //
+// Artifacts: libhippihx_v1.so (these symbols and tables, no device code,
+// one build for every slot) plus one hippihx_<arch>.hsaco per slot (a raw
+// AMDGPU ELF, one --offload-arch).
+//
 // Flow (docs/CONSUME.md):
+//   0. hippihx_v1_load at serve init, once per process: checks the code
+//      object's arch and loads it with hipModuleLoadData.
 //   1. hippihx_v1_plan: host-only, before capture, once per capture bucket
 //      and layer config. It checks caps and params, sizes scratch, picks the
 //      explore variant and reports ready. ready == 0 means keep the serve
@@ -46,6 +52,9 @@ enum {
   HIPPIHX_V1_ERR_PARAM = 8,  // param count, domain, cross-check, or scratch overflow
   HIPPIHX_V1_ERR_TENSOR = 9,  // tensor count, dtype, rank, extent, layout, or NULL data
   HIPPIHX_V1_ERR_UNSUPPORTED_FABRIC = 10,  // comm: not a custom-AR hop; serve keeps RCCL
+  HIPPIHX_V1_ERR_CODE_OBJECT = 11,  // not one raw AMDGPU ELF code object, or unreadable
+  HIPPIHX_V1_ERR_FOREIGN_ISA = 12,  // code object mach is not the slot's, or HSA_OVERRIDE set
+  HIPPIHX_V1_ERR_NO_HIP = 13,  // library built without HIP (host stub); nothing loaded
 };
 // hippihx:gen end v1_status
 
@@ -216,7 +225,7 @@ typedef struct hippihx_v1_plan_t {
   int32_t arch;          // hippihx_v1_arch
   int32_t wave;          // resolved: 32 or 64
   int32_t dtype;         // activation dtype from caps
-  int32_t ready;         // 1 = run enqueues a migrated body; 0 = serve fallback
+  int32_t ready;         // 1 = body migrated and slot loaded; 0 = serve fallback
   int32_t variant;       // explore rank picked (hippihx.mojo.ranked_explore)
   int32_t nparams;
   hippihx_v1_param params[HIPPIHX_V1_MAX_PARAMS];
@@ -242,6 +251,19 @@ int hippihx_v1_op_nparams(hippihx_v1_op_id op);
 const char* hippihx_v1_op_param_name(hippihx_v1_op_id op, int index);
 int hippihx_v1_op_ntensors(hippihx_v1_op_id op);
 const char* hippihx_v1_op_tensor_name(hippihx_v1_op_id op, int index);
+
+// Load this slot's code object. Host-only, at serve init, single-threaded,
+// before any plan or capture; it stays loaded for the process (one worker
+// per GPU, current HIP device). A second load of a loaded slot is a no-op.
+// Returns HIPPIHX_V1_OK, or UNSUPPORTED_ARCH (not a built slot),
+// FOREIGN_ISA (HSA_OVERRIDE_GFX_VERSION is set, or the ELF mach is not the
+// slot's), CODE_OBJECT (unreadable, not one raw AMDGPU ELF, or rejected by
+// HIP), BAD_ARG, or NO_HIP (library built without HIP; nothing loaded).
+int hippihx_v1_load(const char* arch, const char* path);
+int hippihx_v1_load_image(const char* arch, const void* image, size_t nbytes);
+
+// 1 when this slot has a loaded code object.
+int hippihx_v1_loaded(const char* arch);
 
 // Host plan. No device work, no allocation, safe under capture. params is
 // the op's _P_* order and nparams its _NPARAMS (0 when unpinned). Returns

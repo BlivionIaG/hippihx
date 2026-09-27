@@ -104,7 +104,12 @@ list from the gfx900 archive.
 | **gfx900** | yes stub / Later mad_mix | **no** | never load FA/EXL3 DOT |
 | **gfx906** (real Vega20/MI50) | Later non-DOT if ever | **no** | **not** BC-250 |
 
-One configure tree → one `libhippihx_<arch>.a` in `build/fatbin/<arch>/`.
+One configure tree → `build/fatbin/<arch>/`: `hippihx_<arch>.hsaco` (the
+slot's device code, one raw AMDGPU ELF), `libhippihx_v1.so` (V1 host
+symbols, no device code) and the link-smoke `libhippihx_<arch>.a`.
+`hippihx_v1_load` refuses a code object whose ELF mach is not its slot's,
+and refuses any load while `HSA_OVERRIDE_GFX_VERSION` is set. See
+[`CONSUME.md`](CONSUME.md#artifacts).
 CMake rejects multi-arch lists and refuses Later slots (**gfx1013**,
 **gfx906**). Portable DOT slots (1151 / Deck 103x) configure and compile
 the same stubs.

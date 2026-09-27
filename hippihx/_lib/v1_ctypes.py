@@ -159,6 +159,12 @@ def load(path: str | Path) -> ctypes.CDLL:
         ctypes.c_size_t,
         ctypes.c_void_p,
     ]
+    lib.hippihx_v1_load.restype = ctypes.c_int
+    lib.hippihx_v1_load.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
+    lib.hippihx_v1_load_image.restype = ctypes.c_int
+    lib.hippihx_v1_load_image.argtypes = [ctypes.c_char_p, ctypes.c_void_p, ctypes.c_size_t]
+    lib.hippihx_v1_loaded.restype = ctypes.c_int
+    lib.hippihx_v1_loaded.argtypes = [ctypes.c_char_p]
     revision = lib.hippihx_v1_abi_revision()
     if revision != ABI_REVISION:
         raise RuntimeError(

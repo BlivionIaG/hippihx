@@ -90,6 +90,9 @@ cmake --build build && ./build/fatbin/gfx1030/hippihx_smoke_host
 pip install -e ".[dev]" && pytest
 ```
 
+A HIP tree writes `build/fatbin/<arch>/hippihx_<arch>.hsaco` and
+`libhippihx_v1.so`, the consume pair ([`CONSUME`](docs/CONSUME.md#artifacts)).
+
 ROCm **7.14** `hipcc` on the V620 box. Host stub is for layout when
 `hipcc` is missing.
 

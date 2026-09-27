@@ -169,6 +169,14 @@ int main() {
     return fail("PHB must stay RCCL", 0);
   }
 
+  // Loader: nothing is loaded here, and a missing code object is refused.
+  if (hippihx_v1_loaded("gfx1030") != 0 ||
+      hippihx_v1_load("gfx1030", "/nonexistent/hippihx_gfx1030.hsaco") !=
+          HIPPIHX_V1_ERR_CODE_OBJECT ||
+      hippihx_v1_load("gfx1013", "/nonexistent") != HIPPIHX_V1_ERR_UNSUPPORTED_ARCH) {
+    return fail("loader", 0);
+  }
+
   std::printf("hippihx smoke ok magic=0x%x v1_abi=%d ops=%d\n", magic,
               hippihx_v1_abi_revision(), hippihx_v1_op_count());
   return 0;

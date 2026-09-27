@@ -10,8 +10,6 @@ from __future__ import annotations
 import ctypes
 import itertools
 import math
-import shutil
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -54,29 +52,8 @@ PIX = Fabric(hop="pix", switch="pex88096")
 
 
 @pytest.fixture(scope="module")
-def lib(tmp_path_factory: pytest.TempPathFactory) -> ctypes.CDLL:
-    cxx = shutil.which("c++") or shutil.which("g++") or shutil.which("clang++")
-    if cxx is None:
-        pytest.skip("no host C++ compiler")
-    out = tmp_path_factory.mktemp("v1") / "libhippihx_v1.so"
-    subprocess.run(
-        [
-            cxx,
-            "-std=c++17",
-            "-O1",
-            "-Wall",
-            "-Wextra",
-            "-Werror",
-            "-shared",
-            "-fPIC",
-            f"-I{ROOT / 'include'}",
-            str(ROOT / "tiles" / "v1_abi.cpp"),
-            "-o",
-            str(out),
-        ],
-        check=True,
-    )
-    return cv.load(out)
+def lib(v1_lib: ctypes.CDLL) -> ctypes.CDLL:
+    return v1_lib
 
 
 def c_plan(

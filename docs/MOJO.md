@@ -20,7 +20,7 @@ MAX-serve soak exists. Neither soak exists in this tree. Do not edit
 | Compiler | ROCm **7.14** `hipcc`, one `--offload-arch` | Mojo/MAX, not invoked by host tests |
 | Loader | `hipModuleLoad` from `libamdhip64` | MAX `custom_extensions` / `InferenceSession` |
 | Symbols | `hippihx_v1_plan` / `hippihx_v1_run`, ABI rev **4** | `@extensibility.register` `execute(OutputTensor, InputTensor, DeviceContext)` |
-| Object | `libhippihx_<arch>.a` | not an AMDGPU code object from `hipcc` |
+| Object | `hippihx_<arch>.hsaco` + `libhippihx_v1.so` | not an AMDGPU code object from `hipcc` |
 
 **ABI gap.** A Mojo `execute` registration does not export `hippihx_v1_*`
 and is not a module `hipModuleLoad` can open. `Caps(backend="mojo")` may
@@ -38,9 +38,11 @@ A later soak has to be one of these, written down as a soak, not assumed
 from a green authoring test:
 
 1. **HIP re-emit.** The winning schedule is lowered again with `hipcc`
-   7.14 into `build/fatbin/<arch>/libhippihx_<arch>.a`, exporting the V1
-   symbols, then loaded with `hipModuleLoad`. The Mojo file remains the
-   schedule source. The object that ran is the HIP object.
+   7.14 into `build/fatbin/<arch>/hippihx_<arch>.hsaco` (from
+   `tiles/code_object.hip`), loaded by `hippihx_v1_load` through
+   `hipModuleLoadData` behind the V1 symbols in `libhippihx_v1.so`. The
+   Mojo file remains the schedule source. The object that ran is the HIP
+   object.
 2. **MAX-serve soak.** Serve runs a MAX `InferenceSession` / custom op on
    purpose. That is not a silent swap behind `hippihx_v1_run`.
 

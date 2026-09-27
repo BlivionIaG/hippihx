@@ -31,7 +31,8 @@ from .protocol import ScratchSpec
 # Rev 2: caps.dtype + HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE (no fdot2.bf16).
 # Rev 3: qualnames attn.* → attention.* (ids unchanged).
 # Rev 4: caller-owned plan (ready, variant, scratch offsets), params,
-#        tensor descriptors in slot order, stream, caps.fabric.
+#        tensor descriptors in slot order, stream, caps.fabric, and the
+#        per-slot code object loader (hippihx_v1_load*).
 ABI_REVISION = 4
 
 MAX_RANK = 6
@@ -56,6 +57,9 @@ class V1Status(IntEnum):
     ERR_PARAM = 8
     ERR_TENSOR = 9
     ERR_UNSUPPORTED_FABRIC = 10
+    ERR_CODE_OBJECT = 11
+    ERR_FOREIGN_ISA = 12
+    ERR_NO_HIP = 13
 
 
 STATUS_NOTES: dict[V1Status, str] = {
@@ -68,6 +72,9 @@ STATUS_NOTES: dict[V1Status, str] = {
     V1Status.ERR_PARAM: "param count, domain, cross-check, or scratch overflow",
     V1Status.ERR_TENSOR: "tensor count, dtype, rank, extent, layout, or NULL data",
     V1Status.ERR_UNSUPPORTED_FABRIC: "comm: not a custom-AR hop; serve keeps RCCL",
+    V1Status.ERR_CODE_OBJECT: "not one raw AMDGPU ELF code object, or unreadable",
+    V1Status.ERR_FOREIGN_ISA: "code object mach is not the slot's, or HSA_OVERRIDE set",
+    V1Status.ERR_NO_HIP: "library built without HIP (host stub); nothing loaded",
 }
 
 # Element dtype codes. 0 is unset. Caps activation dtypes are fp16 / bf16 / fp32.

@@ -94,10 +94,26 @@ Import these instead of reimplementing extras bugs:
   `lspci` helpers stay serve.
 - `Caps.dtype` — DOT and GDN HIP refuse bf16 (`HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE`).
 
-## Fatbin
+## Artifacts
 
-One `libhippihx_<arch>.a` per configure tree. gfx1013 is Later (not true
-RDNA2) — never load a gfx1030 object on it. Never `HSA_OVERRIDE_GFX_VERSION`.
+One configure tree per slot writes to `build/fatbin/<arch>/`:
+
+| File | What | Serve does |
+|---|---|---|
+| `libhippihx_v1.so` | V1 symbols + generated tables. No device code, so the same for every slot. Links `libamdhip64` when built with HIP | `dlopen` once |
+| `hippihx_<arch>.hsaco` | this slot's device code: one raw AMDGPU ELF (one `--offload-arch`, `--cuda-device-only`, `--no-gpu-bundle-output`), from `tiles/code_object.hip` | `hippihx_v1_load(arch, path)` at init, before any plan or capture |
+| `libhippihx_<arch>.a` | link smoke (`hippihx_smoke_host`) | nothing |
+
+`hippihx_v1_load` checks the code object before `hipModuleLoadData` sees
+it. It refuses a slot that is not built (`UNSUPPORTED_ARCH`, so gfx1013
+and gfx906 never load), `HSA_OVERRIDE_GFX_VERSION` in the environment, or
+an ELF whose `EF_AMDGPU_MACH` is not the slot's (`FOREIGN_ISA`). It also
+refuses anything that is not one raw AMDGPU ELF, such as offload bundles
+and `.o` files (`CODE_OBJECT`). `plan.ready` also needs the slot loaded.
+Tile entries are `extern "C"`, so a migrated body resolves its kernels by
+plain name. A host-stub build validates and returns `NO_HIP`.
+
+Python mirror of the check: `hippihx._lib.codeobject.check_code_object`.
 
 ## After extras rewires
 
