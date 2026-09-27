@@ -58,6 +58,9 @@ target_include_directories(hippihx PUBLIC
   "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
+# mojo/ is the MAX authoring tree. It is not a fatbin input.
+# Mojo objects are not produce until re-emitted with hipcc (see docs/MOJO.md).
+
 # Shared DOT source: FA / EXL3 / AWQ-W4A16 / moe.shared.
 # Same .hip for every DOT slot (gfx1030, gfx110x, gfx1151, gfx103x).
 # gfx1013 is Later (not true RDNA2). gfx900 does not load these.

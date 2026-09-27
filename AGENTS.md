@@ -31,6 +31,14 @@ is false). FlyDSL is an optional extra, not a required dep. Do not port
 MFMA/WMMA FlyDSL GEMM/MoE/FA into `tiles/` or `hippihx.flydsl`.
 `Caps(backend="flydsl")` is valid. See `docs/FLYDSL.md`.
 
+Mojo/MAX (`mojo/`, `Caps(backend="mojo")`) is the maintainability
+authoring direction. ISA contracts stay in `hippihx.isa` /
+`include/hippihx/isa.hpp` / `mojo/isa/contracts.mojo`. `MOJO_PRODUCE`
+and `MOJO_V1_CONSUME` are false. Sandbox winners re-emit HIP (`hipcc`
+7.14 → `hipModuleLoad` / `libamdhip64`) or an explicit MAX serve path
+is chosen before soak. Do not put `mojo/` sources in the fatbin. Do not
+port MAX MFMA/WMMA kernels into `tiles/` or `mojo/`. See `docs/MOJO.md`.
+
 ## Craft locks
 
 - One `--offload-arch` per artifact. Never `HSA_OVERRIDE`.

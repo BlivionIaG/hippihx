@@ -12,6 +12,13 @@ DOT source, one fatbin per `--offload-arch`. Consume:
 **3**, group `attention`). Kernel bodies stay in extras until extras
 wraps those symbols.
 
+**Authoring:** Mojo/MAX (`mojo/`, `Caps(backend="mojo")`) is the
+maintainability surface. ISA contracts stay in `hippihx.isa` and do not
+move into the emit language. Mojo objects are **not produce** for
+vllm-rdna until they are re-emitted to HIP (`hipcc` 7.14 →
+`hipModuleLoad` / `libamdhip64`) or an explicit MAX serve path is chosen.
+See [`docs/MOJO.md`](docs/MOJO.md) and [`docs/ISA.md`](docs/ISA.md).
+
 ```python
 import hippihx
 from hippihx import Caps, Fabric
@@ -88,7 +95,8 @@ ROCm **7.14** `hipcc` on the V620 box. Host stub is for layout when
 
 ## Docs
 
-[`ARCHITECTURE`](docs/ARCHITECTURE.md) · [`CONSUME`](docs/CONSUME.md) ·
+[`ARCHITECTURE`](docs/ARCHITECTURE.md) · [`ISA`](docs/ISA.md) ·
+[`MOJO`](docs/MOJO.md) · [`CONSUME`](docs/CONSUME.md) ·
 [`FLYDSL`](docs/FLYDSL.md) · [`BACKPORT`](docs/BACKPORT.md) ·
 [`EXTRAS`](docs/EXTRAS.md) · [`AGENTS`](AGENTS.md) ·
 [`CONTRIBUTING`](CONTRIBUTING.md)

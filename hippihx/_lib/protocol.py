@@ -57,7 +57,8 @@ class Caps:
 
     Serve bind keys on ``arch`` **and** ``wave``. Comm also keys on
     ``fabric.hop`` + ``fabric.switch`` (PIX vs PHB/PXB). ``backend`` is
-    ``hip`` (fatbin / extras V1) or ``flydsl`` (compiler). Default is HIP.
+    ``hip`` (fatbin / extras V1), ``flydsl`` (compiler), or ``mojo``
+    (MAX authoring; not produce). Default is HIP.
     """
 
     arch: str = DEFAULT_ARCH
@@ -82,7 +83,7 @@ class Caps:
             backend = Backend(self.backend)
         except ValueError as exc:
             raise ValueError(
-                f"unknown backend {self.backend!r}; known hip, flydsl"
+                f"unknown backend {self.backend!r}; known hip, flydsl, mojo"
             ) from exc
         if not is_zoo_backend(backend):
             raise ValueError(f"backend {self.backend!r} is not a hippihx zoo backend")
@@ -110,11 +111,17 @@ class Plan:
 
 @dataclass(frozen=True, slots=True)
 class Binding:
-    """Views container. Fresh every call; never allocates."""
+    """Views container. Fresh every call; never allocates.
+
+    ``family`` is an optional bind hook (``qwen.qsa``, ``qwen.gdn``,
+    ``qwen.ple``, ``moe.routed``, ``moe.leftover_bf16``, ``hybrid.heap``).
+    It names a contract. It does not allocate a heap.
+    """
 
     plan: Plan
     scratch: Any = None
     tensors: Mapping[str, Any] = field(default_factory=dict)
+    family: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -136,7 +143,14 @@ class PlannedOp(Protocol):
 
     def plan(self, caps: Caps) -> Plan: ...
 
-    def bind(self, plan: Plan, scratch: Any = None, **tensors: Any) -> Binding: ...
+    def bind(
+        self,
+        plan: Plan,
+        scratch: Any = None,
+        *,
+        family: str | None = None,
+        **tensors: Any,
+    ) -> Binding: ...
 
     def run(self, binding: Binding) -> Any: ...
 
@@ -155,8 +169,14 @@ def stub_plan(qualname: str, caps: Caps, nbytes: int = 0) -> Plan:
     return Plan(qualname=qualname, arch=caps.arch, specs=specs)
 
 
-def stub_bind(plan: Plan, scratch: Any = None, **tensors: Any) -> Binding:
-    return Binding(plan=plan, scratch=scratch, tensors=dict(tensors))
+def stub_bind(
+    plan: Plan,
+    scratch: Any = None,
+    *,
+    family: str | None = None,
+    **tensors: Any,
+) -> Binding:
+    return Binding(plan=plan, scratch=scratch, tensors=dict(tensors), family=family)
 
 
 def stub_run(binding: Binding) -> None:

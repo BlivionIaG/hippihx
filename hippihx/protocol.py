@@ -1,6 +1,17 @@
 """Re-export the protocol + fatbin locks. Prefer ``hippihx._lib`` for new code."""
 
-from hippihx._lib.backend import DEST_BACKEND, FATBIN_BACKEND, FLYDSL_DEST, FLYDSL_V1_CONSUME, Backend
+from hippihx._lib.backend import (
+    DEST_BACKEND,
+    FATBIN_BACKEND,
+    FLYDSL_DEST,
+    FLYDSL_V1_CONSUME,
+    MOJO_AUTHORING,
+    MOJO_NOT_PRODUCE_MSG,
+    MOJO_PRODUCE,
+    MOJO_V1_CONSUME,
+    Backend,
+    MojoNotProduce,
+)
 from hippihx._lib.fabric import Fabric
 from hippihx._lib.fatbin import (
     BIND_KEYS_ON_ARCH_AND_WAVE,
@@ -66,6 +77,11 @@ __all__ = [
     "FATBIN_BACKEND",
     "FLYDSL_DEST",
     "FLYDSL_V1_CONSUME",
+    "MOJO_AUTHORING",
+    "MOJO_NOT_PRODUCE_MSG",
+    "MOJO_PRODUCE",
+    "MOJO_V1_CONSUME",
+    "MojoNotProduce",
     "Fabric",
     "FP16_ACT_ONLY_ON_DOT",
     "FP16_ACT_ONLY_ON_GDN",

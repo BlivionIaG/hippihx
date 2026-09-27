@@ -14,6 +14,10 @@ unproven. Lab tests already ran working gfx1030 objects. hippihx dest is
 | `hippihx.<group>.<op>` | `plan` / `bind` / `run` (backend-agnostic) |
 | `rdna_extras` | one `torch.ops` wrap; graphs; envs |
 
+Mojo/MAX authoring is a separate maintainability surface
+([`MOJO.md`](MOJO.md)). It is not this compiler backend, and a Mojo
+object is not V1 produce.
+
 `Caps(arch="gfx1030", backend="flydsl")` is valid. `FLYDSL_DEST` is
 **true**. `FLYDSL_GATE0_OBJECT` is **true** (compiler + vec-add).
 `FLYDSL_V1_CONSUME` stays **false** until a graph-safe JIT path exists
