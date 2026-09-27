@@ -1,7 +1,7 @@
 # extras → hippihx backport review
 
 Lock: [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `700753d9add5` (2026-09-25 05:48 UTC). Dest **default
+`rdna_extras` @ `30632b2fa323` (2026-09-27 13:05 UTC). Dest **default
 branch is `rdna_extras`**, not `main` (`c00091e02670` upstream vLLM — no
 dest HIP). **No** `torch.ops.hippihx.*`. Observe only: no `.cu` dump, no
 tok/s, no extras maxdiff.
@@ -48,6 +48,7 @@ until a body migrates and extras binds it.
 | `68a635ed8d78` | extras **#20** capture + dest-integrated **#21** FULL+PIECEWISE | Stay extras. Keeps FULL decode graphs; piecewise mixed/prefill. Foreign Waldecir + Cursor. Zoo does not own graph mode. |
 | `2a5e89368272` | extras PR **#19** merge (MTP unquantized-weight detect) | Stay extras. Python only. MTP still not dest. Foreign a17t + opencode. Do not pick. |
 | `700753d9add5` | MTP draft unbreak (amdsmi shutdown swallow + local-argmax) | Stay extras. Python platform + MTP model. MTP still not dest. Unique Blivion. |
+| `30632b2fa323` | draft decode graph capture for `max_num_reqs` | Stay extras. Python worker (`cudagraph_utils`). MTP still not dest. Unique Blivion. Zoo does not own graph mode. |
 
 Other dest-fixed ISA (keep in tile locks, not a dump): GDN prefill `o`
 `i_t_local`; causal_conv FIR pre-shift then shift; ConfigH
@@ -79,7 +80,7 @@ A dump is not a migrate. CONTRIBUTING: do not edit extras from this repo.
 
 ## Dest file → tile
 
-Observed at `700753d9add5`. Numbers are extras observations, not dest
+Observed at `30632b2fa323`. Numbers are extras observations, not dest
 locks. Fill tile READMEs.
 
 | extras path | hippihx tile | Notes |
@@ -109,7 +110,7 @@ extras consume.
    journals FPP13 16k c=8 green via serve arenas — still extras.
 2. Tile README LDS / `__launch_bounds__` / wave / DOT unit are filled.
 3. hippihx ships one HIP entry extras can bind. **Started:** V1
-   `plan`/`run`. `run` is `NOT_READY`. extras @ `700753d9add5` has no
+   `plan`/`run`. `run` is `NOT_READY`. extras @ `30632b2fa323` has no
    `torch.ops.hippihx.*`.
 4. extras is rewired **in extras**. The extras copy is then deleted.
 
@@ -118,10 +119,10 @@ Until then: observe, lock numbers, keep stubs. Tracker:
 
 ## Dest extras defects
 
-Dest tip `700753d9add5`. Live dest bugs / rolled-back paths — hippihx
+Dest tip `30632b2fa323`. Live dest bugs / rolled-back paths — hippihx
 must not reproduce them.
 
-| Defect | Where | Status @ `700753d9` | Zoo lock |
+| Defect | Where | Status @ `30632b2` | Zoo lock |
 |---|---|---|---|
 | `llvm.amdgcn.fdot2.bf16.bf16` ISel abort | Hybrid W4 gfx10 + bf16. Dest HIP has **no** `fdot2.bf16`. | **Serve-mitigated** (`59237b3`). | Never `fdot2.bf16`. DOT + GDN HIP = **fp16 act**. |
 | Scale-baked W4 zero-point | `qdq_4_rdna2.cuh` `prep_zero_scale_fp16`: `0xE400 \| zero` then `scale * (-1024 - zero)` in `half`. | **Still live** | Integer `q - zero`, then `* scale`. |
