@@ -1,5 +1,7 @@
 """Re-export the V1 mirror. Source of truth is ``hippihx._lib.catalog``."""
 
+from hippihx._lib.catalog import OpSpec, find_spec
+from hippihx._lib.fatbin import CODE_OBJECT, HOST_LIBRARY
 from hippihx._lib.v1 import (
     ABI_REVISION,
     DTYPE_BYTES,
@@ -22,6 +24,10 @@ from hippihx._lib.v1 import (
 
 __all__ = [
     "ABI_REVISION",
+    "CODE_OBJECT",
+    "HOST_LIBRARY",
+    "OpSpec",
+    "find_spec",
     "DTYPE_BYTES",
     "MAX_PARAMS",
     "MAX_RANK",
