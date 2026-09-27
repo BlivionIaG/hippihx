@@ -30,6 +30,7 @@
 #endif
 #endif
 
+// hippihx:gen begin arch_macros -- python -m hippihx._lib.codegen; do not edit
 #if defined(__gfx1030__) || defined(HIPPIHX_ARCH_gfx1030)
 #define HIPPIHX_GFX1030 1
 #define HIPPIHX_DOT_SLOT 1
@@ -70,15 +71,16 @@
 #define HIPPIHX_GFX1036 1
 #define HIPPIHX_DOT_SLOT 1
 #endif
-#if defined(__gfx1013__) || defined(HIPPIHX_ARCH_gfx1013)
-#define HIPPIHX_GFX1013 1
-#endif
 #if defined(__gfx900__) || defined(HIPPIHX_ARCH_gfx900)
 #define HIPPIHX_GFX900 1
 #endif
 #if defined(__gfx906__) || defined(HIPPIHX_ARCH_gfx906)
 #define HIPPIHX_GFX906 1
 #endif
+#if defined(__gfx1013__) || defined(HIPPIHX_ARCH_gfx1013)
+#define HIPPIHX_GFX1013 1
+#endif
+// hippihx:gen end arch_macros
 
 // Shared DOT paths assume no matrix / FP8 hardware. gfx110x WMMA must not
 // leak into those files (Later overlay only).

@@ -21,6 +21,8 @@ this tree. Do not dump `csrc/rocm/*.cu` here until extras consumes V1.
 - Ops live at `hippihx.<group>.<op>` with `api.py` + `META`.
 - Group is `attention` (not `attn`). ISA names stay (`fa_fdot2`, not `paged`).
 - Catalog is `hippihx/_lib/catalog.py` — one table for Python, C, tiles, tests.
+  `hippihx:gen` blocks are rendered from it by `python -m hippihx._lib.codegen`.
+  Never hand-edit a generated block.
 - Never import `b12x`, CuTe, CUTLASS, CUDA, WMMA, NVFP4.
 
 ## HIP fatbins / FlyDSL compiler

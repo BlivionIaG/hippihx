@@ -20,6 +20,7 @@ Same *shape* as b12x (`<group>.<op>` + `api.py`), HIP objects:
 | Path | Owns |
 |---|---|
 | `hippihx/_lib/catalog.py` | One op table (qualname, V1 id, DOT, tile path) |
+| `hippihx/_lib/codegen.py` | Renders the catalog, arch slots and ISA locks into `v1.h`, `v1_abi.cpp`, `isa.hpp`, `arch.hpp`, CMake, `build_fatbin.sh`, and the Mojo contracts |
 | `hippihx/<group>/<op>/api.py` | `plan` / `bind` / `run` |
 | `tiles/<group>/<op>/kernel.hip` | HIP ISA (dest). Torch-free |
 | `include/hippihx/v1.h` | C consume ABI extras wraps as `torch.ops` |

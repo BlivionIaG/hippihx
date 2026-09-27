@@ -30,14 +30,17 @@ enum {
 
 // Activation dtype. 0 = unset (do not refuse). DOT and GDN HIP are fp16;
 // never fdot2.bf16 (gfx1030 LLVM ISel abort).
+// hippihx:gen begin v1_dtype -- python -m hippihx._lib.codegen; do not edit
 typedef enum hippihx_v1_dtype {
   HIPPIHX_V1_DTYPE_UNSET = 0,
   HIPPIHX_V1_DTYPE_FP16 = 1,
   HIPPIHX_V1_DTYPE_BF16 = 2,
   HIPPIHX_V1_DTYPE_FP32 = 3,
 } hippihx_v1_dtype;
+// hippihx:gen end v1_dtype
 
 // Stable ids — match hippihx.list_ops() order. Do not renumber.
+// hippihx:gen begin v1_ops -- python -m hippihx._lib.codegen; do not edit
 typedef enum hippihx_v1_op_id {
   HIPPIHX_V1_OP_ATTN_FA_FDOT2 = 0,
   HIPPIHX_V1_OP_ATTN_GDN_SCAN = 1,
@@ -53,6 +56,7 @@ typedef enum hippihx_v1_op_id {
   HIPPIHX_V1_OP_COMM_PCIE = 11,
   HIPPIHX_V1_OP_COUNT = 12,
 } hippihx_v1_op_id;
+// hippihx:gen end v1_ops
 
 typedef struct hippihx_v1_caps {
   const char* arch;  // e.g. "gfx1030"; required
@@ -94,7 +98,9 @@ int hippihx_v1_run(hippihx_v1_op_id op, const hippihx_v1_caps* caps,
 // ABI revision for extras loaders (bump on breaking layout changes).
 // Rev 2: caps.dtype + HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE (no fdot2.bf16).
 // Rev 3: qualnames attn.* → attention.* (ids unchanged; extras has not bound).
+// hippihx:gen begin v1_revision -- python -m hippihx._lib.codegen; do not edit
 enum { HIPPIHX_V1_ABI_REVISION = 3 };
+// hippihx:gen end v1_revision
 int hippihx_v1_abi_revision(void);
 
 #ifdef __cplusplus

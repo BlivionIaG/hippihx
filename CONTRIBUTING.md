@@ -29,7 +29,9 @@ until it is re-emitted with `hipcc` 7.14 (`hipModuleLoad` /
 ([`docs/MOJO.md`](docs/MOJO.md)).
 
 `list_ops()` must stay in lockstep with `hippihx/_lib/catalog.py` and
-`tiles/` class directories. Add an op in the catalog first.
+`tiles/` class directories. Add an op in the catalog first, then run
+`python -m hippihx._lib.codegen` to rewrite the generated blocks
+(`hippihx:gen begin/end` markers).
 
 Do not dump `opengfx1030/vllm-rdna` `csrc/rocm/*.cu` into `tiles/` until
 the extras consume path exists. Those files are ATen wrappers + paged
@@ -128,6 +130,7 @@ cmake -S . -B build -DHIPPIHX_ARCH=gfx1030
 cmake --build build
 
 pip install -e ".[dev]"
+python -m hippihx._lib.codegen --check  # generated blocks follow the catalog
 pytest
 ```
 

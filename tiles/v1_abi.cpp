@@ -15,7 +15,16 @@ struct OpRow {
   int fp16_act;
 };
 
-// Keep order identical to hippihx_v1_op_id and hippihx.list_ops().
+// Built fatbin slot. dot = shared DOT slot (same dot.hpp source).
+struct ArchRow {
+  const char* name;
+  int dot;
+};
+
+// Op rows keep hippihx_v1_op_id / hippihx.list_ops() order. Arch rows
+// are hippihx._lib.fatbin.KNOWN_ARCHES. Later slots (gfx906, gfx1013)
+// are not rows, so they are refused like any unknown arch (same as Caps).
+// hippihx:gen begin v1_table -- python -m hippihx._lib.codegen; do not edit
 constexpr OpRow kOps[HIPPIHX_V1_OP_COUNT] = {
     {"attention.fa_fdot2", 1, 0, 1},
     {"attention.gdn_scan", 0, 0, 1},
@@ -31,6 +40,21 @@ constexpr OpRow kOps[HIPPIHX_V1_OP_COUNT] = {
     {"comm.pcie", 0, 0, 0},
 };
 
+constexpr ArchRow kArches[] = {
+    {"gfx1030", 1},
+    {"gfx1100", 1},
+    {"gfx1101", 1},
+    {"gfx1102", 1},
+    {"gfx1151", 1},
+    {"gfx1031", 1},
+    {"gfx1032", 1},
+    {"gfx1033", 1},
+    {"gfx1035", 1},
+    {"gfx1036", 1},
+    {"gfx900", 0},
+};
+// hippihx:gen end v1_table
+
 bool arch_ok(const char* arch, int is_dot) {
   if (arch == nullptr || arch[0] == '\0') {
     return false;
@@ -38,30 +62,13 @@ bool arch_ok(const char* arch, int is_dot) {
   if (std::strchr(arch, ',') != nullptr || std::strchr(arch, ' ') != nullptr) {
     return false;  // one fatbin slot per artifact
   }
-  // Later — refuse here (same as Caps).
-  if (std::strcmp(arch, "gfx906") == 0 ||
-      std::strcmp(arch, "gfx1013") == 0) {
-    return false;
-  }
-  static const char* kAll[] = {
-      "gfx1030", "gfx1100", "gfx1101", "gfx1102", "gfx1151",
-      "gfx1031", "gfx1032", "gfx1033", "gfx1035", "gfx1036",
-      "gfx900",
-  };
-  bool known = false;
-  for (const char* a : kAll) {
-    if (std::strcmp(arch, a) == 0) {
-      known = true;
-      break;
+  for (const ArchRow& row : kArches) {
+    if (std::strcmp(arch, row.name) == 0) {
+      // A non-DOT slot (gfx900 Vega stub) never loads FA/EXL3 DOT objects.
+      return row.dot != 0 || is_dot == 0;
     }
   }
-  if (!known) {
-    return false;
-  }
-  if (is_dot && std::strcmp(arch, "gfx900") == 0) {
-    return false;  // Vega stub — no FA/EXL3 DOT objects
-  }
-  return true;
+  return false;
 }
 
 bool valid_op(hippihx_v1_op_id op) {
