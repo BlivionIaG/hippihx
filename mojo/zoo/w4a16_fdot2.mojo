@@ -1,12 +1,13 @@
-# MAX authoring slot for attention.fa_fdot2.
+# MAX authoring slot for gemm.w4a16_fdot2.
 #
 # Not a kernel body, not a fatbin, and not dest-ready. execute() does not
-# enqueue. ABI gap: this registration is not hippihx_v1_plan /
-# hippihx_v1_run. Dest produce stays hipcc 7.14 / hipModuleLoad /
-# libamdhip64 until a documented HIP re-emit or MAX-serve soak exists.
+# enqueue. ABI gap versus hippihx_v1_*. Dest produce stays hipcc 7.14 /
+# hipModuleLoad / libamdhip64 until a documented HIP re-emit or MAX-serve
+# soak exists.
 #
-# Arch switch: gfx1030 packed DOT, wave32, no WMMA gate. gfx900 is mad_mix
-# and must not receive the DOT object. gfx906 and gfx1013 stay unregistered.
+# One W4 family: integer q - zero, then scale. K_STEP=32. No ConfigH.
+# wave32 packed DOT. No WMMA gate. gfx900 mad_mix does not receive the
+# DOT object.
 
 import extensibility
 
@@ -15,19 +16,20 @@ from extensibility import InputTensor, OutputTensor
 from std.utils.index import IndexList
 from zoo.refuse import not_produce, refuse_dot_on_gfx900
 
-alias QUALNAME = "attention.fa_fdot2"
+alias QUALNAME = "gemm.w4a16_fdot2"
 alias WAVE = 32
 alias PRODUCE = False
+alias K_STEP = 32
 
 
 @extensibility.register(
-    "hippihx.attention.fa_fdot2",
+    "hippihx.gemm.w4a16_fdot2",
     type="gpu",
     api="hip",
     arch="gfx1030",
 )
-struct FaFdot2Gfx1030:
-    """gfx1030 packed DOT authoring slot. wave32. No WMMA gate. No enqueue."""
+struct W4A16Fdot2Gfx1030:
+    """gfx1030 W4 authoring slot. K_STEP=32. No enqueue."""
 
     alias ARCH = "gfx1030"
     alias WAVE = WAVE
@@ -49,12 +51,12 @@ struct FaFdot2Gfx1030:
 
 
 @extensibility.register(
-    "hippihx.attention.fa_fdot2",
+    "hippihx.gemm.w4a16_fdot2",
     type="gpu",
     api="hip",
     arch="gfx900",
 )
-struct FaFdot2MadMix:
+struct W4A16Fdot2MadMix:
     """gfx900 mad_mix. Do not ship the gfx1030 DOT object here."""
 
     alias ARCH = "gfx900"
@@ -75,7 +77,7 @@ struct FaFdot2MadMix:
         refuse_dot_on_gfx900(QUALNAME)
 
 
-@extensibility.register_shape_function("hippihx.attention.fa_fdot2")
-def fa_fdot2_shape(x: InputTensor) raises -> IndexList[x.rank]:
+@extensibility.register_shape_function("hippihx.gemm.w4a16_fdot2")
+def w4a16_fdot2_shape(x: InputTensor) raises -> IndexList[x.rank]:
     _ = x
     not_produce(QUALNAME, "shape")
