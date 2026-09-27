@@ -1,12 +1,13 @@
 # Mojo/MAX authoring
 
-hippihx is moving its **authoring** surface to Mojo/MAX so tile contracts
-stay in one language that can specialize on `arch` without a pile of
-`#ifdef`s. The durable asset is still the ISA contract
-([`ISA.md`](ISA.md)). Emit language is a backend.
+hippihx **authors** in Mojo/MAX so tile contracts stay in one language
+that can specialize on `arch` without a pile of `#ifdef`s. The durable
+asset is still the ISA contract ([`ISA.md`](ISA.md)). Emit language is a
+backend.
 
-This is a maintainability conversion. It is not a produce-pin change.
-Mojo objects are **not dest-ready**.
+`mojo/` is the authoring center. Every catalog op with a brief has a
+MAX registration. `execute` refuses to enqueue. This is not a produce-pin
+change. Mojo objects are **not dest-ready**.
 
 ## Dest produce ABI
 
@@ -58,21 +59,25 @@ replaced by this scaffold. Do not port Modular CDNA MFMA attention
 
 ```
 hippihx/isa.py                 # Python ISA API
-hippihx/mojo/                  # authoring flags, explore, family hooks
+hippihx/mojo/                  # host view: authoring_source, explore, hooks
 include/hippihx/isa.hpp        # C++ mirror
-mojo/                          # MAX custom_extensions package
+mojo/                          # MAX custom_extensions package (authoring center)
   isa/contracts.mojo           # arch switch, packed DOT, LDS, wave32
-  zoo/fa_fdot2.mojo            # first registration; execute() refuses
+  zoo/__init__.mojo            # imports every registration
+  zoo/refuse.mojo              # shared not-produce / mad_mix refuse
+  zoo/families.mojo            # family tensor contracts
+  zoo/<op>.mojo                # one registration per catalog op with a brief
 ```
 
 `mojo/` is a MAX package (`__init__.mojo` present) so a later graph can
-pass it as `custom_extensions`. The first op is
-`hippihx.attention.fa_fdot2`:
+pass it as `custom_extensions`. `zoo/__init__.mojo` imports every
+registration. Host `plan.meta["authoring"]` names that file.
 
-| Registration | `arch` | What `execute` does |
-|---|---|---|
-| `FaFdot2Gfx1030` | `gfx1030` | raises not-produce. wave32. no WMMA gate. no enqueue |
-| `FaFdot2MadMix` | `gfx900` | raises mad_mix. the DOT object does not ship here |
+| Kind | Ops | gfx1030 `execute` | gfx900 |
+|---|---|---|---|
+| Packed DOT | `fa_fdot2`, `w4a16_fdot2`, `exl3_3inst`, `moe.shared` | not-produce. wave32. no WMMA gate | mad_mix refuse. the DOT object does not ship |
+| Family / other | `gdn_scan`, `qsa_indexer`, `moe.routed`, `moe.leftover_bf16`, `causal_conv`, `comm.pcie` | not-produce. no enqueue | not registered (not a DOT object) |
+| Left stub | `kda_scan`, `dsa_nope` | no Mojo file | no Mojo file |
 
 Device fields match current MAX `@extensibility.register`
 (`type="gpu"`, `api="hip"`, `arch=`). gfx906 and gfx1013 are Later and
@@ -91,6 +96,7 @@ plan = fa_fdot2.plan(caps)
 plan.meta["arch_switch"]   # "dot"
 plan.meta["explore"]       # ("decode", "prefill") — rank order, no tok/s
 plan.meta["produce"]       # False
+plan.meta["authoring"]     # "mojo/zoo/fa_fdot2.mojo"
 
 gdn = gdn_scan.plan(Caps(arch="gfx1030"))
 gdn.meta["families"]       # ("qwen.gdn", "hybrid.heap")
@@ -137,15 +143,17 @@ family hook, a tensor schema, a Mojo registration, or a transplant plan
 for them. Existing tile READMEs still apply. Do not retarget GDN 16/48
 onto KDA 64×128.
 
-## Next authoring steps
+## Authoring status
 
-1. Register the remaining catalog ops the same way as `fa_fdot2`: one
-   gfx1030 struct that refuses enqueue, and a mad_mix struct only where
-   a DOT object must fail closed. No kernel body in that step.
-2. Lift one family at a time (QSA, GDN, PLE, then routed versus leftover,
-   then the hybrid heap). Each lift keeps that hook's tensor contracts.
+1. The catalog ops that have a brief are registered: one gfx1030 struct
+   that refuses enqueue, and a mad_mix struct only on packed-DOT ops.
+   No kernel body is in those files. `attention.kda_scan` and
+   `attention.dsa_nope` have no registration.
+2. Family tensor contracts are recorded in `mojo/zoo/families.mojo` and
+   still enforced by host `bind`. QSA, GDN, PLE, routed versus leftover,
+   and the caller-owned hybrid heap are views, not new kernels.
    Occupancy and LDS pins stay in the tile README. Spill or a bad ISel is
-   a drop. Do not open a GLM KDA or DeepSeek brief in that step.
+   a drop. GLM KDA and the DeepSeek transplant stay without a new brief.
 3. Dest produce stays hipcc 7.14 / `hipModuleLoad` / `libamdhip64` until
    a documented HIP re-emit soak or a documented MAX-serve soak exists.
    `hippihx_v1_run` stays `NOT_READY` until the HIP object is that soak.

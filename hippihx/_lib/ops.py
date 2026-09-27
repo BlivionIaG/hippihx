@@ -7,7 +7,7 @@ from typing import Any
 from .backend import MOJO_NOT_PRODUCE_MSG, Backend, MojoNotProduce, is_zoo_backend
 from .catalog import OpSpec, find_spec
 from .explore import ranked_explore
-from .families import hooks_for, require_family
+from .families import LEFT_WITHOUT_NEW_BRIEF, hooks_for, require_family
 from .fatbin import supported_arches
 from .isa import arch_switch, wave_occupancy_ok
 from .protocol import (
@@ -66,6 +66,8 @@ class StubOp:
         spec = self._spec
         shapes = ranked_explore(self.META.qualname, caps.arch)
         families = hooks_for(self.META.qualname)
+        registered = self.META.qualname not in LEFT_WITHOUT_NEW_BRIEF
+        stem = self.META.qualname.split(".", 1)[1]
         meta = {
             "backend": caps.backend,
             "wave": caps.wave,
@@ -74,6 +76,8 @@ class StubOp:
             "families": tuple(hook.name for hook in families),
             "produce": caps.backend != Backend.MOJO.value,
             "sized": bool(params),
+            "mojo_registered": registered,
+            "authoring": f"mojo/zoo/{stem}.mojo" if registered else "catalog-stub",
         }
         if not params:
             return Plan(qualname=self.META.qualname, arch=caps.arch, meta=meta)

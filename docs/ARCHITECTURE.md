@@ -1,9 +1,20 @@
 # Architecture
 
-hippihx is a HIP **op zoo**. `opengfx1030/vllm-rdna` `rdna_extras` is the
+hippihx is a Mojo/MAX **authoring** zoo for RDNA. The durable asset is the
+ISA contract ([`ISA.md`](ISA.md)). Emit language is a backend.
+
+`mojo/` is the authoring center: one MAX registration per catalog op that
+has a brief, the family tensor contracts, and the arch switch. `execute`
+does not enqueue. Mojo objects are not dest-ready and are not fatbin
+inputs. `MOJO_DEST_READY` is false.
+
+Dest produce for vllm-rdna stays hipcc 7.14 / `hipModuleLoad` /
+`libamdhip64` (`hippihx_v1_plan` / `hippihx_v1_run`). HIP fatbins in
+`tiles/` are that produce path. FlyDSL is a dest compiler backend, not
+the authoring center. `opengfx1030/vllm-rdna` `rdna_extras` is the
 **serve wiring**. The split is the same *shape* as
 `local-inference-lab/b12x` → a serving engine, but the ISA is HIP/RDNA, not
-CUDA/CuTe.
+CUDA/CuTe. This is not a produce-pin change.
 
 ## Why this repo exists
 
@@ -19,14 +30,15 @@ Same *shape* as b12x (`<group>.<op>` + `api.py`), HIP objects:
 
 | Path | Owns |
 |---|---|
+| `mojo/` | Authoring center. MAX registrations, family contracts, ISA mirror. Not a fatbin input |
+| `hippihx/mojo/` | Host view of that center (`authoring_source`, explore, hooks) |
+| `hippihx/isa.py` | Packed DOT, LDS banks, wave32 gate, arch switch |
 | `hippihx/_lib/catalog.py` | One op table (qualname, V1 id, DOT, tile path) |
 | `hippihx/_lib/codegen.py` | Renders the catalog, arch slots and ISA locks into `v1.h`, `v1_abi.cpp`, `isa.hpp`, `arch.hpp`, CMake, `build_fatbin.sh`, and the Mojo contracts |
 | `hippihx/<group>/<op>/api.py` | `plan` / `bind` / `run` |
-| `tiles/<group>/<op>/kernel.hip` | HIP ISA (dest). Torch-free |
+| `tiles/<group>/<op>/kernel.hip` | HIP produce object (dest). Torch-free |
 | `include/hippihx/v1.h` | C consume ABI extras wraps as `torch.ops` |
 | `hippihx/flydsl/` | FlyDSL compiler atoms + kernel contracts |
-| `hippihx/isa.py` | Packed DOT, LDS banks, wave32 gate, arch switch |
-| `mojo/` | Mojo/MAX authoring package (not a fatbin input) |
 | `hippihx/comm/fabric.py` | PCIe/PLX hop class (PIX/PXB/PHB × 88096/8749) |
 
 Group rename **`attn` → `attention`** (V1 ABI rev **3**; ids unchanged). ISA
@@ -55,11 +67,11 @@ is valid. Do not port ROCm/FlyDSL MFMA/WMMA GEMM/MoE/FA into `tiles/` or
 extras FlyDSL consume waits on `FLYDSL_V1_CONSUME` (graph-safe JIT). See
 [`FLYDSL.md`](FLYDSL.md).
 
-Mojo/MAX (`mojo/`, `Caps(backend="mojo")`) is the maintainability
-**authoring** surface. It is not dest-ready. Dest produce stays hipcc
-7.14 / `hipModuleLoad` / `libamdhip64` until a documented HIP re-emit or
-MAX-serve soak exists. The ABI gap is MAX `execute` versus
-`hippihx_v1_*` (rev 4). `MOJO_DEST_READY` is false. See [`MOJO.md`](MOJO.md).
+`Caps(backend="mojo")` plans and binds against the `mojo/` registration.
+`run` raises `MojoNotProduce`. `plan.meta["authoring"]` is
+`mojo/zoo/<op>.mojo` for every catalog op except `attention.kda_scan` and
+`attention.dsa_nope`, which stay `catalog-stub`. The ABI gap is MAX
+`execute` versus `hippihx_v1_*` (rev 4). See [`MOJO.md`](MOJO.md).
 
 
 ```
