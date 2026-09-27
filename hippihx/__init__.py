@@ -37,7 +37,9 @@ _GROUPS: Final[tuple[str, ...]] = (
     "comm",
     "flydsl",
     "gemm",
+    "isa",
     "moe",
+    "mojo",
     "sequence",
 )
 

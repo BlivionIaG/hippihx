@@ -31,6 +31,17 @@ is false). FlyDSL is an optional extra, not a required dep. Do not port
 MFMA/WMMA FlyDSL GEMM/MoE/FA into `tiles/` or `hippihx.flydsl`.
 `Caps(backend="flydsl")` is valid. See `docs/FLYDSL.md`.
 
+Mojo/MAX (`mojo/`, `Caps(backend="mojo")`) is the maintainability
+authoring direction. It is not dest-ready. Dest produce stays `hipcc`
+7.14 / `hipModuleLoad` / `libamdhip64` until a documented HIP re-emit or
+MAX-serve soak exists (`MOJO_DEST_READY` is false). The ABI gap is MAX
+`execute` versus `hippihx_v1_*`. Family lifts keep Qwen QSA/GDN/PLE,
+leftover BF16 versus routed experts, and hybrid heaps, including their
+tensor contracts. Leave GLM KDA / DeepSeek transplant without a new brief.
+Do not put `mojo/` sources in the fatbin. Do not port MAX MFMA/WMMA
+kernels into `tiles/` or `mojo/`. Do not edit `vllm-rdna` / `rdna_extras`.
+See `docs/MOJO.md`.
+
 ## Craft locks
 
 - One `--offload-arch` per artifact. Never `HSA_OVERRIDE`.
