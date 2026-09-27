@@ -1,9 +1,10 @@
 # First-cut MAX registration for attention.fa_fdot2.
 #
-# This is an authoring stub, not a kernel body and not a fatbin. execute()
-# does not enqueue. A sandbox winner must be re-emitted with hipcc 7.14 and
-# loaded via hipModuleLoad / libamdhip64, or an explicit MAX serve path must
-# be chosen, before soak under vllm-rdna.
+# This is an authoring stub, not a kernel body, not a fatbin, and not
+# dest-ready. execute() does not enqueue. ABI gap: this registration is
+# not hippihx_v1_plan / hippihx_v1_run. Dest produce stays hipcc 7.14 /
+# hipModuleLoad / libamdhip64 until a documented HIP re-emit or MAX-serve
+# soak exists.
 #
 # Arch switch: gfx1030 (packed DOT, wave32, no WMMA gate) versus gfx900
 # (mad_mix — do not ship the DOT object). Matches @extensibility.register
@@ -22,10 +23,11 @@ alias PRODUCE = False
 
 fn _not_produce(arch: StaticString) raises -> None:
     raise Error(
-        "attention.fa_fdot2 Mojo object is not produce (arch=",
+        "attention.fa_fdot2 Mojo object is not dest-ready (arch=",
         arch,
-        "); re-emit HIP (hipcc 7.14 → hipModuleLoad / libamdhip64) "
-        "or choose an explicit MAX serve path",
+        "); ABI gap versus hippihx_v1_*; dest produce stays hipcc 7.14 / "
+        "hipModuleLoad / libamdhip64 until a documented HIP re-emit or "
+        "MAX-serve soak exists",
     )
 
 

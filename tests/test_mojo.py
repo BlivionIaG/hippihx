@@ -9,7 +9,7 @@ import pytest
 
 from hippihx._lib.backend import is_dest_backend, is_v1_consume_backend, is_zoo_backend
 from hippihx._lib.fatbin import DOT_ARCHES
-from hippihx.attention import fa_fdot2, gdn_scan, qsa_indexer
+from hippihx.attention import dsa_nope, fa_fdot2, gdn_scan, kda_scan, qsa_indexer
 from hippihx.isa import (
     FDOT2,
     LDS_BANK_BYTES,
@@ -31,7 +31,9 @@ from hippihx.mojo import (
     FA_FDOT2_MOJO,
     HOOKS,
     ISA_MOJO,
+    LEFT_WITHOUT_NEW_BRIEF,
     MOJO_AUTHORING,
+    MOJO_DEST_READY,
     MOJO_PRODUCE,
     MOJO_V1_CONSUME,
     SOURCE_ROOT,
@@ -49,6 +51,7 @@ def test_mojo_is_authoring_not_produce() -> None:
     assert MOJO_AUTHORING is True
     assert MOJO_PRODUCE is False
     assert MOJO_V1_CONSUME is False
+    assert MOJO_DEST_READY is False
     assert is_zoo_backend("mojo")
     assert not is_dest_backend("mojo")
     assert is_dest_backend("hip")
@@ -71,7 +74,11 @@ def test_mojo_plan_bind_refuses_run() -> None:
     assert plan.meta["explore"] == ("decode", "prefill")
     assert plan.meta["wave"] == 32
     binding = fa_fdot2.bind(plan, scratch=None)
+    with pytest.raises(MojoNotProduce, match="not dest-ready"):
+        fa_fdot2.run(binding)
     with pytest.raises(MojoNotProduce, match="hipModuleLoad"):
+        fa_fdot2.run(binding)
+    with pytest.raises(MojoNotProduce, match="ABI gap"):
         fa_fdot2.run(binding)
 
 
@@ -170,6 +177,32 @@ def test_family_hooks_on_bind() -> None:
     routed.bind(routed_plan, family="moe.routed")
     with pytest.raises(ValueError, match="not a bind hook"):
         routed.bind(routed_plan, family="moe.leftover_bf16")
+    by_name = {hook.name: hook for hook in HOOKS}
+    assert [t.name for t in by_name["qwen.qsa"].tensors] == ["groups"]
+    assert [t.dtype for t in by_name["qwen.gdn"].tensors] == [
+        "fp16",
+        "fp16",
+        "fp16",
+        "fp16",
+        "fp16|fp32",
+    ]
+    assert [t.name for t in by_name["qwen.gdn"].tensors] == [
+        "mixed_qkv",
+        "a",
+        "b",
+        "out",
+        "state",
+    ]
+    assert [t.name for t in by_name["qwen.ple"].tensors] == ["input", "out", "state"]
+    assert [t.name for t in by_name["moe.routed"].tensors] == ["gate", "up", "down"]
+    assert by_name["moe.leftover_bf16"].tensors[0].name == "dense"
+    assert by_name["moe.leftover_bf16"].tensors[0].dtype == "bf16"
+    assert by_name["hybrid.heap"].tensors[0].name == "heap"
+    assert LEFT_WITHOUT_NEW_BRIEF == ("attention.kda_scan", "attention.dsa_nope")
+    assert kda_scan.FAMILY_HOOKS == ()
+    assert dsa_nope.FAMILY_HOOKS == ()
+    with pytest.raises(ValueError, match="not a bind hook"):
+        kda_scan.bind(kda_scan.plan(Caps()), family="qwen.gdn")
 
 
 def test_mojo_sources_match_isa_and_are_not_fatbin() -> None:
@@ -215,5 +248,12 @@ def test_mojo_sources_match_isa_and_are_not_fatbin() -> None:
     assert ".mojo" not in cmake
     doc = (ROOT / "docs" / "MOJO.md").read_text(encoding="utf-8")
     assert "hipModuleLoad" in doc
-    assert "not produce" in doc.lower()
-    assert "explicit MAX serve" in doc
+    assert "not dest-ready" in doc.lower()
+    assert "ABI gap" in doc
+    assert "hippihx_v1_plan" in doc
+    assert "MAX-serve soak" in doc
+    assert "LEFT_WITHOUT_NEW_BRIEF" in doc
+    assert "attention.kda_scan" in doc
+    assert "DeepSeek" in doc
+    assert "mixed_qkv" in doc
+    assert "rdna_extras" in doc

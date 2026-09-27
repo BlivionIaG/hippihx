@@ -6,31 +6,41 @@ stay in one language that can specialize on `arch` without a pile of
 ([`ISA.md`](ISA.md)). Emit language is a backend.
 
 This is a maintainability conversion. It is not a produce-pin change.
+Mojo objects are **not dest-ready**.
 
-## Not produce
+## Dest produce ABI
 
-`Caps(backend="mojo")` may **plan** and **bind**. `run` raises
-`MojoNotProduce`.
+Dest produce for vllm-rdna stays **hipcc 7.14 / `hipModuleLoad` /
+`libamdhip64`** until a documented HIP re-emit soak or a documented
+MAX-serve soak exists. Neither soak exists in this tree. Do not edit
+`opengfx1030/vllm-rdna` or `rdna_extras` to invent one.
 
-A Mojo object is not a HIP fatbin. `hipModuleLoad` / `libamdhip64` will
-not load it. extras V1 consume stays the HIP archive (`hippihx_v1_*`,
-ROCm **7.14** `hipcc`, one `--offload-arch`).
+| | Dest produce (now) | Mojo authoring (this tree) |
+|---|---|---|
+| Compiler | ROCm **7.14** `hipcc`, one `--offload-arch` | Mojo/MAX, not invoked by host tests |
+| Loader | `hipModuleLoad` from `libamdhip64` | MAX `custom_extensions` / `InferenceSession` |
+| Symbols | `hippihx_v1_plan` / `hippihx_v1_run`, ABI rev **3** | `@extensibility.register` `execute(OutputTensor, InputTensor, DeviceContext)` |
+| Object | `libhippihx_<arch>.a` | not an AMDGPU code object from `hipcc` |
 
-Sandbox or Mojo winners soak under vllm-rdna only after one of these is
-true:
+**ABI gap.** A Mojo `execute` registration does not export `hippihx_v1_*`
+and is not a module `hipModuleLoad` can open. `Caps(backend="mojo")` may
+**plan** and **bind**. `run` raises `MojoNotProduce`. `MOJO_AUTHORING` is
+true. `MOJO_PRODUCE`, `MOJO_V1_CONSUME`, and `MOJO_DEST_READY` are false.
+`plan.meta["produce"]` is false on this backend. `mojo/` is not in the
+CMake fatbin. Do not add `max` as a required dependency.
 
-1. **Re-emit HIP.** The winning schedule is lowered again with `hipcc`
-   7.14 into `build/fatbin/<arch>/libhippihx_<arch>.a`, then serve loads
-   it with `hipModuleLoad`. The Mojo file is the source of the schedule,
-   not the object that ran.
-2. **An explicit MAX serve path** is chosen in serve (a MAX
-   `InferenceSession` / custom op, not a silent swap behind
-   `hippihx_v1_run`). That choice is not this repo and not the default.
+A later soak has to be one of these, written down as a soak, not assumed
+from a green authoring test:
 
-`MOJO_AUTHORING` is true. `MOJO_PRODUCE` and `MOJO_V1_CONSUME` are false.
-`mojo/` is not in the CMake fatbin. Do not add `max` as a required
-dependency. Host tests read the Mojo sources as text; they do not invoke
-the Mojo compiler.
+1. **HIP re-emit.** The winning schedule is lowered again with `hipcc`
+   7.14 into `build/fatbin/<arch>/libhippihx_<arch>.a`, exporting the V1
+   symbols, then loaded with `hipModuleLoad`. The Mojo file remains the
+   schedule source. The object that ran is the HIP object.
+2. **MAX-serve soak.** Serve runs a MAX `InferenceSession` / custom op on
+   purpose. That is not a silent swap behind `hippihx_v1_run`.
+
+Host tests read the Mojo sources as text. They do not invoke the Mojo
+compiler and they are not that soak.
 
 FlyDSL stays a dest compiler backend ([`FLYDSL.md`](FLYDSL.md)). It is not
 replaced by this scaffold. Do not port Modular CDNA MFMA attention
@@ -87,38 +97,52 @@ Ranked explore shapes live in `hippihx.mojo.ranked_explore`. Rank 0 is
 the first candidate. Spill rows (QSA 2-warp) stay in the list at a worse
 rank. DOT explore on gfx900/906/1013 is empty.
 
-## Family bind hooks
+## Family binds and tensor contracts
 
-These are not new V1 ids. They are names on the bind surface so Qwen and
-MoE dispatch stay documentable while bodies are still stubs.
+A Mojo lift keeps these hooks and the tensor views on them. They are not
+new V1 ids. Each op module exports `FAMILY_HOOKS` next to `bind`.
+`FamilyHook.tensors` is the view list.
 
-| Hook | Catalog op | Bind keys |
-|---|---|---|
-| `qwen.qsa` | `attention.qsa_indexer` | arch, wave, groups |
-| `qwen.gdn` | `attention.gdn_scan` | arch, wave, state_dtype |
-| `qwen.ple` | `sequence.causal_conv` | arch, wave, state_len |
-| `moe.routed` | `moe.routed` | arch, wave, expert_path |
-| `moe.leftover_bf16` | `moe.leftover_bf16` | arch, wave, expert_path |
-| `hybrid.heap` | `gdn_scan` and `causal_conv` | arch, wave, heap |
+| Hook | Catalog op | Bind keys | Tensor views |
+|---|---|---|---|
+| `qwen.qsa` | `attention.qsa_indexer` | arch, wave, groups | `groups` (selection). q/k/v of the selected set stay on `fa_fdot2` |
+| `qwen.gdn` | `attention.gdn_scan` | arch, wave, state_dtype | `mixed_qkv`, `a`, `b`, `out` (fp16); `state` (fp16 or fp32) |
+| `qwen.ple` | `sequence.causal_conv` | arch, wave, state_len | `input`, `out`, `state` (fp16 or bf16, fp32 mul, state_len 3 or 4) |
+| `moe.routed` | `moe.routed` | arch, wave, expert_path | `gate`, `up`, `down` (fp16 act on the one W4 family) |
+| `moe.leftover_bf16` | `moe.leftover_bf16` | arch, wave, expert_path | `dense` (bf16). Never `fdot2.bf16` |
+| `hybrid.heap` | `gdn_scan` and `causal_conv` | arch, wave, heap | `heap` (caller-owned GDN state + PLE/conv state) |
 
-`expert_path` distinguishes routed experts from leftover BF16. Leftover
-accepts bf16 and must not emit `fdot2.bf16`. Routed stays on the one W4
-family. `hybrid.heap` is the caller-owned GDN + PLE/conv state: `plan`
-sizes it, serve zeros it once, `bind` only views it. Do not wipe it after
-prefill. extras PLE / QSA HIP gates stay extras.
+`expert_path` keeps routed experts off the leftover-BF16 tensor. Leftover
+accepts bf16 caps. Routed stays on the one W4 family (integer `q - zero`,
+then scale). `hybrid.heap` is sized by `plan`, zeroed once by serve, and
+only viewed by `bind`. Do not wipe it after prefill. extras PLE / QSA HIP
+gates stay extras.
 
-Each op module exports `FAMILY_HOOKS` next to `bind`.
+`qwen.qsa` is the Qwen group-select contract. It does not absorb the
+DeepSeek-class indexer.
+
+## Left without a new brief
+
+`attention.kda_scan` (GLM KDA) and `attention.dsa_nope` (DeepSeek / sparse
+MLA transplant) stay the catalog stubs they already are.
+`LEFT_WITHOUT_NEW_BRIEF` is that pair. This conversion does not add a
+family hook, a tensor schema, a Mojo registration, or a transplant plan
+for them. Existing tile READMEs still apply. Do not retarget GDN 16/48
+onto KDA 64×128.
 
 ## Next authoring steps
 
 1. Register the remaining catalog ops the same way as `fa_fdot2`: one
    gfx1030 struct that refuses enqueue, and a mad_mix struct only where
    a DOT object must fail closed. No kernel body in that step.
-2. Move one family at a time (QSA, GDN, PLE, then routed versus leftover,
-   then the hybrid heap keys) onto real Mojo schedules. Occupancy and LDS
-   pins stay in the tile README. Spill or a bad ISel is a drop.
-3. Re-emit HIP for any winner before `hippihx_v1_run` returns anything
-   other than `NOT_READY`. A MAX serve path, if it is ever chosen, is a
-   serve change in `rdna_extras`, not a fatbin of `.mojo` files.
+2. Lift one family at a time (QSA, GDN, PLE, then routed versus leftover,
+   then the hybrid heap). Each lift keeps that hook's tensor contracts.
+   Occupancy and LDS pins stay in the tile README. Spill or a bad ISel is
+   a drop. Do not open a GLM KDA or DeepSeek brief in that step.
+3. Dest produce stays hipcc 7.14 / `hipModuleLoad` / `libamdhip64` until
+   a documented HIP re-emit soak or a documented MAX-serve soak exists.
+   `hippihx_v1_run` stays `NOT_READY` until the HIP object is that soak.
+   A MAX-serve soak is a serve change, not a fatbin of `.mojo` files, and
+   it is not done from this tree.
 
-Do not edit `opengfx1030/vllm-rdna` from this tree.
+Do not edit `opengfx1030/vllm-rdna` or `rdna_extras` from this tree.

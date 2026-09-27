@@ -55,12 +55,10 @@ extras FlyDSL consume waits on `FLYDSL_V1_CONSUME` (graph-safe JIT). See
 [`FLYDSL.md`](FLYDSL.md).
 
 Mojo/MAX (`mojo/`, `Caps(backend="mojo")`) is the maintainability
-**authoring** surface. `plan` / `bind` work; `run` raises
-`MojoNotProduce`. ISA contracts are emit-independent
-([`ISA.md`](ISA.md)). A Mojo object is not vllm-rdna produce until it is
-re-emitted with `hipcc` 7.14 (`hipModuleLoad` / `libamdhip64`) or an
-explicit MAX serve path is chosen. `MOJO_PRODUCE` and `MOJO_V1_CONSUME`
-are false. See [`MOJO.md`](MOJO.md).
+**authoring** surface. It is not dest-ready. Dest produce stays hipcc
+7.14 / `hipModuleLoad` / `libamdhip64` until a documented HIP re-emit or
+MAX-serve soak exists. The ABI gap is MAX `execute` versus
+`hippihx_v1_*` (rev 3). `MOJO_DEST_READY` is false. See [`MOJO.md`](MOJO.md).
 
 
 ```

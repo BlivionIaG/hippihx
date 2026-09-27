@@ -3,9 +3,9 @@
 # Emit language does not own these. Match hippihx/_lib/isa.py and
 # include/hippihx/isa.hpp.
 #
-# Mojo objects are not produce for vllm-rdna until re-emitted to HIP
-# (hipcc 7.14 → hipModuleLoad / libamdhip64) or an explicit MAX serve path
-# is chosen.
+# Mojo objects are not dest-ready. Dest produce stays hipcc 7.14 /
+# hipModuleLoad / libamdhip64 until a documented HIP re-emit or MAX-serve
+# soak exists. ABI gap: MAX execute is not hippihx_v1_plan / hippihx_v1_run.
 #
 # gfx1030 packed DOT: fdot2 / v_dot2c and sdot4. No WMMA gate.
 # Never fdot2.bf16 (gfx1030 LLVM ISel abort).

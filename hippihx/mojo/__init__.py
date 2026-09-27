@@ -1,10 +1,10 @@
 """Mojo/MAX authoring surface for the hippihx zoo.
 
 Plan and bind accept ``Caps(backend="mojo")``. ``run`` raises
-``MojoNotProduce``. Conversion to Mojo is a maintainability path. It does
-not change the vllm-rdna produce pin: extras still loads a HIP fatbin
-(``hipcc`` 7.14 → ``hipModuleLoad`` / ``libamdhip64``) unless an explicit
-MAX serve path is chosen later, outside this tree.
+``MojoNotProduce``. Mojo objects are not dest-ready. Dest produce for
+vllm-rdna stays hipcc 7.14 / ``hipModuleLoad`` / ``libamdhip64`` until a
+documented HIP re-emit or MAX-serve soak exists. The ABI gap is MAX
+``execute`` versus ``hippihx_v1_*``.
 
 Sources live in the repo ``mojo/`` directory (MAX ``custom_extensions``
 package). They are not CMake fatbin inputs.
@@ -16,13 +16,21 @@ from pathlib import Path
 
 from hippihx._lib.backend import (
     MOJO_AUTHORING,
+    MOJO_DEST_READY,
     MOJO_NOT_PRODUCE_MSG,
     MOJO_PRODUCE,
     MOJO_V1_CONSUME,
     MojoNotProduce,
 )
 from hippihx._lib.explore import ExploreShape, preferred_explore, ranked_explore
-from hippihx._lib.families import HOOKS, FamilyHook, hooks_for, require_family
+from hippihx._lib.families import (
+    HOOKS,
+    LEFT_WITHOUT_NEW_BRIEF,
+    FamilyHook,
+    TensorContract,
+    hooks_for,
+    require_family,
+)
 
 SOURCE_ROOT = Path(__file__).resolve().parents[2] / "mojo"
 FA_FDOT2_MOJO = SOURCE_ROOT / "zoo" / "fa_fdot2.mojo"
@@ -32,13 +40,16 @@ __all__ = [
     "FA_FDOT2_MOJO",
     "HOOKS",
     "ISA_MOJO",
+    "LEFT_WITHOUT_NEW_BRIEF",
     "MOJO_AUTHORING",
+    "MOJO_DEST_READY",
     "MOJO_NOT_PRODUCE_MSG",
     "MOJO_PRODUCE",
     "MOJO_V1_CONSUME",
     "SOURCE_ROOT",
     "ExploreShape",
     "FamilyHook",
+    "TensorContract",
     "MojoNotProduce",
     "hooks_for",
     "preferred_explore",

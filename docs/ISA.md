@@ -60,6 +60,11 @@ shapes for a DOT op are empty on `mad_mix`.
 ## What is not an ISA contract
 
 Family names (`qwen.qsa`, `qwen.gdn`, `qwen.ple`, `moe.routed`,
-`moe.leftover_bf16`, `hybrid.heap`) are bind hooks. They select a catalog
-op and a caller-owned buffer. They do not add a packed-DOT opcode. See
-[`MOJO.md`](MOJO.md).
+`moe.leftover_bf16`, `hybrid.heap`) are bind hooks plus tensor views.
+They select a catalog op and a caller-owned buffer. They do not add a
+packed-DOT opcode. GLM KDA and the DeepSeek transplant are not new hooks.
+See [`MOJO.md`](MOJO.md).
+
+The Mojo mirror of this table is authoring text. It is not the dest
+produce ABI. Dest produce stays `hippihx_v1_*` loaded by `hipModuleLoad`
+until a documented HIP re-emit or MAX-serve soak exists.

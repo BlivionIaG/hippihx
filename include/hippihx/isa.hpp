@@ -3,9 +3,10 @@
 // Durable ISA contracts. Independent of emit language.
 //
 // HIP fatbins, FlyDSL atoms, and Mojo/MAX authoring (mojo/) must match
-// hippihx/_lib/isa.py. A Mojo object is not produce for vllm-rdna until it
-// is re-emitted with hipcc 7.14 and loaded via hipModuleLoad / libamdhip64,
-// or an explicit MAX serve path is chosen. See docs/ISA.md and docs/MOJO.md.
+// hippihx/_lib/isa.py. Mojo objects are not dest-ready. Dest produce stays
+// hipcc 7.14 / hipModuleLoad / libamdhip64 until a documented HIP re-emit
+// or MAX-serve soak exists. ABI gap: MAX execute is not hippihx_v1_*.
+// See docs/ISA.md and docs/MOJO.md.
 //
 // gfx1030 packed DOT: fdot2 / v_dot2c and sdot4 / v_dot4. No WMMA gate.
 // Never emit fdot2.bf16 (gfx1030 LLVM ISel abort).

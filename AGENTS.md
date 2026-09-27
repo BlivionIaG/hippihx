@@ -32,12 +32,15 @@ MFMA/WMMA FlyDSL GEMM/MoE/FA into `tiles/` or `hippihx.flydsl`.
 `Caps(backend="flydsl")` is valid. See `docs/FLYDSL.md`.
 
 Mojo/MAX (`mojo/`, `Caps(backend="mojo")`) is the maintainability
-authoring direction. ISA contracts stay in `hippihx.isa` /
-`include/hippihx/isa.hpp` / `mojo/isa/contracts.mojo`. `MOJO_PRODUCE`
-and `MOJO_V1_CONSUME` are false. Sandbox winners re-emit HIP (`hipcc`
-7.14 → `hipModuleLoad` / `libamdhip64`) or an explicit MAX serve path
-is chosen before soak. Do not put `mojo/` sources in the fatbin. Do not
-port MAX MFMA/WMMA kernels into `tiles/` or `mojo/`. See `docs/MOJO.md`.
+authoring direction. It is not dest-ready. Dest produce stays `hipcc`
+7.14 / `hipModuleLoad` / `libamdhip64` until a documented HIP re-emit or
+MAX-serve soak exists (`MOJO_DEST_READY` is false). The ABI gap is MAX
+`execute` versus `hippihx_v1_*`. Family lifts keep Qwen QSA/GDN/PLE,
+leftover BF16 versus routed experts, and hybrid heaps, including their
+tensor contracts. Leave GLM KDA / DeepSeek transplant without a new brief.
+Do not put `mojo/` sources in the fatbin. Do not port MAX MFMA/WMMA
+kernels into `tiles/` or `mojo/`. Do not edit `vllm-rdna` / `rdna_extras`.
+See `docs/MOJO.md`.
 
 ## Craft locks
 

@@ -5,9 +5,11 @@ consume is still the HIP fatbin (``hippihx_v1_*``). FlyDSL extras consume
 waits on graph-safe JIT.
 
 Mojo/MAX (``backend="mojo"``) is the maintainability authoring surface.
-``MOJO_PRODUCE`` and ``MOJO_V1_CONSUME`` stay false: a Mojo object is not
-loaded by ``hipModuleLoad``. Sandbox winners re-emit HIP (hipcc 7.14) or
-an explicit MAX serve path is chosen. See ``docs/MOJO.md``.
+It is not dest-ready. ``MOJO_PRODUCE``, ``MOJO_V1_CONSUME``, and
+``MOJO_DEST_READY`` stay false. Dest produce for vllm-rdna stays hipcc
+7.14 / ``hipModuleLoad`` / ``libamdhip64`` until a documented HIP re-emit
+or MAX-serve soak exists. The ABI gap is MAX ``execute`` versus
+``hippihx_v1_*``. See ``docs/MOJO.md``.
 """
 
 from __future__ import annotations
@@ -24,15 +26,17 @@ class Backend(str, Enum):
 class MojoNotProduce(RuntimeError):
     """``run`` refused to enqueue a Mojo object.
 
-    Authoring may plan and bind. Soak under vllm-rdna needs a HIP object
-    (hipcc 7.14 → hipModuleLoad / libamdhip64) or an explicit MAX serve path.
+    Mojo objects are not dest-ready. Authoring may plan and bind. Dest
+    produce stays hipcc 7.14 / hipModuleLoad / libamdhip64 until a
+    documented HIP re-emit or MAX-serve soak exists.
     """
 
 
 MOJO_NOT_PRODUCE_MSG = (
-    "Mojo objects are not produce for vllm-rdna until re-emitted to HIP "
-    "(hipcc 7.14 → hipModuleLoad / libamdhip64) or an explicit MAX serve "
-    "path is chosen"
+    "Mojo objects are not dest-ready. Dest produce for vllm-rdna stays "
+    "hipcc 7.14 / hipModuleLoad / libamdhip64 until a documented HIP "
+    "re-emit or MAX-serve soak exists. ABI gap: MAX execute(OutputTensor, "
+    "DeviceContext) is not hippihx_v1_plan / hippihx_v1_run"
 )
 
 FATBIN_BACKEND = Backend.HIP
@@ -40,10 +44,11 @@ DEST_BACKEND = FATBIN_BACKEND
 FLYDSL_DEST = True
 FLYDSL_V1_CONSUME = False
 
-# Mojo/MAX is an authoring backend. It is not a dest produce pin.
+# Mojo/MAX is an authoring backend. It is not dest-ready and not a produce pin.
 MOJO_AUTHORING = True
 MOJO_PRODUCE = False
 MOJO_V1_CONSUME = False
+MOJO_DEST_READY = False
 
 # Compiler + vec-add is dest (lab-tested). DOT wrappers / skinny / extras JIT next.
 FLYDSL_GATE0_OBJECT = True
