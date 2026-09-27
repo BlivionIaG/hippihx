@@ -1,8 +1,9 @@
 """Generated contract blocks. The catalog is the one table.
 
-Sources: ``catalog.OPS`` (ops, V1 ids, tiles), ``fatbin`` (arch slots,
-ROCm pin), ``isa`` (packed DOT, LDS, wave32), ``protocol`` (V1 dtype
-codes) and ``v1`` (ABI revision). Targets keep their hand-written prose.
+Sources: ``catalog.OPS`` (ops, V1 ids, tiles, V1 rev 4 schemas),
+``fatbin`` (arch slots, ROCm pin), ``isa`` (packed DOT, LDS, wave32),
+``fabric`` (hop / switch classes, custom-AR set) and ``v1`` (revision,
+status and dtype codes, limits). Targets keep their hand-written prose.
 Only the lines between a marker pair are rewritten::
 
     // hippihx:gen begin <name> -- python -m hippihx._lib.codegen; do not edit
@@ -24,10 +25,8 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import fatbin, isa
-from .catalog import OPS
-from .protocol import DTYPE_UNSET, KNOWN_DTYPES, dtype_to_v1
-from .v1 import ABI_REVISION
+from . import fabric, fatbin, isa, v1
+from .catalog import OPS, Cond, OpSpec, ParamSpec
 
 ROOT = Path(__file__).resolve().parents[2]
 BEGIN = "hippihx:gen begin"
@@ -83,12 +82,129 @@ def _cmake_set(name: str, items: Sequence[str]) -> list[str]:
 # --- C header: include/hippihx/v1.h -------------------------------------
 
 
+def _c_ident(text: str) -> str:
+    return "".join(ch if ch.isalnum() else "_" for ch in text).upper()
+
+
+def render_v1_status() -> str:
+    lines = ["enum {"]
+    for status in v1.V1Status:
+        name = "HIPPIHX_V1_OK" if status is v1.V1Status.OK else f"HIPPIHX_V1_{status.name}"
+        note = v1.STATUS_NOTES.get(status)
+        tail = f"  // {note}" if note else ""
+        lines.append(f"  {name} = {int(status)},{tail}")
+    lines.append("};")
+    return _lines(lines)
+
+
+def render_v1_limits() -> str:
+    return _lines(
+        [
+            f"#define HIPPIHX_V1_MAX_RANK {v1.MAX_RANK}",
+            f"#define HIPPIHX_V1_MAX_PARAMS {v1.MAX_PARAMS}",
+            f"#define HIPPIHX_V1_MAX_SCRATCH {v1.MAX_SCRATCH}",
+            f"#define HIPPIHX_V1_SCRATCH_ALIGN {v1.SCRATCH_ALIGN}",
+        ]
+    )
+
+
 def render_v1_dtype() -> str:
-    lines = ["typedef enum hippihx_v1_dtype {"]
-    lines.append(f"  HIPPIHX_V1_DTYPE_UNSET = {DTYPE_UNSET},")
-    for dtype in KNOWN_DTYPES:
-        lines.append(f"  HIPPIHX_V1_DTYPE_{dtype.upper()} = {dtype_to_v1(dtype)},")
+    lines = ["typedef enum hippihx_v1_dtype {", "  HIPPIHX_V1_DTYPE_UNSET = 0,"]
+    for dtype, code in v1.V1_DTYPES.items():
+        lines.append(f"  HIPPIHX_V1_DTYPE_{dtype.upper()} = {code},")
     lines.append("} hippihx_v1_dtype;")
+    return _lines(lines)
+
+
+def render_v1_arch() -> str:
+    lines = ["typedef enum hippihx_v1_arch {"]
+    for index, arch in enumerate(fatbin.KNOWN_ARCHES):
+        lines.append(f"  HIPPIHX_V1_ARCH_{arch.upper()} = {index},")
+    lines.append(f"  HIPPIHX_V1_ARCH_COUNT = {len(fatbin.KNOWN_ARCHES)},")
+    lines.append("} hippihx_v1_arch;")
+    return _lines(lines)
+
+
+def render_v1_fabric() -> str:
+    lines = ["typedef enum hippihx_v1_hop {", "  HIPPIHX_V1_HOP_UNSET = 0,"]
+    lines += [f"  HIPPIHX_V1_HOP_{_c_ident(h)} = {c}," for h, c in v1.V1_HOPS.items()]
+    lines += ["} hippihx_v1_hop;", ""]
+    lines += ["typedef enum hippihx_v1_switch {", "  HIPPIHX_V1_SWITCH_UNSET = 0,"]
+    lines += [
+        f"  HIPPIHX_V1_SWITCH_{_c_ident(s)} = {c}," for s, c in v1.V1_SWITCHES.items()
+    ]
+    lines.append("} hippihx_v1_switch;")
+    return _lines(lines)
+
+
+def _domain(param: ParamSpec) -> str:
+    if param.kind == "float":
+        return "float > 0"
+    if param.kind == "bool":
+        return "bool 0/1"
+    if param.kind == "enum":
+        if param.labels:
+            pairs = " ".join(f"{lab}={val}" for lab, val in zip(param.labels, param.values))
+            return f"enum {pairs}"
+        return "enum " + "|".join(str(val) for val in param.values)
+    if param.lo is not None and param.hi is not None:
+        return f"int [{param.lo}, {param.hi}]"
+    if param.lo is not None:
+        return f"int >= {param.lo}"
+    if param.hi is not None:
+        return f"int <= {param.hi}"
+    return "int"
+
+
+def _cond_text(spec: OpSpec, cond: Cond) -> str:
+    param = next(p for p in spec.params if p.name == cond.param)
+    value = str(cond.value)
+    if param.labels and cond.value in param.values:
+        value = param.labels[param.values.index(cond.value)]
+    return f"{cond.param} {cond.op} {value}"
+
+
+def render_v1_schema() -> str:
+    lines: list[str] = []
+    for spec in OPS:
+        if not spec.params and not spec.tensors:
+            continue
+        prefix = f"HIPPIHX_V1_{spec.enum}"
+        if lines:
+            lines.append("")
+        if spec.params:
+            lines.append(f"// {spec.qualname} params, in order.")
+            lines.append("enum {")
+            for index, param in enumerate(spec.params):
+                lines.append(
+                    f"  {prefix}_P_{_c_ident(param.name)} = {index},"
+                    f"  // {_domain(param)}: {param.note}"
+                )
+            lines.append(f"  {prefix}_NPARAMS = {len(spec.params)},")
+            lines.append("};")
+            for param in spec.params:
+                if not param.labels:
+                    continue
+                lines.append("enum {")
+                for label, value in zip(param.labels, param.values):
+                    lines.append(
+                        f"  {prefix}_{_c_ident(param.name)}_{_c_ident(label)} = {value},"
+                    )
+                lines.append("};")
+        if spec.tensors:
+            lines.append(f"// {spec.qualname} tensor slots, in order.")
+            lines.append("enum {")
+            for index, slot in enumerate(spec.tensors):
+                when = ""
+                if slot.when:
+                    when = " when " + " or ".join(_cond_text(spec, c) for c in slot.when)
+                lines.append(
+                    f"  {prefix}_T_{_c_ident(slot.name)} = {index},"
+                    f"  // {slot.role} {slot.dtype} [{', '.join(slot.dims)}]"
+                    f" {slot.layout}{when}"
+                )
+            lines.append(f"  {prefix}_NTENSORS = {len(spec.tensors)},")
+            lines.append("};")
     return _lines(lines)
 
 
@@ -101,24 +217,132 @@ def render_v1_ops() -> str:
 
 
 def render_v1_revision() -> str:
-    return _lines([f"enum {{ HIPPIHX_V1_ABI_REVISION = {ABI_REVISION} }};"])
+    return _lines([f"enum {{ HIPPIHX_V1_ABI_REVISION = {v1.ABI_REVISION} }};"])
 
 
 # --- C++ table: tiles/v1_abi.cpp ----------------------------------------
 
 
+_KIND = {"int": "kInt", "enum": "kEnum", "bool": "kBool", "float": "kFloat"}
+_COND = {"==": "kEq", "!=": "kNe", ">": "kGt", ">=": "kGe", "<": "kLt", "<=": "kLe"}
+_LAYOUT = {"contiguous": "kContiguous", "rows": "kRows", "strided": "kStrided"}
+
+
+def _c_array(ctype: str, name: str, rows: Sequence[str], sentinel: str) -> list[str]:
+    """``constexpr`` array. A zero-length array is ill-formed, so pad one row."""
+
+    out = [f"constexpr {ctype} {name}[] = {{"]
+    if rows:
+        out += [f"    {row}," for row in rows]
+    else:
+        out.append(f"    {sentinel},  // unused sentinel")
+    out.append("};")
+    return out
+
+
+def _int64(value: int | None, default: str) -> str:
+    return default if value is None else str(value)
+
+
 def render_v1_table() -> str:
-    lines = ["constexpr OpRow kOps[HIPPIHX_V1_OP_COUNT] = {"]
+    ops: list[str] = []
+    params: list[str] = []
+    enum_values: list[str] = []
+    conds: list[str] = []
+    checks: list[str] = []
+    dims: list[str] = []
+    slots: list[str] = []
+    scratch: list[str] = []
+    ranks: list[str] = []
+
     for spec in OPS:
-        lines.append(
-            f'    {{"{spec.qualname}", {int(spec.dot)}, 0, {int(spec.fp16_act)}}},'
+        index = {param.name: i for i, param in enumerate(spec.params)}
+
+        def cond_rows(items: Sequence[Cond]) -> tuple[int, int]:
+            first = len(conds)
+            conds.extend(
+                f"{{{index[c.param]}, {_COND[c.op]}, {c.value}}}" for c in items
+            )
+            return first, len(items)
+
+        def dim_rows(items: Sequence[str]) -> int:
+            first = len(dims)
+            for dim in items:
+                if dim == "*":
+                    dims.append("{kAny, 0}")
+                elif dim.isdigit():
+                    dims.append(f"{{kLiteral, {dim}}}")
+                elif dim.startswith("<="):
+                    dims.append(f"{{kLeParam, {index[dim[2:]]}}}")
+                else:
+                    dims.append(f"{{kParam, {index[dim]}}}")
+            return first
+
+        params_first = len(params)
+        for param in spec.params:
+            values_first = len(enum_values)
+            enum_values.extend(str(value) for value in param.values)
+            params.append(
+                f'{{"{param.name}", {_KIND[param.kind]}, '
+                f"{_int64(param.lo, 'INT64_MIN')}, {_int64(param.hi, 'INT64_MAX')}, "
+                f"{values_first}, {len(param.values)}}}"
+            )
+        checks_first = len(checks)
+        checks.extend(f"{{{index[c.num]}, {index[c.by]}}}" for c in spec.checks)
+        slots_first = len(slots)
+        for slot in spec.tensors:
+            dims_first = dim_rows(slot.dims)
+            when_first, when_count = cond_rows(slot.when)
+            slots.append(
+                f'{{"{slot.name}", HIPPIHX_V1_DTYPE_{slot.dtype.upper()}, '
+                f"{len(slot.dims)}, {dims_first}, {_LAYOUT[slot.layout]}, "
+                f"{when_first}, {when_count}}}"
+            )
+        scratch_first = len(scratch)
+        for rule in spec.scratch:
+            dims_first = dim_rows(rule.dims)
+            when_first, when_count = cond_rows(rule.when)
+            scratch.append(
+                f'{{"{rule.name}", {rule.elem_bytes}, {dims_first}, {len(rule.dims)}, '
+                f"{rule.max_elems}, {when_first}, {when_count}}}"
+            )
+        variant_param = index[spec.variant] if spec.variant else -1
+        variant_first = len(ranks) if spec.variant else 0
+        ranks.extend(str(rank) for rank in v1.variant_ranks(spec, fatbin.DEFAULT_ARCH))
+        ops.append(
+            f'{{"{spec.qualname}", {int(spec.dot)}, {int(spec.fp16_act)}, '
+            f"{int(spec.ready)}, {int(spec.needs_fabric)}, "
+            f"{params_first}, {len(spec.params)}, {checks_first}, {len(spec.checks)}, "
+            f"{slots_first}, {len(spec.tensors)}, {scratch_first}, {len(spec.scratch)}, "
+            f"{variant_param}, {variant_first}}}"
         )
-    lines.append("};")
+
+    arches = [
+        f'{{"{arch}", {int(arch in fatbin.DOT_ARCHES)}, {fatbin.default_wave(arch)}}}'
+        for arch in fatbin.KNOWN_ARCHES
+    ]
+    ar_hops = [f"HIPPIHX_V1_HOP_{_c_ident(h)}" for h in fabric.CUSTOM_AR_HOPS]
+    ar_switches = [f"HIPPIHX_V1_SWITCH_{_c_ident(s)}" for s in fabric.CUSTOM_AR_SWITCHES]
+
+    lines = ["constexpr OpRow kOps[HIPPIHX_V1_OP_COUNT] = {"]
+    lines += [f"    {row}," for row in ops]
+    lines += ["};", "", "constexpr ArchRow kArches[HIPPIHX_V1_ARCH_COUNT] = {"]
+    lines += [f"    {row}," for row in arches]
+    lines += ["};", ""]
+    lines += _c_array("ParamRow", "kParams", params, '{"", kInt, 0, 0, 0, 0}')
+    lines += _c_array("int64_t", "kEnumValues", enum_values, "0")
+    lines += _c_array("CondRow", "kConds", conds, "{0, kEq, 0}")
+    lines += _c_array("CheckRow", "kChecks", checks, "{0, 0}")
+    lines += _c_array("DimRow", "kDims", dims, "{kAny, 0}")
+    lines += _c_array("SlotRow", "kSlots", slots, '{"", 0, 0, 0, kContiguous, 0, 0}')
+    lines += _c_array("ScratchRow", "kScratch", scratch, '{"", 0, 0, 0, 0, 0, 0}')
+    lines += _c_array("int", "kVariantRanks", ranks, "0")
     lines.append("")
-    lines.append("constexpr ArchRow kArches[] = {")
-    for arch in fatbin.KNOWN_ARCHES:
-        lines.append(f'    {{"{arch}", {int(arch in fatbin.DOT_ARCHES)}}},')
-    lines.append("};")
+    lines.append(f"constexpr int kNumHops = {len(v1.V1_HOPS)};")
+    lines.append(f"constexpr int kNumSwitches = {len(v1.V1_SWITCHES)};")
+    lines += _c_array("int", "kArHops", ar_hops, "0")
+    lines += _c_array("int", "kArSwitches", ar_switches, "0")
+    lines += _c_array("int", "kLinkWidths", [str(w) for w in fabric.LINK_WIDTHS], "0")
     return _lines(lines)
 
 
@@ -258,8 +482,13 @@ def render_mojo_arch_switch() -> str:
 
 
 BLOCKS: tuple[Block, ...] = (
+    Block("include/hippihx/v1.h", "v1_status", "//", render_v1_status),
+    Block("include/hippihx/v1.h", "v1_limits", "//", render_v1_limits),
     Block("include/hippihx/v1.h", "v1_dtype", "//", render_v1_dtype),
+    Block("include/hippihx/v1.h", "v1_arch", "//", render_v1_arch),
+    Block("include/hippihx/v1.h", "v1_fabric", "//", render_v1_fabric),
     Block("include/hippihx/v1.h", "v1_ops", "//", render_v1_ops),
+    Block("include/hippihx/v1.h", "v1_schema", "//", render_v1_schema),
     Block("include/hippihx/v1.h", "v1_revision", "//", render_v1_revision),
     Block("tiles/v1_abi.cpp", "v1_table", "//", render_v1_table),
     Block("include/hippihx/isa.hpp", "isa_macros", "//", render_isa_macros),

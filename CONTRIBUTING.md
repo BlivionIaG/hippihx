@@ -109,7 +109,10 @@ replaces Author with the picker.
 3. One HIP entry that will become one `torch.ops` / V1 symbol. No second
    Triton path in this library.
 4. Scratch sized in `plan`. Serve zeros it for page-commit. `bind` views
-   only. `run` is capture-safe (no D2H).
+   only. `run` is capture-safe (no D2H). Pin the op's V1 rows in the
+   catalog (params, tensor slots, scratch rules) from the observed host
+   signature, then run `python -m hippihx._lib.codegen`. `ready` stays
+   False until the body runs on silicon.
 5. Host tests for the protocol stay torch-free until a HIP extension exists.
 6. If the tile is DOT, include `hippihx/dot.hpp` (not a WMMA header) and
    mark the catalog row `dot=True`. Do not add a per-SKU copy of the file.

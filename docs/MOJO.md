@@ -19,7 +19,7 @@ MAX-serve soak exists. Neither soak exists in this tree. Do not edit
 |---|---|---|
 | Compiler | ROCm **7.14** `hipcc`, one `--offload-arch` | Mojo/MAX, not invoked by host tests |
 | Loader | `hipModuleLoad` from `libamdhip64` | MAX `custom_extensions` / `InferenceSession` |
-| Symbols | `hippihx_v1_plan` / `hippihx_v1_run`, ABI rev **3** | `@extensibility.register` `execute(OutputTensor, InputTensor, DeviceContext)` |
+| Symbols | `hippihx_v1_plan` / `hippihx_v1_run`, ABI rev **4** | `@extensibility.register` `execute(OutputTensor, InputTensor, DeviceContext)` |
 | Object | `libhippihx_<arch>.a` | not an AMDGPU code object from `hipcc` |
 
 **ABI gap.** A Mojo `execute` registration does not export `hippihx_v1_*`
@@ -28,6 +28,11 @@ and is not a module `hipModuleLoad` can open. `Caps(backend="mojo")` may
 true. `MOJO_PRODUCE`, `MOJO_V1_CONSUME`, and `MOJO_DEST_READY` are false.
 `plan.meta["produce"]` is false on this backend. `mojo/` is not in the
 CMake fatbin. Do not add `max` as a required dependency.
+
+Rev 4 gives `hippihx_v1_run` a tensor list in catalog slot order, the same
+kind of list a MAX `execute` takes. A Mojo registration should take those
+slots in that order. `FaFdot2Gfx1030` still takes a single input, and
+lifting it is an authoring step. The object and loader gap is unchanged.
 
 A later soak has to be one of these, written down as a soak, not assumed
 from a green authoring test:

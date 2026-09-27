@@ -60,7 +60,8 @@ def test_v1_rows_and_slots_follow_the_catalog() -> None:
     abi = (ROOT / "tiles" / "v1_abi.cpp").read_text(encoding="utf-8")
     names = [line.split('"')[1] for line in abi.splitlines() if line.startswith('    {"')]
     assert names[: len(OPS)] == [spec.qualname for spec in OPS]
-    assert names[len(OPS) :] == list(KNOWN_ARCHES)
+    arches = names[len(OPS) : len(OPS) + len(KNOWN_ARCHES)]
+    assert arches == list(KNOWN_ARCHES)
     cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     for spec in OPS:
         assert f"  tiles/{spec.tile}/kernel.hip\n" in cmake, spec.qualname

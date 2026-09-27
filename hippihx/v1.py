@@ -1,9 +1,20 @@
-"""Re-export V1 ids. Source of truth is ``hippihx._lib.catalog``."""
+"""Re-export the V1 mirror. Source of truth is ``hippihx._lib.catalog``."""
 
 from hippihx._lib.v1 import (
     ABI_REVISION,
+    DTYPE_BYTES,
+    MAX_PARAMS,
+    MAX_RANK,
+    MAX_SCRATCH,
+    SCRATCH_ALIGN,
+    V1_DTYPES,
+    V1_HOPS,
     V1_OP_NAMES,
+    V1_SWITCHES,
+    V1Error,
     V1OpId,
+    V1Status,
+    arena_layout,
     v1_op_fp16_act,
     v1_op_is_dot,
     v1_op_name,
@@ -11,8 +22,19 @@ from hippihx._lib.v1 import (
 
 __all__ = [
     "ABI_REVISION",
+    "DTYPE_BYTES",
+    "MAX_PARAMS",
+    "MAX_RANK",
+    "MAX_SCRATCH",
+    "SCRATCH_ALIGN",
+    "V1Error",
     "V1OpId",
+    "V1Status",
+    "V1_DTYPES",
+    "V1_HOPS",
     "V1_OP_NAMES",
+    "V1_SWITCHES",
+    "arena_layout",
     "v1_op_fp16_act",
     "v1_op_is_dot",
     "v1_op_name",

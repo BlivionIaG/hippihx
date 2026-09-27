@@ -55,6 +55,8 @@ DEFAULT_ARCH = "gfx1030"
 ROCM_PIN = "7.14"
 GFX1030_WAVE = 32
 DOT_WAVE = 32
+# Built slots whose default wave is 64 (Vega stub). Every other slot is wave32.
+WAVE64_ARCHES: tuple[str, ...] = ("gfx900",)
 NO_FDOT2_BF16 = True
 NO_WMMA_ON_SHARED_DOT = True
 NO_HSA_OVERRIDE = True
@@ -82,6 +84,11 @@ def require_single_arch(arch: str) -> str:
     if arch not in KNOWN_ARCHES:
         raise ValueError(f"unknown fatbin slot {arch!r}")
     return arch
+
+
+def default_wave(arch: str) -> int:
+    """Wave a slot gets when caps leave it unset. Bind keys on arch + wave."""
+    return 64 if arch in WAVE64_ARCHES else DOT_WAVE
 
 
 def supported_arches(dot: bool) -> tuple[str, ...]:

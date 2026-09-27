@@ -9,7 +9,7 @@ ISA is HIP/RDNA, not CUDA/CuTe.
 **Dest:** gfx1030 (V620, wave32, ROCm **7.14**). gfx110x share the same
 DOT source, one fatbin per `--offload-arch`. Consume:
 `include/hippihx/v1.h` (`hippihx_v1_plan` / `hippihx_v1_run`, ABI rev
-**3**, group `attention`). Kernel bodies stay in extras until extras
+**4**, group `attention`). Kernel bodies stay in extras until extras
 wraps those symbols.
 
 **Authoring:** Mojo/MAX (`mojo/`, `Caps(backend="mojo")`) is the

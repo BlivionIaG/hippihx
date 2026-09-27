@@ -7,21 +7,22 @@ from __future__ import annotations
 
 from typing import Any
 
-from hippihx._lib.fabric import Fabric, mapped_peer_ok, refuse_leave
+from hippihx._lib.fabric import (
+    AR_MAX_KB,
+    Fabric,
+    custom_ar_fabric_ok,
+    mapped_peer_ok,
+    refuse_leave,
+)
 
-AR_MAX_KB = 512
 STAGING = "uncached_push"
 WIRE = "int8_q8"
 RCCL_FALLBACK = "rccl"
 
 
 def custom_ar_ok(fabric: Fabric | None, *, nbytes: int = 0) -> bool:
-    if fabric is None:
-        return False
-    if fabric.hop != "pix" or not fabric.acs_clear or not fabric.large_bar:
-        return False
-    if fabric.switch == "pex8749":
-        return False  # Gen3 SKU; same class, not dest AR mesh
+    if not custom_ar_fabric_ok(fabric):
+        return False  # PHB/PXB, 8749 (Gen3; not dest AR mesh), no ACS/BAR
     if nbytes < 0:
         raise ValueError("nbytes must be >= 0")
     if nbytes > AR_MAX_KB * 1024:

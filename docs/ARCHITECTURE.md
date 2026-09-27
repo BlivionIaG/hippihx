@@ -59,7 +59,7 @@ Mojo/MAX (`mojo/`, `Caps(backend="mojo")`) is the maintainability
 **authoring** surface. It is not dest-ready. Dest produce stays hipcc
 7.14 / `hipModuleLoad` / `libamdhip64` until a documented HIP re-emit or
 MAX-serve soak exists. The ABI gap is MAX `execute` versus
-`hippihx_v1_*` (rev 3). `MOJO_DEST_READY` is false. See [`MOJO.md`](MOJO.md).
+`hippihx_v1_*` (rev 4). `MOJO_DEST_READY` is false. See [`MOJO.md`](MOJO.md).
 
 
 ```
@@ -201,15 +201,20 @@ the fatbin:
 
 | Symbol | Role |
 |---|---|
-| `hippihx_v1_plan` | host-only scratch specs (always `zeroed=1`) |
-| `hippihx_v1_run` | capture-safe enqueue; stub returns `NOT_READY` until migrate |
+| `hippihx_v1_plan` | host-only, before capture: caps + params → caller-owned `hippihx_v1_plan_t` (ready bit, explore variant, zeroed scratch specs with offsets) |
+| `hippihx_v1_run` | capture-safe enqueue on a stream: plan + tensor descriptors in slot order + scratch; stub returns `NOT_READY` until migrate |
 | `hippihx_v1_op_name` / `_is_dot` / `_fp16_act` | id ↔ qualname / DOT / fp16-act flags |
+| `hippihx_v1_op_nparams` / `_ntensors` / `_param_name` / `_tensor_name` | per-op schema from the catalog |
 
 One V1 id per tile (`HIPPIHX_V1_OP_*`). Serve wraps as
 `torch.ops.hippihx.<op>` — never a second Triton path in this library.
 Python mirror: `hippihx.v1` (`V1OpId`, `ABI_REVISION`). Caps include
 optional activation `dtype` (revision **2**). Qualnames `attention.*`
-(revision **3**; ids unchanged). Dest extras tip `30632b2fa323` still
+(revision **3**; ids unchanged). Revision **4** adds the caller-owned
+plan, params, tensor descriptors, the stream and `caps.fabric`. Per-op
+params, tensor slots and scratch rules live in the catalog, and
+`python -m hippihx._lib.codegen` writes the header enums and C tables.
+See [`CONSUME.md`](CONSUME.md). Dest extras tip `30632b2fa323` still
 has no `torch.ops.hippihx.*` rewire — see [`BACKPORT.md`](BACKPORT.md).
 Do not edit `opengfx1030/vllm-rdna` from this tree.
 

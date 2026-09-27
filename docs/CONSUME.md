@@ -6,22 +6,73 @@ hippihx is a library. Serve wiring stays in
 
 ## One V1 entry per op
 
-C ABI: `include/hippihx/v1.h` (rev **3**).
+C ABI: `include/hippihx/v1.h` (rev **4**). Its enums and tables are
+generated from `hippihx/_lib/catalog.py`.
 
 | Call | When |
 |---|---|
-| `hippihx_v1_plan(op, caps, specs, nspecs)` | Host. Sizes scratch. Always `zeroed=1`. |
-| `hippihx_v1_run(op, caps, scratch, nbytes)` | Capture-safe enqueue. Stub returns `NOT_READY` until a body migrates. |
+| `hippihx_v1_plan(op, &caps, params, nparams, &plan)` | Host, **before capture**, once per capture bucket and layer config. Checks caps and params, sizes scratch, picks the explore variant, reports `plan.ready`. |
+| `hippihx_v1_run(&plan, tensors, ntensors, scratch, nbytes, stream)` | Capture-safe enqueue. Checks tensors against the op's slots and scratch against the plan. Never allocates, never D2H. `NOT_READY` until a body migrates. |
 
-Python (torch-free, same contracts):
+- `plan.ready == 0` means keep the serve path. Decide it at plan time,
+  never under capture. Every op is `ready == 0` today.
+- Params are host scalars, and a captured graph bakes them in. Lengths,
+  block tables and query offsets are tensors the kernel reads on device.
+- `plan.scratch_nbytes` is one block. Each spec has an aligned `offset`
+  inside it. Zero it once for page-commit. Several plans can share one
+  arena (`hippihx.v1.arena_layout`, `HIPPIHX_V1_SCRATCH_ALIGN`).
+- `caps.fabric` carries hop + switch. A comm plan that is not PIX +
+  ACS-clear + large-BAR on 88096 fails with `UNSUPPORTED_FABRIC`, and
+  serve keeps RCCL.
+- `hippihx_v1_plan_t` is plain data: cache it per bucket, never edit it.
+  A failed plan is zeroed and `run` refuses it (`ERR_ABI`).
+
+Pinned schemas. Every other op is unpinned (`nparams == 0`,
+`ntensors == 0`) until its body migrates:
+
+| Op | Params | Tensor slots | Scratch |
+|---|---|---|---|
+| `attention.fa_fdot2` | `mode` (decode / prefill), `head_dim` (128 / 256), `num_q_heads`, `num_kv_heads`, `block_size`, `kv_splits` (1–16), `sliding_window`, `causal`, `max_tokens`, `scale` | `q`, `k_cache`, `v_cache`, `block_table`, `seq_lens`, `cu_query_lens` (prefill), `out` | fp32 `o/m/l_partial` for decode and prefill split-K |
+| `comm.pcie` | `max_bytes` (≤ `AR_MAX_KB`) | unpinned | none |
+
+C++ (extras side, sketch):
+
+```cpp
+hippihx_v1_caps caps{"gfx1030", 32, HIPPIHX_V1_DTYPE_FP16, nullptr};
+hippihx_v1_param p[HIPPIHX_V1_ATTN_FA_FDOT2_NPARAMS] = {};
+p[HIPPIHX_V1_ATTN_FA_FDOT2_P_MODE].i = HIPPIHX_V1_ATTN_FA_FDOT2_MODE_DECODE;
+p[HIPPIHX_V1_ATTN_FA_FDOT2_P_HEAD_DIM].i = 128;
+// ... the other _P_* slots ...
+hippihx_v1_plan_t plan{};
+plan.struct_size = sizeof(plan);
+const int rc = hippihx_v1_plan(HIPPIHX_V1_OP_ATTN_FA_FDOT2, &caps, p,
+                               HIPPIHX_V1_ATTN_FA_FDOT2_NPARAMS, &plan);
+if (rc != HIPPIHX_V1_OK || !plan.ready) {
+  // serve fallback, chosen before capture
+}
+// Per call, eager or under capture:
+hippihx_v1_tensor t[HIPPIHX_V1_ATTN_FA_FDOT2_NTENSORS] = {};  // _T_* order
+hippihx_v1_run(&plan, t, HIPPIHX_V1_ATTN_FA_FDOT2_NTENSORS, scratch,
+               plan.scratch_nbytes, stream);
+```
+
+Python (torch-free, same contracts). A sized plan refuses what the C plan
+refuses (`V1Error.status` is the C code). `plan(caps)` without params is
+a contract plan: no scratch, `meta["sized"]` false.
 
 ```python
 from hippihx.attention import fa_fdot2
 
 caps = fa_fdot2.Caps(arch="gfx1030", wave=32, dtype="fp16")
-plan = fa_fdot2.plan(caps)
-# extras: scratch = torch.zeros(plan.scratch_specs()[0].nbytes, device="cuda")
-binding = fa_fdot2.bind(plan, scratch=scratch, q=q, k=k, v=v)
+plan = fa_fdot2.plan(
+    caps, mode="decode", head_dim=128, num_q_heads=32, num_kv_heads=8,
+    block_size=16, kv_splits=4, sliding_window=0, causal=True,
+    max_tokens=8, scale=128 ** -0.5,
+)
+# extras: scratch = torch.zeros(plan.scratch_nbytes, dtype=torch.uint8, device="cuda")
+binding = fa_fdot2.bind(plan, scratch=scratch, q=q, k_cache=k_cache,
+                        v_cache=v_cache, block_table=block_table,
+                        seq_lens=seq_lens, out=out)
 fa_fdot2.run(binding)
 ```
 
