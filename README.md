@@ -17,8 +17,9 @@ inputs. See [`docs/MOJO.md`](docs/MOJO.md) and [`docs/ISA.md`](docs/ISA.md).
 **Dest produce:** gfx1030 (V620, wave32, ROCm **7.14**). gfx110x share the
 same DOT source, one fatbin per `--offload-arch`. Consume:
 `include/hippihx/v1.h` (`hippihx_v1_plan` / `hippihx_v1_run`, ABI rev
-**3**, group `attention`) via hipcc 7.14 / `hipModuleLoad` /
-`libamdhip64`. Kernel bodies stay in extras until extras wraps those
+**4**, group `attention`) via hipcc 7.14 / `hipModuleLoad` /
+`libamdhip64`: `libhippihx_v1.so` plus one `hippihx_<arch>.hsaco` per
+slot. Kernel bodies stay in extras until extras wraps those
 symbols. A Mojo `execute` is not a silent swap behind that ABI.
 
 ```python
@@ -94,6 +95,9 @@ cmake --build build && ./build/fatbin/gfx1030/hippihx_smoke_host
 
 pip install -e ".[dev]" && pytest
 ```
+
+A HIP tree writes `build/fatbin/<arch>/hippihx_<arch>.hsaco` and
+`libhippihx_v1.so`, the consume pair ([`CONSUME`](docs/CONSUME.md#artifacts)).
 
 ROCm **7.14** `hipcc` on the V620 box. Host stub is for layout when
 `hipcc` is missing.

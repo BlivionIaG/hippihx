@@ -3,7 +3,9 @@
 Same verbs as b12x → serve. No CUDA/CuTe types. Backends: HIP fatbins and
 the FlyDSL compiler.
 
-- ``plan`` is host-side and may allocate metadata.
+- ``plan`` is host-side and may allocate metadata. With params it is
+  sized: it mirrors ``hippihx_v1_plan`` (V1 rev 4) and refuses the same
+  inputs. Without params it is a contract plan (no scratch, not sized).
 - ``bind`` builds views; it must not allocate tensors.
 - ``run`` is graph-capture safe: no device-to-host under capture.
 
@@ -19,10 +21,10 @@ from .backend import Backend, is_zoo_backend
 from .fabric import Fabric
 from .fatbin import (
     DEFAULT_ARCH,
-    DOT_WAVE,
     KNOWN_ARCHES,
-    LATER_ARCHES,
     LATER_ARCH_NOTES,
+    LATER_ARCHES,
+    default_wave,
 )
 
 KNOWN_DTYPES: tuple[str, ...] = ("fp16", "bf16", "fp32")
@@ -43,12 +45,17 @@ def dtype_to_v1(dtype: str | None) -> int:
 
 @dataclass(frozen=True, slots=True)
 class ScratchSpec:
-    """Caller-owned buffer the serve layer allocates and zeros."""
+    """Caller-owned buffer the serve layer allocates and zeros.
+
+    ``offset`` is from the plan's scratch base (V1 rev 4 packs every spec
+    of one plan into one aligned block).
+    """
 
     name: str
     nbytes: int
     zeroed: bool = True
     note: str = "zeroed for cudagraph page-commit"
+    offset: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,20 +97,27 @@ class Caps:
         if self.fabric is not None and not isinstance(self.fabric, Fabric):
             raise ValueError("caps.fabric must be hippihx.comm.fabric.Fabric or None")
         if self.wave is None:
-            if self.arch == "gfx900":
-                object.__setattr__(self, "wave", 64)
-            else:
-                object.__setattr__(self, "wave", DOT_WAVE)
+            object.__setattr__(self, "wave", default_wave(self.arch))
 
 
 @dataclass(frozen=True, slots=True)
 class Plan:
-    """Launch + scratch policy. Must not own a serve workspace."""
+    """Launch + scratch policy. Must not own a serve workspace.
+
+    ``params`` holds the checked plan params (empty on a contract plan).
+    ``ready`` is the V1 ready bit: False means serve keeps its fallback,
+    decided before capture. ``variant`` is the explore rank plan picked.
+    ``scratch_nbytes`` is the block to allocate for ``specs``.
+    """
 
     qualname: str
     arch: str
     specs: tuple[ScratchSpec, ...] = field(default_factory=tuple)
     meta: Mapping[str, Any] = field(default_factory=dict)
+    params: Mapping[str, Any] = field(default_factory=dict)
+    ready: bool = False
+    variant: int = 0
+    scratch_nbytes: int = 0
 
     def scratch_specs(self) -> tuple[ScratchSpec, ...]:
         return self.specs
@@ -141,7 +155,7 @@ class OpMeta:
 class PlannedOp(Protocol):
     META: OpMeta
 
-    def plan(self, caps: Caps) -> Plan: ...
+    def plan(self, caps: Caps | None = None, **params: Any) -> Plan: ...
 
     def bind(
         self,
@@ -158,15 +172,12 @@ class PlannedOp(Protocol):
 
 
 def stub_plan(qualname: str, caps: Caps, nbytes: int = 0) -> Plan:
-    specs = (
-        ScratchSpec(
-            name="workspace",
-            nbytes=nbytes,
-            zeroed=True,
-            note="zeroed for cudagraph page-commit",
-        ),
-    )
-    return Plan(qualname=qualname, arch=caps.arch, specs=specs)
+    """Contract plan. A ``nbytes`` workspace when > 0, else no scratch."""
+
+    specs: tuple[ScratchSpec, ...] = ()
+    if nbytes > 0:
+        specs = (ScratchSpec(name="workspace", nbytes=nbytes, zeroed=True),)
+    return Plan(qualname=qualname, arch=caps.arch, specs=specs, scratch_nbytes=nbytes)
 
 
 def stub_bind(

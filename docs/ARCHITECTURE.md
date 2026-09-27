@@ -34,6 +34,7 @@ Same *shape* as b12x (`<group>.<op>` + `api.py`), HIP objects:
 | `hippihx/mojo/` | Host view of that center (`authoring_source`, explore, hooks) |
 | `hippihx/isa.py` | Packed DOT, LDS banks, wave32 gate, arch switch |
 | `hippihx/_lib/catalog.py` | One op table (qualname, V1 id, DOT, tile path) |
+| `hippihx/_lib/codegen.py` | Renders the catalog, arch slots and ISA locks into `v1.h`, `v1_abi.cpp`, `isa.hpp`, `arch.hpp`, CMake, `build_fatbin.sh`, and the Mojo contracts |
 | `hippihx/<group>/<op>/api.py` | `plan` / `bind` / `run` |
 | `tiles/<group>/<op>/kernel.hip` | HIP produce object (dest). Torch-free |
 | `include/hippihx/v1.h` | C consume ABI extras wraps as `torch.ops` |
@@ -70,7 +71,7 @@ extras FlyDSL consume waits on `FLYDSL_V1_CONSUME` (graph-safe JIT). See
 `run` raises `MojoNotProduce`. `plan.meta["authoring"]` is
 `mojo/zoo/<op>.mojo` for every catalog op except `attention.kda_scan` and
 `attention.dsa_nope`, which stay `catalog-stub`. The ABI gap is MAX
-`execute` versus `hippihx_v1_*` (rev 3). See [`MOJO.md`](MOJO.md).
+`execute` versus `hippihx_v1_*` (rev 4). See [`MOJO.md`](MOJO.md).
 
 
 ```
@@ -115,7 +116,12 @@ list from the gfx900 archive.
 | **gfx900** | yes stub / Later mad_mix | **no** | never load FA/EXL3 DOT |
 | **gfx906** (real Vega20/MI50) | Later non-DOT if ever | **no** | **not** BC-250 |
 
-One configure tree → one `libhippihx_<arch>.a` in `build/fatbin/<arch>/`.
+One configure tree → `build/fatbin/<arch>/`: `hippihx_<arch>.hsaco` (the
+slot's device code, one raw AMDGPU ELF), `libhippihx_v1.so` (V1 host
+symbols, no device code) and the link-smoke `libhippihx_<arch>.a`.
+`hippihx_v1_load` refuses a code object whose ELF mach is not its slot's,
+and refuses any load while `HSA_OVERRIDE_GFX_VERSION` is set. See
+[`CONSUME.md`](CONSUME.md#artifacts).
 CMake rejects multi-arch lists and refuses Later slots (**gfx1013**,
 **gfx906**). Portable DOT slots (1151 / Deck 103x) configure and compile
 the same stubs.
@@ -212,15 +218,20 @@ the fatbin:
 
 | Symbol | Role |
 |---|---|
-| `hippihx_v1_plan` | host-only scratch specs (always `zeroed=1`) |
-| `hippihx_v1_run` | capture-safe enqueue; stub returns `NOT_READY` until migrate |
+| `hippihx_v1_plan` | host-only, before capture: caps + params → caller-owned `hippihx_v1_plan_t` (ready bit, explore variant, zeroed scratch specs with offsets) |
+| `hippihx_v1_run` | capture-safe enqueue on a stream: plan + tensor descriptors in slot order + scratch; stub returns `NOT_READY` until migrate |
 | `hippihx_v1_op_name` / `_is_dot` / `_fp16_act` | id ↔ qualname / DOT / fp16-act flags |
+| `hippihx_v1_op_nparams` / `_ntensors` / `_param_name` / `_tensor_name` | per-op schema from the catalog |
 
 One V1 id per tile (`HIPPIHX_V1_OP_*`). Serve wraps as
 `torch.ops.hippihx.<op>` — never a second Triton path in this library.
 Python mirror: `hippihx.v1` (`V1OpId`, `ABI_REVISION`). Caps include
 optional activation `dtype` (revision **2**). Qualnames `attention.*`
-(revision **3**; ids unchanged). Dest extras tip `30632b2fa323` still
+(revision **3**; ids unchanged). Revision **4** adds the caller-owned
+plan, params, tensor descriptors, the stream and `caps.fabric`. Per-op
+params, tensor slots and scratch rules live in the catalog, and
+`python -m hippihx._lib.codegen` writes the header enums and C tables.
+See [`CONSUME.md`](CONSUME.md). Dest extras tip `30632b2fa323` still
 has no `torch.ops.hippihx.*` rewire — see [`BACKPORT.md`](BACKPORT.md).
 Do not edit `opengfx1030/vllm-rdna` from this tree.
 

@@ -61,19 +61,19 @@ target_include_directories(hippihx PUBLIC
 # mojo/ is the MAX authoring tree. It is not a fatbin input.
 # Mojo objects are not produce until re-emitted with hipcc (see docs/MOJO.md).
 
-# Shared DOT source: FA / EXL3 / AWQ-W4A16 / moe.shared.
+# Shared DOT source: FA / EXL3 / AWQ-W4A16 / moe.shared (catalog dot=True).
 # Same .hip for every DOT slot (gfx1030, gfx110x, gfx1151, gfx103x).
 # gfx1013 is Later (not true RDNA2). gfx900 does not load these.
 # Never #ifdef WMMA. Never HSA_OVERRIDE.
+# Non-DOT contracts compile for every built fatbin (stubs).
+# tiles/v1_abi.cpp is the torch-free C consume surface extras will bind.
+# hippihx:gen begin tile_sources -- python -m hippihx._lib.codegen; do not edit
 set(HIPPIHX_DOT_SOURCES
   tiles/attention/fa_fdot2/kernel.hip
   tiles/gemm/w4a16_fdot2/kernel.hip
   tiles/gemm/exl3_3inst/kernel.hip
   tiles/moe/shared/kernel.hip
 )
-
-# Non-DOT contracts compile for every built fatbin (stubs).
-# tiles/v1_abi.cpp is the torch-free C consume surface extras will bind.
 set(HIPPIHX_COMMON_SOURCES
   tiles/smoke.hip
   tiles/v1_abi.cpp
@@ -86,6 +86,7 @@ set(HIPPIHX_COMMON_SOURCES
   tiles/sequence/causal_conv/kernel.hip
   tiles/comm/pcie/kernel.hip
 )
+# hippihx:gen end tile_sources
 
 set(HIPPIHX_TILE_SOURCES ${HIPPIHX_COMMON_SOURCES})
 if(HIPPIHX_IS_DOT_SLOT)
@@ -120,6 +121,44 @@ target_include_directories(hippihx_smoke_host PRIVATE
 set_target_properties(hippihx_smoke_host PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/fatbin/${HIPPIHX_ARCH}"
 )
+
+# Consume artifacts (docs/CONSUME.md). The static .a above stays the link
+# smoke.
+#   libhippihx_v1.so      V1 symbols + generated tables, no device code.
+#                         With HIP it links libamdhip64 and hippihx_v1_load
+#                         loads code objects; the host stub only validates.
+#   hippihx_<arch>.hsaco  this slot's device code: one raw AMDGPU ELF (one
+#                         --offload-arch, no offload bundle).
+add_library(hippihx_v1 SHARED tiles/v1_abi.cpp)
+target_include_directories(hippihx_v1 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set_target_properties(hippihx_v1 PROPERTIES
+  OUTPUT_NAME "hippihx_v1"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/fatbin/${HIPPIHX_ARCH}"
+  CXX_STANDARD 17
+  CXX_STANDARD_REQUIRED ON
+)
+
+if(HIPPIHX_HAS_HIP)
+  find_package(hip REQUIRED CONFIG)
+  target_link_libraries(hippihx_v1 PRIVATE hip::host)
+  target_compile_definitions(hippihx_v1 PRIVATE HIPPIHX_V1_WITH_HIP=1)
+
+  set(HIPPIHX_CODE_OBJECT
+      "${CMAKE_BINARY_DIR}/fatbin/${HIPPIHX_ARCH}/hippihx_${HIPPIHX_ARCH}.hsaco")
+  file(GLOB HIPPIHX_TILE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/hippihx/*.hpp")
+  add_custom_command(
+    OUTPUT "${HIPPIHX_CODE_OBJECT}"
+    COMMAND "${CMAKE_HIP_COMPILER}" -x hip "--offload-arch=${HIPPIHX_ARCH}"
+            --cuda-device-only --no-gpu-bundle-output -O3 -std=c++17
+            "-I${CMAKE_CURRENT_SOURCE_DIR}/include"
+            -o "${HIPPIHX_CODE_OBJECT}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tiles/code_object.hip"
+    DEPENDS tiles/code_object.hip ${HIPPIHX_TILE_SOURCES} ${HIPPIHX_TILE_HEADERS}
+    COMMENT "hippihx: ${HIPPIHX_ARCH} code object (one --offload-arch, raw ELF)"
+    VERBATIM
+  )
+  add_custom_target(hippihx_code_object ALL DEPENDS "${HIPPIHX_CODE_OBJECT}")
+endif()
 
 # Convenience: document slots without mixing them into this .a.
 add_custom_target(hippihx_list_fatbin_slots

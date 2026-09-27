@@ -16,26 +16,24 @@
 #                        HSA_OVERRIDE a dest object onto it.
 #   gfx906               real Vega20/MI50 — not BC-250, not DOT
 
+# hippihx:gen begin arch_lists -- python -m hippihx._lib.codegen; do not edit
 set(HIPPIHX_KNOWN_ARCHES
-  gfx1030
-  gfx1100 gfx1101 gfx1102
-  gfx1151
-  gfx1031 gfx1032 gfx1033 gfx1035 gfx1036
-  gfx900
+  gfx1030 gfx1100 gfx1101 gfx1102 gfx1151 gfx1031 gfx1032 gfx1033 gfx1035
+  gfx1036 gfx900
 )
 set(HIPPIHX_DOT_ARCHES
-  gfx1030
-  gfx1100 gfx1101 gfx1102
-  gfx1151
-  gfx1031 gfx1032 gfx1033 gfx1035 gfx1036
+  gfx1030 gfx1100 gfx1101 gfx1102 gfx1151 gfx1031 gfx1032 gfx1033 gfx1035
+  gfx1036
 )
 set(HIPPIHX_DOT_UNOPTIMIZED_ARCHES
-  gfx1151
-  gfx1031 gfx1032 gfx1033 gfx1035 gfx1036
+  gfx1151 gfx1031 gfx1032 gfx1033 gfx1035 gfx1036
 )
 set(HIPPIHX_LATER_NONDOT_ARCHES gfx906)
 set(HIPPIHX_LATER_ARCHES gfx906 gfx1013)
 set(HIPPIHX_DEFAULT_ARCH gfx1030)
+set(HIPPIHX_ROCM_PIN "7.14" CACHE STRING
+    "Documented ROCm pin for V620 / gfx1030. Not auto-enforced when HIP is absent.")
+# hippihx:gen end arch_lists
 
 if(NOT DEFINED HIPPIHX_ARCH)
   set(HIPPIHX_ARCH "${HIPPIHX_DEFAULT_ARCH}" CACHE STRING
@@ -78,9 +76,6 @@ if(_hippihx_arch_idx EQUAL -1)
     "Unknown HIPPIHX_ARCH='${HIPPIHX_ARCH}'. Built: ${HIPPIHX_KNOWN_ARCHES}. "
     "Later: ${HIPPIHX_LATER_ARCHES}")
 endif()
-
-set(HIPPIHX_ROCM_PIN "7.14" CACHE STRING
-    "Documented ROCm pin for V620 / gfx1030. Not auto-enforced when HIP is absent.")
 
 set(HIPPIHX_IS_DOT_SLOT OFF)
 set(HIPPIHX_DOT_UNOPTIMIZED OFF)
