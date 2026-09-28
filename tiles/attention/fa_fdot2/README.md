@@ -37,7 +37,8 @@ body yet — when you do, cherry-pick BlivionIaG, do not re-author
 
 Dest extras @ `48c56ef` pins `AttentionConfig.backend = RDNA_ATTN` from
 the API-server `VLLM_USE_RDNA2_FA` env so workers actually select
-FA-RDNA2. Stay extras. No HIP.
+FA-RDNA2. Dest extras **#28** @ `bfd5286d` (tile skip / in-place out /
+GQA softmax) stay extras. Do not dump. Do not pick Claude. No tok/s.
 
 ## V1 rev 4 contract (pinned)
 
