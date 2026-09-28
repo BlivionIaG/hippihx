@@ -7,13 +7,13 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `330b42abb5b0` (2026-09-27 23:45 UTC). Dest default
+`rdna_extras` @ `bfd5286d846b` (2026-09-28 02:32 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
 squash is `a4060647cfbb`. Open **#2**, **#18**. Draft **#9/#10**, **#23**,
-**#25**, **#28**, **#29**. Closed **#3/#16** unmerged; **#21** dest-integrated
+**#25**, **#29**. Closed **#3/#16** unmerged; **#21** dest-integrated
 unmerged; **#12** superseded by **#15**. Merged **#13**, **#14**, **#15**,
-**#17**, **#19**, **#20**, **#22**, **#24**, **#26**, **#27**.
+**#17**, **#19**, **#20**, **#22**, **#24**, **#26**, **#27**, **#28**.
 **No** `torch.ops.hippihx.*`. Dest **#27** is opt-in `VLLM_HIPPIHX`
 ctypes consume (default **off**; plans not ready).
 
@@ -32,7 +32,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 
 | Kernel / op | extras | hippihx tile | Notes |
 |---|---|---|---|
-| FA paged decode / prefill / split-K / short / GQA | `fa_rdna2.cu` | `attention/fa_fdot2` | `fdot2`. Occupancy pin closed. GQA-subgroup default. O register-resident @ `d1b200b1`. Persist O stay extras. **unvalidated** |
+| FA paged decode / prefill / split-K / short / GQA | `fa_rdna2.cu` | `attention/fa_fdot2` | `fdot2`. Occupancy pin closed. GQA-subgroup default. O register-resident @ `d1b200b1`. Dest **#28** @ `bfd5286d` tile skip / in-place out / GQA softmax stay extras. Do not dump. Persist O stay extras. **unvalidated** |
 | FA INT8 KV writer | `reshape_and_cache_int8_rdna2` | `attention/fa_fdot2` | INT8 cache layout. **unvalidated** |
 | FA fp16 flash KV writer | `reshape_and_cache_flash_rdna2` | `attention/fa_fdot2` | Non-native KV. `__launch_bounds__(128, 4)`. **unvalidated** |
 | W4A16 dense decode | `q_gemm_rdna2.cu` | `gemm/w4a16_fdot2` | GPTQ + AWQ = pack/zeros, one GEMM. Dest ZP is scale-baked `half` — zoo uses integer `q-zero` then scale. **unvalidated** |
@@ -57,7 +57,8 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | rdna_ar retained-output | draft PR **#25** | — | **skip** — not dest. George/Codex. Do not dump. Do not pick |
 | HIP MoE skinny `MAX_M=16` | dest PR **#26** @ `7434efee` | — | Stay extras. Opt-in `VLLM_ROCM_MOE_SKINNY_MAX_M`. Default still **8**. Do not dump. Do not pick |
 | hippihx V1 consume | `hippihx_v1.py` (dest **#27** @ `a3f7e5da`) | — | Stay extras. Opt-in `VLLM_HIPPIHX`. ctypes + `hippihx_v1_load`. Plans not ready. Still no `torch.ops.hippihx`. Do not dump. Do not pick Claude |
-| FA-RDNA2 tile skip / spec-decode split | draft PRs **#28/#29** | — | **skip** — not dest. Claude FA drafts. Do not dump |
+| FA-RDNA2 tile skip / in-place / GQA softmax | dest PR **#28** @ `bfd5286d` | `attention/fa_fdot2` | Stay extras. Foreign Claude. Do not dump. Do not pick. **unvalidated** |
+| FA spec-decode split | draft PR **#29** | — | **skip** — not dest. Claude. Stacked on dest **#28**. Do not dump |
 | Explore W4A8 sdot4 / W4A4 sdot8 | extras PRs **#9/#10** | — | **skip** — not dest |
 | Resident W4A16 MoE skinny decode | `moe_resident_decode.cu` (dest **#17** @ `e1315629`) | `moe/routed` (watch) | Stay extras. Opt-in `VLLM_RDNA_MOE_RESIDENT*`. ATen HIP. Do not dump. Closed **#16** unmerged. **unvalidated** |
 
@@ -113,6 +114,7 @@ stay extras (no D2H under capture in the zoo).
 | `VLLM_HIPPIHX_LIB` / `VLLM_HIPPIHX_CODE_OBJECT` | unset | `libhippihx_v1.so` / `hippihx_<arch>.hsaco` |
 | `VLLM_RDNA_MOE_RESIDENT` / `VLLM_RDNA_MOE_RESIDENT_SKINNY` | `"0"` (dest **#17** @ `e1315629`) | resident W4A16 MoE layout / skinny decode |
 | `VLLM_FA_RDNA2_GQA_MODE` | `subgroup` | FA GQA-subgroup prefill |
+| `VLLM_FA_RDNA2_GQA_DECODE` | `"0"` (dest **#28** @ `bfd5286d`) | opt-in GQA decode kernel |
 | `VLLM_RDNA_HC_PREFILL_HIP` / `VLLM_RDNA_QSA_HIP` / `VLLM_RDNA_PLE_CONV_HIP` | `"0"` | Flash-Next product HIP (opt-in) |
 | `VLLM_RDNA_FUSED_HC` / `VLLM_RDNA_FUSED_SE` | `"1"` (Flash-Next production launcher sets fused HC `0` @ `3bddd3c9`) | fused decode glue |
 | `VLLM_ROCM_USE_AITER` | `False` | AITER (CDNA; not dest gfx1030) |
@@ -144,11 +146,11 @@ Stay extras: capture plumbing, product serve, skinny GEMM, ConfigH,
 graph mode, vLLM custom AR, `bench_report.py`, dest T44b `rdna_ar`
 (still opt-in), dest PR **#13** / PR **#14** / PR **#15** / PR **#17** /
 PR **#19** / PR **#20** / dest **#22** two-shot / dest **#24** RAM KV /
-dest **#26** MoE skinny `MAX_M` / dest **#27** V1 consume (observe, do
-not pick), dest-integrated PR **#21**, dest FA `RDNA_ATTN` pin, resident
-MoE ATen HIP, Qwen4Exp MTP (not dest), ROCm platform init, extras EXL3
-docker arch-guard. Skip: a17t PR **#3**, PR **#18** GPTQ
-`BLOCK_KN_SIZE` 256, draft PR **#23** PCIe P2P KV, draft PR **#25**
-rdna_ar retained-output, draft PRs **#28/#29** FA (Claude; do not dump),
-explore **#9/#10**, closed PR **#12**, closed PR **#16**,
-closed **#5/#11**. Produce stays outside hippihx.
+dest **#26** MoE skinny `MAX_M` / dest **#27** V1 consume / dest **#28**
+FA tile skip (observe, do not pick), dest-integrated PR **#21**, dest FA
+`RDNA_ATTN` pin, resident MoE ATen HIP, Qwen4Exp MTP (not dest), ROCm
+platform init, extras EXL3 docker arch-guard. Skip: a17t PR **#3**,
+PR **#18** GPTQ `BLOCK_KN_SIZE` 256, draft PR **#23** PCIe P2P KV, draft
+PR **#25** rdna_ar retained-output, draft PR **#29** FA spec-decode
+split (Claude; do not dump), explore **#9/#10**, closed PR **#12**,
+closed PR **#16**, closed **#5/#11**. Produce stays outside hippihx.
