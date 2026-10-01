@@ -18,9 +18,8 @@ dest-integrated unmerged; **#12** superseded by **#15**. Merged **#13**,
 **#14**, **#15**, **#17**, **#19**, **#20**, **#22**, **#24**, **#26**,
 **#27**, **#28**, **#29**. Dest **#30** @ `3fb9d43a` / dest **#32** @
 `a5059cf0` dest-presence. Dest tip `ac9dfd8f` is TunableOp/serve (not a
-new extras PR). **No**
-`torch.ops.hippihx.*`. Dest **#27** is opt-in `VLLM_HIPPIHX` ctypes
-consume (default **off**; plans not ready).
+new extras PR). **No** `torch.ops.hippihx.*`. Dest **#27** is opt-in
+`VLLM_HIPPIHX` ctypes consume (default **off**; plans not ready).
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs.
