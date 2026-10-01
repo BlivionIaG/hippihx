@@ -20,7 +20,11 @@ per fatbin. gfx1150 / gfx12xx are not dest. Do not dump the `.cu`.
 | Produce | **outside** hippihx — do not add a `produce/` or `3inst/` packer dir here |
 | Consume ABI | `HIPPIHX_V1_OP_GEMM_EXL3_3INST` in `include/hippihx/v1.h` — plan/run stub until body migrate |
 
-`mcg` / `mul1` codebooks are compile slots, not extra zoo roots. UNC-26 is
+`mcg` / `mul1` codebooks are compile slots, not extra zoo roots. Dest
+extras **#32** @ `a5059cf0` dest-lands unsigned mul1 + K=1..8 dispatch
+and dest-fixes MoE n-tile staging. Dest tip `30b0bd4e` dest-lands the
+v0.30 loader, fused `exl3_project_rdna2`, `Exl3MoEMethod`, and inert
+`Exl3NgramTable` PLE gather. Stay extras. Do not dump. UNC-26 is
 still In Progress on extras — do not copy bodies until produce/consume
 and capture buffers stop moving. Port and later perf commits stay
 **BlivionIaG** `<kev29lt@gmail.com>` as Author **and** Committer. Do not
