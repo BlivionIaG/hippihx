@@ -16,10 +16,14 @@ a DOT path.
 | `__launch_bounds__` | extras prefill `__launch_bounds__(THREADS)` (ConfigA=256 / V1=512 / C=128). Not dest-locked here until migrate |
 | Wave | **32 only** |
 | Zero-point | **Integer nibble `q` minus integer `zero`, then `* scale`.** GPTQ zeros are `uint4b8` (+1); AWQ zeros are literal. Do **not** copy extras `prep_zero_scale_fp16` scale-baked `half` (`0xE400 \| zero`) — that rounded offset is a dest defect (all-zero weights were not exact zero). |
-| Prefill K-split | `K_STEP=32`. Every `k_per_split` must be **equal and a multiple of 32**, inside the LDS budget. Dest `compute_split_k` can pick K=640 → 16×40; the kernel reads 32-value tiles — refuse that split. |
+| Prefill K-split | `K_STEP=32`. Every `k_per_split` must be **equal and a multiple of 32**, inside the LDS budget. Dest @ `3a0786ea` keeps legacy POT when `k_per_split % K_STEP == 0` and enumerates otherwise. Zoo still refuse 40-wide. |
 | Scratch | sized by `plan`; **zeroed** for page-commit; **no D2H under capture** |
 
 Do not take a17t `awq_gemm_rdna2.cu` / `qdq_awq_rdna2.cuh` as a second W4
 family. GPTQ vs AWQ is pack/zeros on this tile. If dest ever locks that
 family, cherry-pick **their** commits (`d53572644` and follow-ups), do
 not rewrite them.
+
+Dest extras **#30** @ `3fb9d43a` is opt-in compile-dispatch
+(`VLLM_RDNA2_W4A16_RUNTIME_DISPATCH`, default **off**). Stay extras.
+Do not dump. Do not copy tok/s.
