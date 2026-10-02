@@ -118,6 +118,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "3a0786ea" in extras
     assert "3fb9d43a" in extras
     assert "9cad8792" in extras
+    assert "a5059cf0" in extras
     assert "a3f7e5da" in extras
     assert "VLLM_HIPPIHX" in extras
     assert "VLLM_RDNA2_W4A8_SDOT4" in extras
@@ -170,6 +171,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "3a0786ea" in bp
     assert "3fb9d43a" in bp
     assert "9cad8792" in bp
+    assert "a5059cf0" in bp
     assert "d94e2209" in bp
     assert "dbb1e77" in bp
     assert "e45dd5c" in bp
@@ -222,10 +224,11 @@ def test_readme_unvalidated_inventory() -> None:
     assert "VLLM_RDNA_MOE_RESIDENT" in extras
     assert "moe_resident" in extras
     contrib = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
-    assert "9cad8792" in contrib
+    assert "a5059cf0" in contrib
     assert "a4060647" in contrib
     # CONTRIBUTING is tip-only. Historical dest SHAs live in BACKPORT.
     for token in (
+        "9cad8792",
         "3fb9d43a",
         "3a0786ea",
         "e0112c55",

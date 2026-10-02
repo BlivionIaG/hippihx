@@ -234,7 +234,7 @@ optional activation `dtype` (revision **2**). Qualnames `attention.*`
 plan, params, tensor descriptors, the stream and `caps.fabric`. Per-op
 params, tensor slots and scratch rules live in the catalog, and
 `python -m hippihx._lib.codegen` writes the header enums and C tables.
-See [`CONSUME.md`](CONSUME.md). Dest extras tip `9cad8792ad89` still
+See [`CONSUME.md`](CONSUME.md). Dest extras tip `a5059cf0480e` still
 has no `torch.ops.hippihx.*` rewire. Dest extras **#27** is opt-in
 `VLLM_HIPPIHX` ctypes consume (default **off**; plans not ready) — see
 [`BACKPORT.md`](BACKPORT.md).
