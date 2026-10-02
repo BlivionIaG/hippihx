@@ -39,10 +39,11 @@ Dest extras @ `48c56ef` pins `AttentionConfig.backend = RDNA_ATTN` from
 the API-server `VLLM_USE_RDNA2_FA` env so workers actually select
 FA-RDNA2. Dest extras **#28** @ `bfd5286d` and dest **#29** @ `d94e2209` /
 `e0112c55` (`cu_query_lens` split decode + row gate) stay extras.
-Dest extras **#34** @ `284fbad0` / tip `ef8f0a28` dest-lands D=128
-register-O GQA prefill (`HEAD_DIM` 128/256; ~14 KiB LDS dest
-observation). GitHub closed-unmerged. Stay extras. Do not dump. Do not
-pick Claude. No tok/s.
+Dest extras **#34** @ `284fbad0` / dest-presence `ef8f0a28` dest-lands
+D=128 register-O GQA prefill (`HEAD_DIM` 128/256; ~14 KiB LDS dest
+observation). Dest tip `bb40498c` is bench-summary follow-on, not FA
+HIP. GitHub closed-unmerged. Stay extras. Do not dump. Do not pick
+Claude. No tok/s.
 
 ## V1 rev 4 contract (pinned)
 

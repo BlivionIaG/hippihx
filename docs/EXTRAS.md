@@ -7,18 +7,18 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `ef8f0a2831f2` (2026-10-02 00:04 UTC). Dest default
+`rdna_extras` @ `bb40498cc002` (2026-10-02 00:13 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
 squash is `a4060647cfbb`. Open **#2**, **#18**. Draft **#10**, **#23**,
 **#25**, **#31**, **#33**. Closed **#3/#9/#16/#30/#32/#34** unmerged
 (**#9** superseded by dest W4A8; **#30** dest-landed independently @
 `3fb9d43a`; **#32** dest-landed independently @ `a5059cf0`; **#34**
-dest-landed independently @ `284fbad0` / tip `ef8f0a28`); **#21**
+dest-landed independently @ `284fbad0` / dest-presence `ef8f0a28`); **#21**
 dest-integrated unmerged; **#12** superseded by **#15**. Merged **#13**,
 **#14**, **#15**, **#17**, **#19**, **#20**, **#22**, **#24**, **#26**,
 **#27**, **#28**, **#29**. Dest **#30** @ `3fb9d43a` / dest **#32** @
-`a5059cf0` / dest **#34** @ `ef8f0a28` dest-presence. **No**
+`a5059cf0` / dest **#34** @ `ef8f0a28` dest-presence / tip `bb40498c`. **No**
 `torch.ops.hippihx.*`. Dest **#27** is opt-in `VLLM_HIPPIHX` ctypes
 consume (default **off**; plans not ready).
 
@@ -38,7 +38,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 
 | Kernel / op | extras | hippihx tile | Notes |
 |---|---|---|---|
-| FA paged decode / prefill / split-K / short / GQA | `fa_rdna2.cu` | `attention/fa_fdot2` | `fdot2`. Occupancy pin closed. GQA-subgroup default. O register-resident @ `d1b200b1`. Dest **#28** @ `bfd5286d` tile skip / dest **#34** @ `ef8f0a28` D=128 register-O GQA prefill stay extras. Do not dump. Persist O stay extras. **unvalidated** |
+| FA paged decode / prefill / split-K / short / GQA | `fa_rdna2.cu` | `attention/fa_fdot2` | `fdot2`. Occupancy pin closed. GQA-subgroup default. O register-resident @ `d1b200b1`. Dest **#28** @ `bfd5286d` tile skip / dest **#34** @ `ef8f0a28` D=128 register-O GQA prefill stay extras. Dest tip `bb40498c` is bench docs. Do not dump. Persist O stay extras. **unvalidated** |
 | FA INT8 KV writer | `reshape_and_cache_int8_rdna2` | `attention/fa_fdot2` | INT8 cache layout. **unvalidated** |
 | FA fp16 flash KV writer | `reshape_and_cache_flash_rdna2` | `attention/fa_fdot2` | Non-native KV. `__launch_bounds__(128, 4)`. **unvalidated** |
 | W4A16 dense decode | `q_gemm_rdna2.cu` | `gemm/w4a16_fdot2` | GPTQ + AWQ = pack/zeros, one GEMM. Dest ZP is scale-baked `half` — zoo uses integer `q-zero` then scale. **unvalidated** |
@@ -74,7 +74,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | TunableOp unify / EXL3 27B rows / gemma_rms fake | dest @ `ac9dfd8f` (`tunableop/rocblas-f30bb442e9b5`, `gemma_rms_norm_fake`) | — | Stay extras. Serve/ops + inductor fake. Unique Blivion. Do not dump. Do not copy tok/s. |
 | EXL3 MTP draft + `serve_rdna` recipes | dest @ `bc5fbee5` (`exl3.py` `mtp.fc`, `serve_rdna.sh`, HIP conv `state_len` gate) | — | Stay extras. Dest serves EXL3 quantized MTP. No zoo MTP tile. Unique Blivion. Do not dump. Do not copy tok/s. |
 | FA decode scores / 4 barriers | draft PR **#33** | — | **skip** — not dest. Do not dump `fa_rdna2` |
-| FA D=128 prefill register-O GQA | dest PR **#34** @ `ef8f0a28` | `attention/fa_fdot2` | Stay extras. `HEAD_DIM` 128/256; ~14 KiB LDS dest observation. GitHub closed-unmerged. Do not dump `fa_rdna2`. Do not copy tok/s. |
+| FA D=128 prefill register-O GQA | dest PR **#34** @ `ef8f0a28` / tip `bb40498c` | `attention/fa_fdot2` | Stay extras. `HEAD_DIM` 128/256; ~14 KiB LDS dest observation. Tip is bench-summary follow-on. GitHub closed-unmerged. Do not dump `fa_rdna2`. Do not copy tok/s. |
 | Explore W4A8 sdot4 / W4A4 sdot8 | extras PRs **#9/#10** | — | **#9** closed-unmerged (superseded by dest W4A8 @ `3a0786ea`). **#10** **skip** — not dest |
 | Resident W4A16 MoE skinny decode | `moe_resident_decode.cu` (dest **#17** @ `e1315629`) | `moe/routed` (watch) | Stay extras. Opt-in `VLLM_RDNA_MOE_RESIDENT*`. ATen HIP. Do not dump. Closed **#16** unmerged. **unvalidated** |
 
@@ -172,7 +172,7 @@ split decode / dest row-gate `e0112c55` / dest W4A8 `3a0786ea` / dest
 **#30** compile-dispatch `3fb9d43a` / dest MoE epilogue `9cad8792` /
 dest **#32** EXL3 mul1 `a5059cf0` / dest EXL3 loader `30b0bd4e` / dest
 TunableOp `ac9dfd8f` / dest EXL3 MTP + `serve_rdna` `bc5fbee5` / dest
-**#34** FA D=128 GQA `ef8f0a28` (observe, do not pick). Skip: a17t
+**#34** FA D=128 GQA `ef8f0a28` / bench follow-on `bb40498c` (observe, do not pick). Skip: a17t
 PR **#3**, PR **#18** GPTQ `BLOCK_KN_SIZE` 256, draft PR **#23** PCIe
 P2P KV, draft PR **#25** rdna_ar retained-output, draft PR **#31** W4
 exact-dequant explore, draft PR **#33** FA decode scores, closed **#9**
