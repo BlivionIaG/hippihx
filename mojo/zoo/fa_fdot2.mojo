@@ -1,34 +1,23 @@
-# First-cut MAX registration for attention.fa_fdot2.
+# MAX authoring slot for attention.fa_fdot2.
 #
-# This is an authoring stub, not a kernel body, not a fatbin, and not
-# dest-ready. execute() does not enqueue. ABI gap: this registration is
-# not hippihx_v1_plan / hippihx_v1_run. Dest produce stays hipcc 7.14 /
-# hipModuleLoad / libamdhip64 until a documented HIP re-emit or MAX-serve
-# soak exists.
+# Not a kernel body, not a fatbin, and not dest-ready. execute() does not
+# enqueue. ABI gap: this registration is not hippihx_v1_plan /
+# hippihx_v1_run. Dest produce stays hipcc 7.14 / hipModuleLoad /
+# libamdhip64 until a documented HIP re-emit or MAX-serve soak exists.
 #
-# Arch switch: gfx1030 (packed DOT, wave32, no WMMA gate) versus gfx900
-# (mad_mix — do not ship the DOT object). Matches @extensibility.register
-# device fields from the MAX custom-op surface.
+# Arch switch: gfx1030 packed DOT, wave32, no WMMA gate. gfx900 is mad_mix
+# and must not receive the DOT object. gfx906 and gfx1013 stay unregistered.
 
 import extensibility
 
 from max.gpu.host import DeviceContext
 from extensibility import InputTensor, OutputTensor
 from std.utils.index import IndexList
+from zoo.refuse import not_produce, refuse_dot_on_gfx900
 
 alias QUALNAME = "attention.fa_fdot2"
 alias WAVE = 32
 alias PRODUCE = False
-
-
-fn _not_produce(arch: StaticString) raises -> None:
-    raise Error(
-        "attention.fa_fdot2 Mojo object is not dest-ready (arch=",
-        arch,
-        "); ABI gap versus hippihx_v1_*; dest produce stays hipcc 7.14 / "
-        "hipModuleLoad / libamdhip64 until a documented HIP re-emit or "
-        "MAX-serve soak exists",
-    )
 
 
 @extensibility.register(
@@ -56,7 +45,7 @@ struct FaFdot2Gfx1030:
         _ = output
         _ = x
         _ = ctx
-        _not_produce("gfx1030")
+        not_produce(QUALNAME, "gfx1030")
 
 
 @extensibility.register(
@@ -83,16 +72,10 @@ struct FaFdot2MadMix:
         _ = output
         _ = x
         _ = ctx
-        raise Error(
-            "do not ship gfx1030 DOT objects onto gfx900 mad_mix; "
-            "re-emit is still not this path"
-        )
+        refuse_dot_on_gfx900(QUALNAME)
 
 
 @extensibility.register_shape_function("hippihx.attention.fa_fdot2")
 def fa_fdot2_shape(x: InputTensor) raises -> IndexList[x.rank]:
     _ = x
-    raise Error(
-        "attention.fa_fdot2 shape is not produce; "
-        "re-emit HIP (hipcc 7.14 → hipModuleLoad / libamdhip64)"
-    )
+    not_produce(QUALNAME, "shape")

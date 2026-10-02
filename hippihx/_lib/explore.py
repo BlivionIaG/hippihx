@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .catalog import find_spec
-from .fatbin import DOT_WAVE
+from .fatbin import default_wave
 from .isa import WAVE32, ArchSwitch, arch_switch
 
 
@@ -173,7 +173,7 @@ def ranked_explore(qualname: str, arch: str) -> tuple[ExploreShape, ...]:
     )
     if pinned:
         return tuple(sorted(pinned, key=lambda shape: shape.rank))
-    wave = 64 if arch == "gfx900" else DOT_WAVE
+    wave = default_wave(arch)
     return (
         ExploreShape(
             qualname=qualname,

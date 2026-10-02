@@ -14,6 +14,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 HOPS: tuple[str, ...] = ("pix", "pxb", "phb")
+# Custom AR / mapped-peer class: PIX only, on 88096 or a generic Gen4
+# fan-out. 8749 is Gen3 (same class, not the dest AR mesh). PHB/PXB stay RCCL.
+CUSTOM_AR_HOPS: tuple[str, ...] = ("pix",)
+CUSTOM_AR_SWITCHES: tuple[str, ...] = ("pex88096", "generic")
+# Size gate. RCCL above this. Dest extras default is 64; the zoo lock is 512.
+AR_MAX_KB = 512
+LINK_WIDTHS: tuple[int, ...] = (1, 2, 4, 8, 16)
 SWITCH_ALIASES: dict[str, str] = {
     "pex88096": "pex88096",
     "plx88096": "pex88096",
@@ -65,7 +72,7 @@ def payload_gbs(*, gen: int, width: int) -> float:
     """PCIe payload GB/s one way (128b/130b). Not measured busbw."""
     if gen not in _GT:
         raise ValueError(f"unknown PCIe gen {gen}; known {tuple(_GT)}")
-    if width not in (1, 2, 4, 8, 16):
+    if width not in LINK_WIDTHS:
         raise ValueError(f"width must be a xN link, got {width}")
     return _GT[gen] * width * 128 / 130 / 8
 
@@ -92,7 +99,7 @@ class Fabric:
         object.__setattr__(self, "hop", hop)
         object.__setattr__(self, "switch", normalize_switch(self.switch))
         sku = SWITCHES[self.switch]
-        if self.width not in (1, 2, 4, 8, 16):
+        if self.width not in LINK_WIDTHS:
             raise ValueError(f"width must be a xN link, got {self.width}")
         if self.switch == "pex8749" and self.width == 16 and sku.x16_slots < 5:
             # 8749 cannot host a 5-slot x16 backplane. x16 endpoint is still valid.
@@ -139,13 +146,18 @@ def refuse_vega_mix(*arches: str) -> None:
         )
 
 
-def mapped_peer_ok(fabric: Fabric | None) -> bool:
-    """BAR0 peer-store scatter. Not switch DMA, not NTB, not IBGDA."""
+def custom_ar_fabric_ok(fabric: Fabric | None) -> bool:
+    """PIX + ACS-clear + large-BAR on a custom-AR switch. Size gate is separate."""
     if fabric is None:
         return False
     return (
-        fabric.hop == "pix"
+        fabric.hop in CUSTOM_AR_HOPS
         and fabric.acs_clear
         and fabric.large_bar
-        and fabric.switch in {"pex88096", "generic"}
+        and fabric.switch in CUSTOM_AR_SWITCHES
     )
+
+
+def mapped_peer_ok(fabric: Fabric | None) -> bool:
+    """BAR0 peer-store scatter. Not switch DMA, not NTB, not IBGDA."""
+    return custom_ar_fabric_ok(fabric)

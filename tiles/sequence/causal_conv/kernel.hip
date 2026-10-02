@@ -6,4 +6,4 @@
 // Decode FIR: pre-shift state, then shift (dest cafe95ef8).
 // Fwd: stride_o_token + null-block skip (dest 82b6f183da2a).
 // Scratch zeroed by the caller; no D2H under capture.
-__global__ void hippihx_sequence_causal_conv_stub() {}
+extern "C" __global__ void hippihx_sequence_causal_conv_stub() {}

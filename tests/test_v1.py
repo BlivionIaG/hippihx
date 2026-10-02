@@ -38,6 +38,11 @@ def test_v1_header_lockstep() -> None:
     assert "HIPPIHX_V1_OP_COUNT = 12" in header
     assert "hippihx_v1_plan" in header
     assert "hippihx_v1_run" in header
+    assert "hippihx_v1_plan_t" in header
+    assert "hippihx_v1_tensor" in header
+    assert "void* stream" in header
+    assert "HIPPIHX_V1_ERR_UNSUPPORTED_FABRIC" in header
+    assert "HIPPIHX_V1_ATTN_FA_FDOT2_T_Q" in header
     assert "HIPPIHX_V1_ERR_NOT_READY" in header
     assert "HIPPIHX_V1_ERR_UNSUPPORTED_DTYPE" in header
     assert "HIPPIHX_V1_DTYPE_BF16" in header
@@ -69,7 +74,7 @@ def test_exl3_grain_v2_lock_documented() -> None:
 
 
 def test_package_exports_v1() -> None:
-    assert hippihx.V1_ABI_REVISION == ABI_REVISION == 3
+    assert hippihx.V1_ABI_REVISION == ABI_REVISION == 4
     assert hippihx.V1_OP_NAMES == V1_OP_NAMES
     assert hippihx.v1_op_name(V1OpId.ATTN_FA_FDOT2) == "attention.fa_fdot2"
     assert hippihx.v1_op_fp16_act(V1OpId.ATTN_GDN_SCAN) is True

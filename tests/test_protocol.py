@@ -77,7 +77,10 @@ def test_plan_bind_run_stub() -> None:
     plan = fa_fdot2.plan(caps)
     assert plan.arch == "gfx1100"
     assert plan.qualname == "attention.fa_fdot2"
-    assert plan.scratch_specs()[0].zeroed is True
+    # Contract plan: no params, so nothing is sized yet (V1 rev 4).
+    assert plan.scratch_specs() == ()
+    assert plan.meta["sized"] is False
+    assert plan.ready is False
     binding = fa_fdot2.bind(plan, scratch=None)
     assert fa_fdot2.run(binding) is None
     assert fa_fdot2.is_supported(caps)
@@ -98,7 +101,7 @@ def test_causal_conv_protocol() -> None:
     caps = causal_conv.Caps(arch="gfx1030")
     plan = causal_conv.plan(caps)
     assert plan.qualname == "sequence.causal_conv"
-    assert plan.scratch_specs()[0].zeroed is True
+    assert plan.scratch_specs() == ()  # register-only; no workspace slab
     assert causal_conv.run(causal_conv.bind(plan)) is None
     assert causal_conv.is_supported(Caps(arch="gfx900"))
     assert causal_conv.is_supported(Caps(arch="gfx1033"))

@@ -9,7 +9,7 @@ HIP/RDNA op zoo. Methodology from
 
 | Layer | Owns |
 |---|---|
-| **this repo** | Tile contracts, HIP fatbins, FlyDSL atoms, catalog, V1 ABI |
+| **this repo** | Mojo/MAX authoring center, tile contracts, HIP fatbins, FlyDSL atoms, catalog, V1 ABI |
 | **`opengfx1030/vllm-rdna` `rdna_extras`** | `torch.ops`, envs, graphs, model hooks |
 | **produce** | AWQ / EXL3 `-cb 3inst` packers |
 
@@ -21,6 +21,8 @@ this tree. Do not dump `csrc/rocm/*.cu` here until extras consumes V1.
 - Ops live at `hippihx.<group>.<op>` with `api.py` + `META`.
 - Group is `attention` (not `attn`). ISA names stay (`fa_fdot2`, not `paged`).
 - Catalog is `hippihx/_lib/catalog.py` — one table for Python, C, tiles, tests.
+  `hippihx:gen` blocks are rendered from it by `python -m hippihx._lib.codegen`.
+  Never hand-edit a generated block.
 - Never import `b12x`, CuTe, CUTLASS, CUDA, WMMA, NVFP4.
 
 ## HIP fatbins / FlyDSL compiler

@@ -10,6 +10,10 @@ Mojo/MAX authoring tree (`mojo/`) all read the same locks:
 | C++ | `include/hippihx/isa.hpp` (included from `arch.hpp`) |
 | Mojo | `mojo/isa/contracts.mojo` |
 
+The C++ macros, the arch blocks in `arch.hpp`, and the Mojo aliases and
+arch switch are generated from the Python tables by
+`python -m hippihx._lib.codegen`. `--check` fails when one drifts.
+
 `include/hippihx/dot.hpp` remains the compile-time DOT lock (`#error` on
 Vega, gfx1013, wave64, and `fdot2.bf16`). The table below is what that
 header, the Mojo arch switch, and `plan` are not allowed to weaken.

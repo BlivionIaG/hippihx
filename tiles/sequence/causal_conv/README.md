@@ -22,7 +22,8 @@ capture now uses permanent state arenas (extras, not this tile). BF16
 was rolled back off the Triton/`fdot2.bf16` path on the Flash-Next V620
 integration (fp32-promoted scalar FMA). Do not copy the ATen wrapper.
 
-C consume id: `HIPPIHX_V1_OP_SEQUENCE_CAUSAL_CONV`. `hippihx_v1_plan`
-returns a **0-byte** zeroed workspace (register-only). `hippihx_v1_run`
-returns `HIPPIHX_V1_ERR_NOT_READY` until the body migrates. bf16 caps are
+C consume id: `HIPPIHX_V1_OP_SEQUENCE_CAUSAL_CONV`. V1 rev 4: the
+schema is unpinned (`nparams == 0`, `ntensors == 0`), and `hippihx_v1_plan`
+returns no scratch spec (register-only). `hippihx_v1_run` returns
+`HIPPIHX_V1_ERR_NOT_READY` until the body migrates. bf16 caps are
 accepted; FA/GDN/DOT are not.

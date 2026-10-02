@@ -10,6 +10,7 @@
 # gfx1030 packed DOT: fdot2 / v_dot2c and sdot4. No WMMA gate.
 # Never fdot2.bf16 (gfx1030 LLVM ISel abort).
 
+# hippihx:gen begin isa_aliases -- python -m hippihx._lib.codegen; do not edit
 alias WAVE32 = 32
 alias LDS_BANKS = 32
 alias LDS_BANK_BYTES = 4
@@ -25,8 +26,10 @@ alias ISA_SDOT4 = "v_dot4_i32_i8,v_dot4c_i32_i8"
 # Same order as hippihx._lib.fatbin.DOT_ARCHES / isa.MAD_MIX_ARCHES.
 alias DOT_ARCHES = "gfx1030,gfx1100,gfx1101,gfx1102,gfx1200,gfx1151,gfx1031,gfx1032,gfx1033,gfx1035,gfx1036"
 alias MAD_MIX_ARCHES = "gfx900,gfx906,gfx1013"
+# hippihx:gen end isa_aliases
 
 
+# hippihx:gen begin arch_switch -- python -m hippihx._lib.codegen; do not edit
 fn arch_switch(arch: StaticString) -> StaticString:
     """``dot`` or ``mad_mix``. gfx1030 is the primary DOT slot.
 
@@ -34,15 +37,14 @@ fn arch_switch(arch: StaticString) -> StaticString:
     """
     if arch == "gfx1030" or arch == "gfx1100" or arch == "gfx1101" or arch == "gfx1102":
         return "dot"
-    if arch == "gfx1200":
+    if arch == "gfx1200" or arch == "gfx1151" or arch == "gfx1031" or arch == "gfx1032":
         return "dot"
-    if arch == "gfx1151" or arch == "gfx1031" or arch == "gfx1032" or arch == "gfx1033":
-        return "dot"
-    if arch == "gfx1035" or arch == "gfx1036":
+    if arch == "gfx1033" or arch == "gfx1035" or arch == "gfx1036":
         return "dot"
     if arch == "gfx900" or arch == "gfx906" or arch == "gfx1013":
         return "mad_mix"
     return "unknown"
+# hippihx:gen end arch_switch
 
 
 fn refuse_dot_on_mad_mix(arch: StaticString) raises:

@@ -12,7 +12,7 @@ Size-gated **Uncached + push** custom all-reduce on PCIe
 | Wire class | **INT8 / Q8 preferred** |
 | Leave | E4M3 / `f8_dma` without FP8 hardware; NTB; switch DMA |
 | Graph | IPC scratch + device-resident seq; in/out stay local; scratch **zeroed**; **no D2H under capture** |
-| Bind key | **arch + wave + hop + switch**. PIX on PEX/PLX **88096** may custom-AR. PHB/PXB and 8749 stay RCCL. |
+| Bind key | **arch + wave + hop + switch**. PIX on PEX/PLX **88096** may custom-AR. PHB/PXB and 8749 stay RCCL. V1 rev 4: hop + switch ride `hippihx_v1_caps.fabric`; any other hop fails `hippihx_v1_plan` with `HIPPIHX_V1_ERR_UNSUPPORTED_FABRIC`. Param `max_bytes` ≤ `AR_MAX_KB`. Tensor slots unpinned. |
 
 Wire codec (INT8 / Q8) is a class, not a product name. RCCL remains the
 fallback above `AR_MAX_KB=512` and off PIX. Not a DOT tile — Vega may

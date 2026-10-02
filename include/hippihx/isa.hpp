@@ -14,6 +14,7 @@
 // DOT occupancy gate: wave32 only.
 // Do not ship those DOT objects onto gfx900/gfx906/gfx1013 mad_mix paths.
 
+// hippihx:gen begin isa_macros -- python -m hippihx._lib.codegen; do not edit
 #ifndef HIPPIHX_ISA_WAVE32
 #define HIPPIHX_ISA_WAVE32 32
 #endif
@@ -41,6 +42,7 @@
 #ifndef HIPPIHX_ISA_WMMA_GATE
 #define HIPPIHX_ISA_WMMA_GATE 0
 #endif
+// hippihx:gen end isa_macros
 
 static_assert(HIPPIHX_ISA_WAVE32 == 32, "DOT occupancy gate is wave32");
 static_assert(HIPPIHX_LDS_BANKS == 32, "RDNA LDS bank count");

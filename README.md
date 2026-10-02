@@ -1,23 +1,26 @@
 # hippihx
 
-HIP / FlyDSL op zoo for RDNA. **plan / bind / run** live here so
+Mojo/MAX authoring zoo for RDNA. **plan / bind / run** live here so
 [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
 `rdna_extras` stays thin serve wiring. Shape from
 [`local-inference-lab/b12x`](https://github.com/local-inference-lab/b12x);
 ISA is HIP/RDNA, not CUDA/CuTe.
 
-**Dest:** gfx1030 (V620, wave32, ROCm **7.14**). gfx110x and gfx1200 share
-the same DOT source, one fatbin per `--offload-arch`. Consume:
-`include/hippihx/v1.h` (`hippihx_v1_plan` / `hippihx_v1_run`, ABI rev
-**3**, group `attention`). Kernel bodies stay in extras until extras
-wraps those symbols.
+**Authoring center:** `mojo/` (MAX `custom_extensions`). Every catalog op
+with a brief has a gfx1030 registration whose `execute` refuses to
+enqueue. DOT ops also fail closed on gfx900 mad_mix. Family tensor
+contracts live in `mojo/zoo/families.mojo`. `attention.kda_scan` and
+`attention.dsa_nope` stay catalog stubs. ISA contracts stay in
+`hippihx.isa`. Mojo objects are **not dest-ready** and are not fatbin
+inputs. See [`docs/MOJO.md`](docs/MOJO.md) and [`docs/ISA.md`](docs/ISA.md).
 
-**Authoring:** Mojo/MAX (`mojo/`, `Caps(backend="mojo")`) is the
-maintainability surface. ISA contracts stay in `hippihx.isa`. Mojo
-objects are **not dest-ready**. Dest produce stays hipcc 7.14 /
-`hipModuleLoad` / `libamdhip64` until a documented HIP re-emit or
-MAX-serve soak exists (ABI gap versus `hippihx_v1_*`). See
-[`docs/MOJO.md`](docs/MOJO.md) and [`docs/ISA.md`](docs/ISA.md).
+**Dest produce:** gfx1030 (V620, wave32, ROCm **7.14**). gfx110x and gfx1200 share the
+same DOT source, one fatbin per `--offload-arch`. Consume:
+`include/hippihx/v1.h` (`hippihx_v1_plan` / `hippihx_v1_run`, ABI rev
+**4**, group `attention`) via hipcc 7.14 / `hipModuleLoad` /
+`libamdhip64`: `libhippihx_v1.so` plus one `hippihx_<arch>.hsaco` per
+slot. Kernel bodies stay in extras until extras wraps those
+symbols. A Mojo `execute` is not a silent swap behind that ABI.
 
 ```python
 import hippihx
@@ -27,9 +30,12 @@ from hippihx.comm import pcie
 
 print(hippihx.list_ops())
 
-caps = fa_fdot2.Caps(arch="gfx1030")  # or gfx1100; backend="flydsl" is valid
+caps = fa_fdot2.Caps(arch="gfx1030")  # HIP stub; backend="flydsl" is valid
 plan = fa_fdot2.plan(caps)
 fa_fdot2.run(fa_fdot2.bind(plan, scratch=None))  # stub until HIP migrates
+
+mojo_caps = fa_fdot2.Caps(arch="gfx1030", wave=32, backend="mojo")
+mojo_plan = fa_fdot2.plan(mojo_caps)  # authoring; produce is false
 
 pcie.plan(Caps(arch="gfx1030", fabric=Fabric(hop="pix", switch="88096")))
 ```
@@ -42,7 +48,7 @@ switch**. Never `HSA_OVERRIDE_GFX_VERSION`. Never a multi-arch `.so`.
 
 | | Owns |
 |---|---|
-| **hippihx** | tiles, FlyDSL kernels, catalog, V1 ABI, pack/fabric contracts |
+| **hippihx** | Mojo/MAX authoring, tiles, FlyDSL kernels, catalog, V1 ABI, pack/fabric contracts |
 | **`rdna_extras`** | `torch.ops`, graphs, envs, ACS/`lspci` |
 | **outside** | AWQ / EXL3 produce, vLLM scheduler |
 
@@ -90,6 +96,9 @@ cmake --build build && ./build/fatbin/gfx1030/hippihx_smoke_host
 
 pip install -e ".[dev]" && pytest
 ```
+
+A HIP tree writes `build/fatbin/<arch>/hippihx_<arch>.hsaco` and
+`libhippihx_v1.so`, the consume pair ([`CONSUME`](docs/CONSUME.md#artifacts)).
 
 ROCm **7.14** `hipcc` on the V620 box. Host stub is for layout when
 `hipcc` is missing.

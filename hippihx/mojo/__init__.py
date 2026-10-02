@@ -22,6 +22,7 @@ from hippihx._lib.backend import (
     MOJO_V1_CONSUME,
     MojoNotProduce,
 )
+from hippihx._lib.catalog import OPS
 from hippihx._lib.explore import ExploreShape, preferred_explore, ranked_explore
 from hippihx._lib.families import (
     HOOKS,
@@ -34,13 +35,23 @@ from hippihx._lib.families import (
 
 SOURCE_ROOT = Path(__file__).resolve().parents[2] / "mojo"
 FA_FDOT2_MOJO = SOURCE_ROOT / "zoo" / "fa_fdot2.mojo"
+FAMILIES_MOJO = SOURCE_ROOT / "zoo" / "families.mojo"
 ISA_MOJO = SOURCE_ROOT / "isa" / "contracts.mojo"
+REFUSE_MOJO = SOURCE_ROOT / "zoo" / "refuse.mojo"
+
+# Catalog ops with a MAX registration. KDA / DSA stay catalog stubs.
+AUTHORING_QUALNAMES: tuple[str, ...] = tuple(
+    spec.qualname for spec in OPS if spec.qualname not in LEFT_WITHOUT_NEW_BRIEF
+)
 
 __all__ = [
+    "AUTHORING_QUALNAMES",
     "FA_FDOT2_MOJO",
+    "FAMILIES_MOJO",
     "HOOKS",
     "ISA_MOJO",
     "LEFT_WITHOUT_NEW_BRIEF",
+    "REFUSE_MOJO",
     "MOJO_AUTHORING",
     "MOJO_DEST_READY",
     "MOJO_NOT_PRODUCE_MSG",
@@ -51,12 +62,28 @@ __all__ = [
     "FamilyHook",
     "TensorContract",
     "MojoNotProduce",
+    "authoring_source",
     "hooks_for",
     "preferred_explore",
     "ranked_explore",
     "refuse_produce",
     "require_family",
 ]
+
+
+def authoring_source(qualname: str) -> Path:
+    """Path of the MAX registration for ``qualname``.
+
+    Raises for catalog stubs that were left without a Mojo brief.
+    """
+
+    if qualname not in AUTHORING_QUALNAMES:
+        raise KeyError(
+            f"{qualname} has no Mojo registration; "
+            f"left without a brief: {LEFT_WITHOUT_NEW_BRIEF}"
+        )
+    stem = qualname.split(".", 1)[1]
+    return SOURCE_ROOT / "zoo" / f"{stem}.mojo"
 
 
 def refuse_produce() -> None:

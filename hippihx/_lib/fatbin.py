@@ -57,6 +57,35 @@ DEFAULT_ARCH = "gfx1030"
 ROCM_PIN = "7.14"
 GFX1030_WAVE = 32
 DOT_WAVE = 32
+# Built slots whose default wave is 64 (Vega stub). Every other slot is wave32.
+WAVE64_ARCHES: tuple[str, ...] = ("gfx900",)
+
+# Consume artifacts. The host library carries the V1 symbols and tables and
+# no device code, so one build serves every slot. Each slot's device code is
+# one raw AMDGPU ELF (one --offload-arch, no offload bundle) that
+# hippihx_v1_load checks and hands to hipModuleLoadData.
+HOST_LIBRARY = "libhippihx_v1.so"
+CODE_OBJECT = "hippihx_{arch}.hsaco"
+
+# EF_AMDGPU_MACH: low byte of the AMDGPU ELF e_flags, per slot. Checked
+# against clang output. A code object whose mach is not its slot's is a
+# foreign ISA and never loads (the HSA_OVERRIDE failure mode, caught early).
+ELF_MACH: dict[str, int] = {
+    "gfx1030": 0x36,
+    "gfx1100": 0x41,
+    "gfx1101": 0x46,
+    "gfx1102": 0x47,
+    "gfx1200": 0x48,
+    "gfx1151": 0x4A,
+    "gfx1031": 0x37,
+    "gfx1032": 0x38,
+    "gfx1033": 0x39,
+    "gfx1035": 0x3D,
+    "gfx1036": 0x45,
+    "gfx900": 0x2C,
+    "gfx906": 0x2F,
+    "gfx1013": 0x42,
+}
 NO_FDOT2_BF16 = True
 NO_WMMA_ON_SHARED_DOT = True
 NO_HSA_OVERRIDE = True
@@ -84,6 +113,11 @@ def require_single_arch(arch: str) -> str:
     if arch not in KNOWN_ARCHES:
         raise ValueError(f"unknown fatbin slot {arch!r}")
     return arch
+
+
+def default_wave(arch: str) -> int:
+    """Wave a slot gets when caps leave it unset. Bind keys on arch + wave."""
+    return 64 if arch in WAVE64_ARCHES else DOT_WAVE
 
 
 def supported_arches(dot: bool) -> tuple[str, ...]:

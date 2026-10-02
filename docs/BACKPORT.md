@@ -7,7 +7,7 @@ dest HIP). **No** `torch.ops.hippihx.*`. Observe only: no `.cu` dump, no
 tok/s, no extras maxdiff.
 
 hippihx is the zoo. extras is serve wiring. Dest HIP is still
-ATen-coupled. V1 C ABI (`include/hippihx/v1.h`, rev **3**,
+ATen-coupled. V1 C ABI (`include/hippihx/v1.h`, rev **4**,
 `attention.*`) is the consume path; `hippihx_v1_run` is `NOT_READY`
 until a body migrates and extras binds it.
 
