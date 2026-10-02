@@ -7,7 +7,7 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `ac9dfd8fba6d` (2026-10-01 11:35 UTC). Dest default
+`rdna_extras` @ `bc5fbee5d0a1` (2026-10-01 13:08 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
 squash is `a4060647cfbb`. Open **#2**, **#18**. Draft **#10**, **#23**,
@@ -17,9 +17,9 @@ squash is `a4060647cfbb`. Open **#2**, **#18**. Draft **#10**, **#23**,
 dest-integrated unmerged; **#12** superseded by **#15**. Merged **#13**,
 **#14**, **#15**, **#17**, **#19**, **#20**, **#22**, **#24**, **#26**,
 **#27**, **#28**, **#29**. Dest **#30** @ `3fb9d43a` / dest **#32** @
-`a5059cf0` dest-presence. Dest tip `ac9dfd8f` is TunableOp/serve (not a
-new extras PR). **No** `torch.ops.hippihx.*`. Dest **#27** is opt-in
-`VLLM_HIPPIHX` ctypes consume (default **off**; plans not ready).
+`a5059cf0` dest-presence. Dest tip `bc5fbee5` is serve recipes + EXL3
+MTP (not a new extras PR). **No** `torch.ops.hippihx.*`. Dest **#27** is
+opt-in `VLLM_HIPPIHX` ctypes consume (default **off**; plans not ready).
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs.
@@ -49,7 +49,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | EXL3 dense / MoE / dequant / Hadamard / trellis decode | `exl3_dot2_*.cu` | `gemm/exl3_3inst` | Consume `-cb 3inst`. Produce outside. Dest **#32** @ `a5059cf0` mul1 / K=1..8 + MoE n-tile bound. Dest @ `7be99d84` fused `exl3_project_rdna2`. UNC-26. **unvalidated** |
 | GDN packed decode | `gdn_decode_rdna2.cu` | `attention/gdn_scan` | Dest @ `02adbfd4`: SSM **fp16 or fp32**. Dest @ `388a61b6`: no one-shot `zero_()` wipe. **fp16 act only.** **unvalidated** |
 | GDN prefill chain | `gdn_prefill_*_rdna2.cu` | `attention/gdn_scan` | **Opt-in** (`VLLM_GDN_HIP_PREFILL=1`; default Triton/FLA @ `cd1231fd`). `o` varlen `i_t_local` dest-fixed. Dispatch still misses dtype. **unvalidated** |
-| causal_conv1d update + fwd | `causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA. FIR on pre-shift then shift. BF16: fp32 mul, **not** `fdot2.bf16`. **unvalidated** |
+| causal_conv1d update + fwd | `causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA. FIR on pre-shift then shift. Dest @ `b13effcb` gates HIP when `state_len != width-1`. BF16: fp32 mul, **not** `fdot2.bf16`. **unvalidated** |
 | Paged MQA indexer | `indexer_paged_mqa_rdna2.cu` | `attention/qsa_indexer` | gfx1030 BF16 6h×256: **4 warps**. **unvalidated** |
 | Flash-Next QSA store/compress/MQA | `qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | `VLLM_RDNA_QSA_HIP` default **off**. Eager Triton serves (`8cf0dedb`). Dest @ `e45dd5cb`: empty QSA ring prefix hits. Dest @ `f3dd65fa`: live-context prefill scoring bound (Triton). **unvalidated** |
 | Sparse MLA decode / prefill | `sparse_mla_rdna2.cu` | `attention/dsa_nope` | **unvalidated** |
@@ -70,7 +70,8 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | W4 exact-dequant explore | draft PR **#31** | — | **skip** — explore, not dest. Claude. Opt-in `VLLM_RDNA2_W4A16_EXACT_DEQUANT`. Zoo already locks integer `q-zero` then scale. Do not dump |
 | EXL3 mul1 decode / K=1..8 trellis | dest PR **#32** @ `a5059cf0` | `gemm/exl3_3inst` | Stay extras. Unsigned mul1 + K=1..8 + dest-fixed MoE staging bound. GitHub PR closed-unmerged. Do not dump. |
 | EXL3 v0.30 loader / fused project / MoE / PLE | dest @ `30b0bd4e` (`exl3.py`, `exl3_moe.py`, `exl3_ple.py`, `exl3_project_rdna2`) | `gemm/exl3_3inst` | Stay extras. Codebook markers, suh grouping, TP slicing, `fold_weight` lm_head only, `Exl3MoEMethod`, inert `Exl3NgramTable`. Unique Blivion. Do not dump. |
-| TunableOp unify / EXL3 27B rows / gemma_rms fake | dest tip `ac9dfd8f` (`tunableop/rocblas-f30bb442e9b5`, `serve_gfx1030_exl3_27b.sh`, `gemma_rms_norm_fake`) | — | Stay extras. Serve/ops + inductor fake. Unique Blivion. Do not dump. Do not copy tok/s. |
+| TunableOp unify / EXL3 27B rows / gemma_rms fake | dest @ `ac9dfd8f` (`tunableop/rocblas-f30bb442e9b5`, `gemma_rms_norm_fake`) | — | Stay extras. Serve/ops + inductor fake. Unique Blivion. Do not dump. Do not copy tok/s. |
+| EXL3 MTP draft + `serve_rdna` recipes | dest tip `bc5fbee5` (`exl3.py` `mtp.fc`, `serve_rdna.sh`, HIP conv `state_len` gate) | — | Stay extras. Dest serves EXL3 quantized MTP. No zoo MTP tile. Unique Blivion. Do not dump. Do not copy tok/s. |
 | FA decode scores / 4 barriers | draft PR **#33** | — | **skip** — not dest. Do not dump `fa_rdna2` |
 | FA D=128 prefill register-O GQA | draft PR **#34** | — | **skip** — not dest. Do not dump `fa_rdna2` |
 | Explore W4A8 sdot4 / W4A4 sdot8 | extras PRs **#9/#10** | — | **#9** closed-unmerged (superseded by dest W4A8 @ `3a0786ea`). **#10** **skip** — not dest |
@@ -169,7 +170,8 @@ Stay extras: serve, product HIP, dest-landed extras PRs, dest **#29**
 split decode / dest row-gate `e0112c55` / dest W4A8 `3a0786ea` / dest
 **#30** compile-dispatch `3fb9d43a` / dest MoE epilogue `9cad8792` /
 dest **#32** EXL3 mul1 `a5059cf0` / dest EXL3 loader `30b0bd4e` / dest
-TunableOp `ac9dfd8f` (observe, do not pick). Skip: a17t
+TunableOp `ac9dfd8f` / dest EXL3 MTP + `serve_rdna` `bc5fbee5`
+(observe, do not pick). Skip: a17t
 PR **#3**, PR **#18** GPTQ `BLOCK_KN_SIZE` 256, draft PR **#23** PCIe
 P2P KV, draft PR **#25** rdna_ar retained-output, draft PR **#31** W4
 exact-dequant explore, draft PR **#33** FA decode scores, draft PR
