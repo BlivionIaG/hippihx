@@ -26,8 +26,9 @@ extras **#32** @ `a5059cf0` dest-lands unsigned mul1 + K=1..8 dispatch
 and dest-fixes MoE n-tile staging (GitHub closed-unmerged). Dest @
 `30b0bd4e` dest-lands the v0.30 loader, fused `exl3_project_rdna2`,
 `Exl3MoEMethod`, and inert `Exl3NgramTable` PLE gather. Dest @
-`b13effcb` serves the EXL3 quantized MTP draft. Dest tip `bc5fbee5`
-is serve recipes. Stay extras. Do not dump. UNC-26 is
+`b13effcb` serves the EXL3 quantized MTP draft. Dest tip `ef8f0a28`
+is FA **#34** dest-presence, not EXL3 HIP. Stay extras. Do not dump.
+UNC-26 is
 still In Progress on extras — do not copy bodies until produce/consume
 and capture buffers stop moving. Port and later perf commits stay
 **BlivionIaG** `<kev29lt@gmail.com>` as Author **and** Committer. Do not
