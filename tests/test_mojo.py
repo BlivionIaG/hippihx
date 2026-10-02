@@ -120,6 +120,8 @@ def test_packed_dot_and_no_wmma_gate() -> None:
 def test_arch_switch_keeps_dot_off_mad_mix() -> None:
     assert arch_switch("gfx1030") is ArchSwitch.DOT
     assert arch_switch("gfx1102") is ArchSwitch.DOT
+    assert arch_switch("gfx1200") is ArchSwitch.DOT
+    assert refuse_dot_on_mad_mix("gfx1200") == "gfx1200"
     assert arch_switch("gfx1033") is ArchSwitch.DOT
     assert MAD_MIX_ARCHES == ("gfx900", "gfx906", "gfx1013")
     for arch in MAD_MIX_ARCHES:

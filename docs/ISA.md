@@ -50,7 +50,7 @@ so a search does not promote it. These are occupancy locks, not tok/s.
 
 | Switch | Arches | DOT objects |
 |---|---|---|
-| `dot` | **gfx1030** primary; gfx1100/1101/1102; portable gfx1151 and gfx1031–1036 | yes, one `--offload-arch` each |
+| `dot` | **gfx1030** primary; gfx1100/1101/1102; **gfx1200**; portable gfx1151 and gfx1031–1036 | yes, one `--offload-arch` each |
 | `mad_mix` | gfx900 (built stub); gfx906 and gfx1013 (Later, not built) | **no** |
 
 `refuse_dot_on_mad_mix` is the placement check. gfx1030 packed-DOT objects
