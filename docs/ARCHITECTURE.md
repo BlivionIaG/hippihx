@@ -41,7 +41,7 @@ Same *shape* as b12x (`<group>.<op>` + `api.py`), HIP objects:
 | `hippihx/flydsl/` | FlyDSL compiler atoms + kernel contracts |
 | `hippihx/comm/fabric.py` | PCIe/PLX hop class (PIX/PXB/PHB × 88096/8749) |
 
-Group rename **`attn` → `attention`** (V1 ABI rev **3**; ids unchanged). ISA
+Group rename **`attn` → `attention`** (V1 ABI rev **3**; ids unchanged; rev **4** is the consume ABI). ISA
 class names stay (`fa_fdot2`, not b12x `paged`). Map:
 
 | hippihx | b12x analogue |
@@ -231,8 +231,10 @@ optional activation `dtype` (revision **2**). Qualnames `attention.*`
 plan, params, tensor descriptors, the stream and `caps.fabric`. Per-op
 params, tensor slots and scratch rules live in the catalog, and
 `python -m hippihx._lib.codegen` writes the header enums and C tables.
-See [`CONSUME.md`](CONSUME.md). Dest extras tip `30632b2fa323` still
-has no `torch.ops.hippihx.*` rewire — see [`BACKPORT.md`](BACKPORT.md).
+See [`CONSUME.md`](CONSUME.md). Dest extras tip `ab5ccf3d9f34` still
+has no `torch.ops.hippihx.*` rewire. Dest extras **#27** is opt-in
+`VLLM_HIPPIHX` ctypes consume (default **off**; plans not ready) — see
+[`BACKPORT.md`](BACKPORT.md).
 Do not edit `opengfx1030/vllm-rdna` from this tree.
 
 ## Non-goals (room lock)
