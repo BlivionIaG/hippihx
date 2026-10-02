@@ -34,6 +34,7 @@ wedge check. **AR default stays off.** Occupancy pin stays closed.
 **off**. **Authorship of unique HIP is Aron Hsiao**
 `<leapdragon@gmail.com>` — Author **and** Committer on unique commits.
 Do **not** pick dest squash `a4060647` or `3b59ee16` (Cursor rewrite).
+Do not dump dest **#22**.
 C consume id: `HIPPIHX_V1_OP_COMM_PCIE` — stub only; do not dump the
 ATen wrapper until extras rewires onto this V1 entry.
 

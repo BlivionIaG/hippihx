@@ -79,8 +79,8 @@ class ArchSwitch(str, Enum):
 def arch_switch(arch: str) -> ArchSwitch:
     """Classify ``arch`` for object placement.
 
-    ``dot`` is the gfx1030 primary slot plus the portable DOT fatbins
-    (gfx110x, gfx1151, gfx103x). ``mad_mix`` is gfx900/gfx906/gfx1013 —
+    ``dot`` is the gfx1030 primary slot, gfx110x, gfx1200, and the portable
+    DOT fatbins (gfx1151, gfx103x). ``mad_mix`` is gfx900/gfx906/gfx1013 —
     do not ship gfx1030 packed-DOT objects there.
     """
 
