@@ -23,9 +23,11 @@ not. Do not dump the `.cu`.
 
 `mcg` / `mul1` codebooks are compile slots, not extra zoo roots. Dest
 extras **#32** @ `a5059cf0` dest-lands unsigned mul1 + K=1..8 dispatch
-and dest-fixes MoE n-tile staging. Dest tip `30b0bd4e` dest-lands the
-v0.30 loader, fused `exl3_project_rdna2`, `Exl3MoEMethod`, and inert
-`Exl3NgramTable` PLE gather. Stay extras. Do not dump. UNC-26 is
+and dest-fixes MoE n-tile staging (GitHub closed-unmerged). Dest @
+`30b0bd4e` dest-lands the v0.30 loader, fused `exl3_project_rdna2`,
+`Exl3MoEMethod`, and inert `Exl3NgramTable` PLE gather. Dest tip
+`ac9dfd8f` is TunableOp/serve, not EXL3 HIP. Stay extras. Do not dump.
+UNC-26 is
 still In Progress on extras — do not copy bodies until produce/consume
 and capture buffers stop moving. Port and later perf commits stay
 **BlivionIaG** `<kev29lt@gmail.com>` as Author **and** Committer. Do not

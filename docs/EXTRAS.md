@@ -7,20 +7,19 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `30b0bd4e3604` (2026-10-01 06:27 UTC). Dest default
+`rdna_extras` @ `ac9dfd8fba6d` (2026-10-01 11:35 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
 squash is `a4060647cfbb`. Open **#2**, **#18**. Draft **#10**, **#23**,
-**#25**, **#31**, **#33**, **#34**. Draft **#32** dest-landed
-independently (GitHub still open). Closed **#3/#9/#16/#30** unmerged
+**#25**, **#31**, **#33**, **#34**. Closed **#3/#9/#16/#30/#32** unmerged
 (**#9** superseded by dest W4A8; **#30** dest-landed independently @
-`3fb9d43a`); **#21** dest-integrated unmerged; **#12** superseded by
-**#15**. Merged **#13**, **#14**, **#15**, **#17**, **#19**, **#20**,
-**#22**, **#24**, **#26**, **#27**, **#28**, **#29**. Dest **#30** @
-`3fb9d43a` / dest **#32** @ `a5059cf0` dest-presence. Dest tip
-`30b0bd4e` is the EXL3 loader follow-on (not a new extras PR). **No**
-`torch.ops.hippihx.*`. Dest **#27** is opt-in `VLLM_HIPPIHX` ctypes
-consume (default **off**; plans not ready).
+`3fb9d43a`; **#32** dest-landed independently @ `a5059cf0`); **#21**
+dest-integrated unmerged; **#12** superseded by **#15**. Merged **#13**,
+**#14**, **#15**, **#17**, **#19**, **#20**, **#22**, **#24**, **#26**,
+**#27**, **#28**, **#29**. Dest **#30** @ `3fb9d43a` / dest **#32** @
+`a5059cf0` dest-presence. Dest tip `ac9dfd8f` is TunableOp/serve (not a
+new extras PR). **No** `torch.ops.hippihx.*`. Dest **#27** is opt-in
+`VLLM_HIPPIHX` ctypes consume (default **off**; plans not ready).
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs.
@@ -69,8 +68,9 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | FA spec-decode split | dest PR **#29** @ `d94e2209` / tip `e0112c55` | `attention/fa_fdot2` | Stay extras. Dest rework of foreign Claude (`cu_query_lens` decode + row gate ≤256). Supersedes dest @ `83e6af80` per-position verify-decode. Do not dump. Do not pick Claude. **unvalidated** |
 | W4 `torch.compile` M-dispatch | dest PR **#30** @ `3fb9d43a` | — | Stay extras. Opt-in `VLLM_RDNA2_W4A16_RUNTIME_DISPATCH`. Default **off**. Python only. GitHub PR closed-unmerged. Do not dump. Do not copy tok/s. |
 | W4 exact-dequant explore | draft PR **#31** | — | **skip** — explore, not dest. Claude. Opt-in `VLLM_RDNA2_W4A16_EXACT_DEQUANT`. Zoo already locks integer `q-zero` then scale. Do not dump |
-| EXL3 mul1 decode / K=1..8 trellis | dest PR **#32** @ `a5059cf0` | `gemm/exl3_3inst` | Stay extras. Unsigned mul1 + K=1..8 + dest-fixed MoE staging bound. GitHub PR still open draft. Do not dump. |
-| EXL3 v0.30 loader / fused project / MoE / PLE | dest tip `30b0bd4e` (`exl3.py`, `exl3_moe.py`, `exl3_ple.py`, `exl3_project_rdna2`) | `gemm/exl3_3inst` | Stay extras. Codebook markers, suh grouping, TP slicing, `fold_weight` lm_head only, `Exl3MoEMethod`, inert `Exl3NgramTable`. Unique Blivion. Do not dump. |
+| EXL3 mul1 decode / K=1..8 trellis | dest PR **#32** @ `a5059cf0` | `gemm/exl3_3inst` | Stay extras. Unsigned mul1 + K=1..8 + dest-fixed MoE staging bound. GitHub PR closed-unmerged. Do not dump. |
+| EXL3 v0.30 loader / fused project / MoE / PLE | dest @ `30b0bd4e` (`exl3.py`, `exl3_moe.py`, `exl3_ple.py`, `exl3_project_rdna2`) | `gemm/exl3_3inst` | Stay extras. Codebook markers, suh grouping, TP slicing, `fold_weight` lm_head only, `Exl3MoEMethod`, inert `Exl3NgramTable`. Unique Blivion. Do not dump. |
+| TunableOp unify / EXL3 27B rows / gemma_rms fake | dest tip `ac9dfd8f` (`tunableop/rocblas-f30bb442e9b5`, `serve_gfx1030_exl3_27b.sh`, `gemma_rms_norm_fake`) | — | Stay extras. Serve/ops + inductor fake. Unique Blivion. Do not dump. Do not copy tok/s. |
 | FA decode scores / 4 barriers | draft PR **#33** | — | **skip** — not dest. Do not dump `fa_rdna2` |
 | FA D=128 prefill register-O GQA | draft PR **#34** | — | **skip** — not dest. Do not dump `fa_rdna2` |
 | Explore W4A8 sdot4 / W4A4 sdot8 | extras PRs **#9/#10** | — | **#9** closed-unmerged (superseded by dest W4A8 @ `3a0786ea`). **#10** **skip** — not dest |
@@ -168,11 +168,11 @@ stay extras (no D2H under capture in the zoo).
 Stay extras: serve, product HIP, dest-landed extras PRs, dest **#29**
 split decode / dest row-gate `e0112c55` / dest W4A8 `3a0786ea` / dest
 **#30** compile-dispatch `3fb9d43a` / dest MoE epilogue `9cad8792` /
-dest **#32** EXL3 mul1 `a5059cf0` / dest EXL3 loader `30b0bd4e`
-(observe, do not pick). Skip: a17t
+dest **#32** EXL3 mul1 `a5059cf0` / dest EXL3 loader `30b0bd4e` / dest
+TunableOp `ac9dfd8f` (observe, do not pick). Skip: a17t
 PR **#3**, PR **#18** GPTQ `BLOCK_KN_SIZE` 256, draft PR **#23** PCIe
 P2P KV, draft PR **#25** rdna_ar retained-output, draft PR **#31** W4
 exact-dequant explore, draft PR **#33** FA decode scores, draft PR
-**#34** FA D=128 prefill, closed **#9** (superseded), closed **#30**
-(dest-landed independently), explore **#10**, closed PR **#12**, closed
-PR **#16**, closed **#5/#11**. Produce stays outside hippihx.
+**#34** FA D=128 prefill, closed **#9** (superseded), closed **#30** /
+**#32** (dest-landed independently), explore **#10**, closed PR **#12**,
+closed PR **#16**, closed **#5/#11**. Produce stays outside hippihx.
