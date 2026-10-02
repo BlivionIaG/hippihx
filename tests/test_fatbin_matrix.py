@@ -41,6 +41,7 @@ def test_fatbin_slots_named() -> None:
         "gfx906",
         "gfx1101",
         "gfx1102",
+        "gfx1200",
     ):
         assert token in text, token
     assert "portable" in text.lower()

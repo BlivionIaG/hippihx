@@ -40,7 +40,7 @@ until a body migrates and extras binds it.
 | `3b59ee16e553` | extras PR **#13** squash (T44b `rdna_ar` VRAM flags + wedge) | Later `comm.pcie`. Still opt-in (`VLLM_RDNA_AR=0`). Dest extras `MAX_KB` default **64**. Zoo lock **512**. Do **not** pick squash (Cursor rewrite). |
 | `dbb1e7764aba` | extras PR **#14** merge (V620 Triton MoE JSON / ROCR amdsmi / PLE fp8) | Stay extras. HIP MoE ignores the JSON. Cursor rewrite — do not pick. |
 | `4425834a26ac` | ROCm platform/worker startup (amdsmi import, hip fallback, `torch.cuda.init`) | Stay extras. Serve/platform only. No HIP body. |
-| `3d6df9ed617a` | extras `exl3_dot2_*` `__HIP__RDNA__` guard for docker multi-arch | Stay extras. Zoo still one `--offload-arch` per fatbin. gfx1150 / gfx12xx not dest. Do not dump. |
+| `3d6df9ed617a` | extras `exl3_dot2_*` `__HIP__RDNA__` guard for docker multi-arch | Stay extras. Zoo still one `--offload-arch` per fatbin. gfx1200 is its own DOT slot (same `dot.hpp`, no WMMA gate). gfx1150 / gfx1201 and other gfx12xx are not slots. Do not dump. |
 | `ed94e3f3d299` | Qwen4Exp MTP proposer allowlist + skinny `w2_zp` | Stay extras. MTP still not dest. No HIP body. |
 | `b33f9b66eb2b` | `get_device_name` torch fallback when amdsmi has no handles | Stay extras. Platform only. |
 | `f3dd65fa7063` | extras PR **#15** merge (QSA live-context bound + folded **#12** PLE/MTP/graph-redirect) | Stay extras. Python/Triton/serve. Foreign George + Codex. Do not pick. |

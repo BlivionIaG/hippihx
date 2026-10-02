@@ -2,10 +2,10 @@
 
 Paged / varlen flash-attention class via `fdot2`.
 
-**Shared DOT source:** the same `kernel.hip` is compiled for **gfx1030** and
-**gfx1100** as two fatbins (`--offload-arch` each). Never one multi-arch
-object. Never `#ifdef WMMA` on this path — WMMA is a gfx1100-only Later
-overlay, optional, never required.
+**Shared DOT source:** the same `kernel.hip` is compiled for **gfx1030**,
+**gfx1100**, and **gfx1200** as separate fatbins (`--offload-arch` each).
+Never one multi-arch object. Never `#ifdef WMMA` on this path — WMMA is a
+Later overlay, optional, never required.
 
 | Lock | Status |
 |---|---|
