@@ -262,7 +262,7 @@ def test_param_count_and_null_params(lib: ctypes.CDLL) -> None:
     )
     assert lib.hippihx_v1_plan(conv, None, None, 0, ctypes.byref(plan)) == V1Status.ERR_BAD_ARG
     assert lib.hippihx_v1_plan(conv, ctypes.byref(caps), None, 0, None) == V1Status.ERR_BAD_ARG
-    for arch in (b"", b"gfx1030,gfx1100", b"gfx906", b"gfx1013", b"gfx1200"):
+    for arch in (b"", b"gfx1030,gfx1100", b"gfx906", b"gfx1013", b"gfx1201"):
         caps = cv.Caps(arch=arch)
         assert lib.hippihx_v1_plan(conv, ctypes.byref(caps), None, 0, ctypes.byref(plan)) == (
             V1Status.ERR_UNSUPPORTED_ARCH
