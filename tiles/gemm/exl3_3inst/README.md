@@ -3,11 +3,12 @@
 HIP consume hook for EXL3 weights whose **produce** used `-cb 3inst`.
 Decode is `3inst` → `half2` → `fdot2`.
 
-**Shared DOT source** with gfx1100 (two fatbins). Never `#ifdef WMMA`.
-**wave32 only.** **No `fdot2.bf16`.** Dest extras @ `3d6df9ed` widened
-the extras `__HIP__RDNA__` compile guard for a docker multi-arch list
-(gfx1101 / 1150 / 1151 / 1200 / 1201). Zoo still one `--offload-arch`
-per fatbin. gfx1150 / gfx12xx are not dest. Do not dump the `.cu`.
+**Shared DOT source** with gfx1100 and gfx1200 (one fatbin each). Never
+`#ifdef WMMA`. **wave32 only.** **No `fdot2.bf16`.** Dest extras @
+`3d6df9ed` widened the extras `__HIP__RDNA__` compile guard for a docker
+multi-arch list (gfx1101 / 1150 / 1151 / 1200 / 1201). Zoo still one
+`--offload-arch` per fatbin. gfx1200 is that slot; gfx1150 / gfx1201 are
+not. Do not dump the `.cu`.
 
 | Lock | Status |
 |---|---|

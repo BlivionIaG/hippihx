@@ -6,7 +6,8 @@
 // one --offload-arch per fatbin. Never one multi-arch object.
 // Never HSA_OVERRIDE / foreign ISA load.
 //
-// Built slots: gfx1030, gfx1100/1101/1102, gfx1151, gfx1031..1036.
+// Built slots: gfx1030, gfx1100/1101/1102, gfx1200, gfx1151, gfx1031..1036.
+// gfx1200 is its own --offload-arch. Same dot.hpp. No WMMA gate.
 // gfx1151 / Deck gfx103x are portable — can run, not dest-tuned.
 // gfx1013 (Cyan Skillfish / BC-250) is Later — not true RDNA2, not dest DOT.
 //
