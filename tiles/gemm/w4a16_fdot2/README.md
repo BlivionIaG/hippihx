@@ -23,3 +23,7 @@ Do not take a17t `awq_gemm_rdna2.cu` / `qdq_awq_rdna2.cuh` as a second W4
 family. GPTQ vs AWQ is pack/zeros on this tile. If dest ever locks that
 family, cherry-pick **their** commits (`d53572644` and follow-ups), do
 not rewrite them.
+
+Dest extras **#30** @ `3fb9d43a` is opt-in compile-dispatch
+(`VLLM_RDNA2_W4A16_RUNTIME_DISPATCH`, default **off**). Stay extras.
+Do not dump. Do not copy tok/s.
