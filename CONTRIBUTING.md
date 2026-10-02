@@ -29,7 +29,9 @@ until it is re-emitted with `hipcc` 7.14 (`hipModuleLoad` /
 ([`docs/MOJO.md`](docs/MOJO.md)).
 
 `list_ops()` must stay in lockstep with `hippihx/_lib/catalog.py` and
-`tiles/` class directories. Add an op in the catalog first.
+`tiles/` class directories. Add an op in the catalog first, then run
+`python -m hippihx._lib.codegen` to rewrite the generated blocks
+(`hippihx:gen begin/end` markers).
 
 Do not dump `opengfx1030/vllm-rdna` `csrc/rocm/*.cu` into `tiles/` until
 the extras consume path exists. Those files are ATen wrappers + paged
@@ -80,8 +82,9 @@ replaces Author with the picker.
 ## ROCm / arch
 
 - V620 = **gfx1030**, **wave32**, **ROCm 7.14**.
-- **gfx1100/1101/1102** are first-class DOT consumers of the **same** FA /
-  EXL3 / AWQ / `moe.shared` source. One `--offload-arch` per fatbin.
+- **gfx1100/1101/1102** and **gfx1200** are first-class DOT consumers of
+  the **same** FA / EXL3 / AWQ / `moe.shared` source. One `--offload-arch`
+  per fatbin. gfx1200 is not the V620 dest pin and is not a WMMA path.
 - gfx900 is a Vega stub (`mad_mix` / `pk_fma`). It does **not** load DOT
   tiles.
 - **BC-250 is gfx1013** (Cyan Skillfish): **Later**. It is **not true
@@ -107,7 +110,10 @@ replaces Author with the picker.
 3. One HIP entry that will become one `torch.ops` / V1 symbol. No second
    Triton path in this library.
 4. Scratch sized in `plan`. Serve zeros it for page-commit. `bind` views
-   only. `run` is capture-safe (no D2H).
+   only. `run` is capture-safe (no D2H). Pin the op's V1 rows in the
+   catalog (params, tensor slots, scratch rules) from the observed host
+   signature, then run `python -m hippihx._lib.codegen`. `ready` stays
+   False until the body runs on silicon.
 5. Host tests for the protocol stay torch-free until a HIP extension exists.
 6. If the tile is DOT, include `hippihx/dot.hpp` (not a WMMA header) and
    mark the catalog row `dot=True`. Do not add a per-SKU copy of the file.
@@ -128,6 +134,7 @@ cmake -S . -B build -DHIPPIHX_ARCH=gfx1030
 cmake --build build
 
 pip install -e ".[dev]"
+python -m hippihx._lib.codegen --check  # generated blocks follow the catalog
 pytest
 ```
 

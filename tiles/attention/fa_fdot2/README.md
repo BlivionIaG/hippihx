@@ -2,10 +2,10 @@
 
 Paged / varlen flash-attention class via `fdot2`.
 
-**Shared DOT source:** the same `kernel.hip` is compiled for **gfx1030** and
-**gfx1100** as two fatbins (`--offload-arch` each). Never one multi-arch
-object. Never `#ifdef WMMA` on this path — WMMA is a gfx1100-only Later
-overlay, optional, never required.
+**Shared DOT source:** the same `kernel.hip` is compiled for **gfx1030**,
+**gfx1100**, and **gfx1200** as separate fatbins (`--offload-arch` each).
+Never one multi-arch object. Never `#ifdef WMMA` on this path — WMMA is a
+Later overlay, optional, never required.
 
 | Lock | Status |
 |---|---|
@@ -38,6 +38,25 @@ body yet — when you do, cherry-pick BlivionIaG, do not re-author
 Dest extras @ `48c56ef` pins `AttentionConfig.backend = RDNA_ATTN` from
 the API-server `VLLM_USE_RDNA2_FA` env so workers actually select
 FA-RDNA2. Stay extras. No HIP.
+
+## V1 rev 4 contract (pinned)
+
+Observed extras `csrc/rocm/fa_rdna2.cu` @ `cd38a1d` host signatures
+(`fa_rdna2_decode_paged`, `fa_rdna2_prefill_paged_varlen[_splitk]`).
+Contract only, no body. Rows live in `hippihx/_lib/catalog.py`. Header
+enums are `HIPPIHX_V1_ATTN_FA_FDOT2_P_*` and `_T_*`.
+
+| | Contract |
+|---|---|
+| Params | `mode` (decode = split-K + combine, prefill = paged varlen), `head_dim` 128 / 256, `num_q_heads` a multiple of `num_kv_heads`, `block_size`, `kv_splits` 1–16 (extras `MAX_SPLITS`), `sliding_window` (0 = off), `causal`, `max_tokens` (the capture bucket), `scale` |
+| Tensor slots | `q` fp16 `[≤max_tokens, H_q, D]` contiguous · `k_cache` fp16 `[blocks, H_kv, D/x, block_size, x]` strided · `v_cache` fp16 5-D strided · `block_table` i32 rows (decode reads one row per query token) · `seq_lens` i32 · `cu_query_lens` i32 (prefill only) · `out` fp16 `[≤max_tokens, H_q, D]` contiguous |
+| Scratch | fp32 `o_partial [T, H_q, S, D]` and `m_partial` / `l_partial [T, H_q, S]` when `mode == decode` or `kv_splits > 1`. Zeroed once by serve |
+| Variant | explore rank: decode 0, prefill 1 |
+| Index width | extras uses 32-bit `int` partial indices in the decode per-head kernels, the combine, and the prefill split-K empty-split path. Plan refuses `T·H_q·S·D > 2^31 − 1` (`HIPPIHX_V1_ERR_PARAM`) |
+
+extras allocates `O` and the partials inside the op (`rdna2_persist_zeros`).
+The zoo contract moves both out: `out` is a caller-owned slot and the
+partials are plan scratch. That keeps `bind` allocation-free.
 
 Scratch is sized by `plan`. C consume id: `HIPPIHX_V1_OP_ATTN_FA_FDOT2`
 (`include/hippihx/v1.h`). Serve wraps as one `torch.ops.hippihx.*` — no

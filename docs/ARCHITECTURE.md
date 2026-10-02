@@ -34,6 +34,7 @@ Same *shape* as b12x (`<group>.<op>` + `api.py`), HIP objects:
 | `hippihx/mojo/` | Host view of that center (`authoring_source`, explore, hooks) |
 | `hippihx/isa.py` | Packed DOT, LDS banks, wave32 gate, arch switch |
 | `hippihx/_lib/catalog.py` | One op table (qualname, V1 id, DOT, tile path) |
+| `hippihx/_lib/codegen.py` | Renders the catalog, arch slots and ISA locks into `v1.h`, `v1_abi.cpp`, `isa.hpp`, `arch.hpp`, CMake, `build_fatbin.sh`, and the Mojo contracts |
 | `hippihx/<group>/<op>/api.py` | `plan` / `bind` / `run` |
 | `tiles/<group>/<op>/kernel.hip` | HIP produce object (dest). Torch-free |
 | `include/hippihx/v1.h` | C consume ABI extras wraps as `torch.ops` |
@@ -70,7 +71,7 @@ extras FlyDSL consume waits on `FLYDSL_V1_CONSUME` (graph-safe JIT). See
 `run` raises `MojoNotProduce`. `plan.meta["authoring"]` is
 `mojo/zoo/<op>.mojo` for every catalog op except `attention.kda_scan` and
 `attention.dsa_nope`, which stay `catalog-stub`. The ABI gap is MAX
-`execute` versus `hippihx_v1_*` (rev 3). See [`MOJO.md`](MOJO.md).
+`execute` versus `hippihx_v1_*` (rev 4). See [`MOJO.md`](MOJO.md).
 
 
 ```
@@ -84,16 +85,17 @@ extras FlyDSL consume waits on `FLYDSL_V1_CONSUME` (graph-safe JIT). See
                     run(binding)  # no D2H under capture
 ```
 
-## Shared DOT source (gfx1030 + gfx110x)
+## Shared DOT source (gfx1030, gfx110x, gfx1200)
 
 FA, EXL3, AWQ/W4A16, and `moe/shared` are **the same tile source**.
-gfx1100/1101/1102 are **first-class DOT consumers**, not a later port.
+gfx1100/1101/1102 and gfx1200 are **first-class DOT consumers**, not a
+later port. Each is its own `--offload-arch`.
 
 | Rule | Meaning |
 |---|---|
 | One source | `tiles/attention/fa_fdot2`, `tiles/gemm/w4a16_fdot2`, `tiles/gemm/exl3_3inst`, `tiles/moe/shared` |
 | Separate fatbins | one `--offload-arch` per CMake tree (every built DOT slot) |
-| No multi-arch object | Never `--offload-arch=gfx1030,gfx1100` in one `.a` / `.so` |
+| No multi-arch object | Never `--offload-arch=gfx1030,gfx1100,gfx1200` in one `.a` / `.so` |
 | No foreign ISA load | **Never** `HSA_OVERRIDE_GFX_VERSION` or load gfx1030 objects on another GFX |
 | No WMMA gate | **Never** `#ifdef WMMA` (or WMMA-only paths) in those files |
 | WMMA Later | gfx110x overlay, optional, never required for DOT |
@@ -109,13 +111,19 @@ list from the gfx900 archive.
 |---|---|---|---|
 | **gfx1030** | yes (primary) | — | V620 dest |
 | **gfx1100/1101/1102** | yes | **yes** (same `dot.hpp`, no WMMA gate) | separate fatbin |
+| **gfx1200** | yes | **yes** (same `dot.hpp`, wave32, no WMMA gate) | separate fatbin. Not the V620 dest pin |
 | **gfx1151** Strix Halo | yes (portable) | **yes** (same `dot.hpp`) | can run, not dest-tuned; not WMMA-gated |
 | **gfx1031/1032/1033/1035/1036** Deck/mobile | yes (portable) | **yes** (RDNA2 DOT, **wave32**) | Steam Deck is **gfx1033 / wave32**. Same gen as gfx1030; not dest-tuned |
 | **gfx1013** BC-250 | Later | **no** | Cyan Skillfish — **not true RDNA2**, not dest, not portable DOT. Not gfx906. Never `HSA_OVERRIDE` dest ISA onto it. |
 | **gfx900** | yes stub / Later mad_mix | **no** | never load FA/EXL3 DOT |
 | **gfx906** (real Vega20/MI50) | Later non-DOT if ever | **no** | **not** BC-250 |
 
-One configure tree → one `libhippihx_<arch>.a` in `build/fatbin/<arch>/`.
+One configure tree → `build/fatbin/<arch>/`: `hippihx_<arch>.hsaco` (the
+slot's device code, one raw AMDGPU ELF), `libhippihx_v1.so` (V1 host
+symbols, no device code) and the link-smoke `libhippihx_<arch>.a`.
+`hippihx_v1_load` refuses a code object whose ELF mach is not its slot's,
+and refuses any load while `HSA_OVERRIDE_GFX_VERSION` is set. See
+[`CONSUME.md`](CONSUME.md#artifacts).
 CMake rejects multi-arch lists and refuses Later slots (**gfx1013**,
 **gfx906**). Portable DOT slots (1151 / Deck 103x) configure and compile
 the same stubs.
@@ -123,7 +131,8 @@ the same stubs.
 **BC-250 is Later.** It is Cyan Skillfish **`gfx1013`** — not true RDNA2,
 not dest, not a portable DOT fatbin with gfx1030. It is **not**
 Vega20/`gfx906`. Never `HSA_OVERRIDE` a gfx1030 / gfx1033 object onto
-it. Own dest work stays gfx1030 / Deck gfx103x / gfx110x.
+it. Own dest work stays gfx1030 / Deck gfx103x / gfx110x. gfx1200 is a
+supported DOT fatbin on the same source, not the V620 dest pin.
 
 ## ROCm pin (V620)
 
@@ -212,15 +221,20 @@ the fatbin:
 
 | Symbol | Role |
 |---|---|
-| `hippihx_v1_plan` | host-only scratch specs (always `zeroed=1`) |
-| `hippihx_v1_run` | capture-safe enqueue; stub returns `NOT_READY` until migrate |
+| `hippihx_v1_plan` | host-only, before capture: caps + params → caller-owned `hippihx_v1_plan_t` (ready bit, explore variant, zeroed scratch specs with offsets) |
+| `hippihx_v1_run` | capture-safe enqueue on a stream: plan + tensor descriptors in slot order + scratch; stub returns `NOT_READY` until migrate |
 | `hippihx_v1_op_name` / `_is_dot` / `_fp16_act` | id ↔ qualname / DOT / fp16-act flags |
+| `hippihx_v1_op_nparams` / `_ntensors` / `_param_name` / `_tensor_name` | per-op schema from the catalog |
 
 One V1 id per tile (`HIPPIHX_V1_OP_*`). Serve wraps as
 `torch.ops.hippihx.<op>` — never a second Triton path in this library.
 Python mirror: `hippihx.v1` (`V1OpId`, `ABI_REVISION`). Caps include
 optional activation `dtype` (revision **2**). Qualnames `attention.*`
-(revision **3**; ids unchanged). Dest extras tip `bcdaaddc80d5` still
+(revision **3**; ids unchanged). Revision **4** adds the caller-owned
+plan, params, tensor descriptors, the stream and `caps.fabric`. Per-op
+params, tensor slots and scratch rules live in the catalog, and
+`python -m hippihx._lib.codegen` writes the header enums and C tables.
+See [`CONSUME.md`](CONSUME.md). Dest extras tip `bcdaaddc80d5` still
 has no `torch.ops.hippihx.*` rewire — see [`BACKPORT.md`](BACKPORT.md).
 Do not edit `opengfx1030/vllm-rdna` from this tree.
 

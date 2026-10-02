@@ -14,11 +14,12 @@ contracts live in `mojo/zoo/families.mojo`. `attention.kda_scan` and
 `hippihx.isa`. Mojo objects are **not dest-ready** and are not fatbin
 inputs. See [`docs/MOJO.md`](docs/MOJO.md) and [`docs/ISA.md`](docs/ISA.md).
 
-**Dest produce:** gfx1030 (V620, wave32, ROCm **7.14**). gfx110x share the
+**Dest produce:** gfx1030 (V620, wave32, ROCm **7.14**). gfx110x and gfx1200 share the
 same DOT source, one fatbin per `--offload-arch`. Consume:
 `include/hippihx/v1.h` (`hippihx_v1_plan` / `hippihx_v1_run`, ABI rev
-**3**, group `attention`) via hipcc 7.14 / `hipModuleLoad` /
-`libamdhip64`. Kernel bodies stay in extras until extras wraps those
+**4**, group `attention`) via hipcc 7.14 / `hipModuleLoad` /
+`libamdhip64`: `libhippihx_v1.so` plus one `hippihx_<arch>.hsaco` per
+slot. Kernel bodies stay in extras until extras wraps those
 symbols. A Mojo `execute` is not a silent swap behind that ABI.
 
 ```python
@@ -59,6 +60,7 @@ No PRs to upstream vLLM. Do not edit the extras fork from this tree.
 |---|---|---|
 | **gfx1030** | primary | V620 dest |
 | **gfx1100/1101/1102** | yes | first-class, separate fatbin |
+| **gfx1200** | yes | first-class, separate fatbin, wave32, no WMMA gate |
 | **gfx1151** | portable | can run, not dest-tuned |
 | **gfx1031–1036** | portable | Deck **gfx1033** is wave32 |
 | **gfx1013** | Later | BC-250 / Cyan Skillfish, **not true RDNA2**, not dest |
@@ -94,6 +96,9 @@ cmake --build build && ./build/fatbin/gfx1030/hippihx_smoke_host
 
 pip install -e ".[dev]" && pytest
 ```
+
+A HIP tree writes `build/fatbin/<arch>/hippihx_<arch>.hsaco` and
+`libhippihx_v1.so`, the consume pair ([`CONSUME`](docs/CONSUME.md#artifacts)).
 
 ROCm **7.14** `hipcc` on the V620 box. Host stub is for layout when
 `hipcc` is missing.

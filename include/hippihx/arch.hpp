@@ -7,6 +7,7 @@
 // Built DOT (same tile source, separate --offload-arch objects):
 //   gfx1030           V620 dest, ROCm 7.14, wave32, fdot2 / v_dot2c
 //   gfx1100/1101/1102 first-class DOT, wave32, same dot.hpp
+//   gfx1200           first-class DOT, wave32, same dot.hpp, no WMMA gate
 //   gfx1151           Strix Halo — portable/unoptimized, can run
 //   gfx1031..1036     Deck/mobile RDNA2 — portable/unoptimized, wave32
 //                     (Steam Deck gfx1033 is wave32, same class as gfx1030)
@@ -30,6 +31,7 @@
 #endif
 #endif
 
+// hippihx:gen begin arch_macros -- python -m hippihx._lib.codegen; do not edit
 #if defined(__gfx1030__) || defined(HIPPIHX_ARCH_gfx1030)
 #define HIPPIHX_GFX1030 1
 #define HIPPIHX_DOT_SLOT 1
@@ -44,6 +46,10 @@
 #endif
 #if defined(__gfx1102__) || defined(HIPPIHX_ARCH_gfx1102)
 #define HIPPIHX_GFX1102 1
+#define HIPPIHX_DOT_SLOT 1
+#endif
+#if defined(__gfx1200__) || defined(HIPPIHX_ARCH_gfx1200)
+#define HIPPIHX_GFX1200 1
 #define HIPPIHX_DOT_SLOT 1
 #endif
 #if defined(__gfx1151__) || defined(HIPPIHX_ARCH_gfx1151)
@@ -70,18 +76,19 @@
 #define HIPPIHX_GFX1036 1
 #define HIPPIHX_DOT_SLOT 1
 #endif
-#if defined(__gfx1013__) || defined(HIPPIHX_ARCH_gfx1013)
-#define HIPPIHX_GFX1013 1
-#endif
 #if defined(__gfx900__) || defined(HIPPIHX_ARCH_gfx900)
 #define HIPPIHX_GFX900 1
 #endif
 #if defined(__gfx906__) || defined(HIPPIHX_ARCH_gfx906)
 #define HIPPIHX_GFX906 1
 #endif
+#if defined(__gfx1013__) || defined(HIPPIHX_ARCH_gfx1013)
+#define HIPPIHX_GFX1013 1
+#endif
+// hippihx:gen end arch_macros
 
-// Shared DOT paths assume no matrix / FP8 hardware. gfx110x WMMA must not
-// leak into those files (Later overlay only).
+// Shared DOT paths assume no matrix / FP8 hardware. gfx110x / gfx1200 WMMA
+// must not leak into those files (Later overlay only).
 #if defined(HIPPIHX_DOT_SLOT)
 #define HIPPIHX_HAS_WMMA 0
 #define HIPPIHX_HAS_MFMA 0
