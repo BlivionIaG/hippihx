@@ -39,7 +39,7 @@ Dest extras @ `48c56ef` pins `AttentionConfig.backend = RDNA_ATTN` from
 the API-server `VLLM_USE_RDNA2_FA` env so workers actually select
 FA-RDNA2. Dest extras **#28** @ `bfd5286d` and dest **#29** @ `d94e2209` /
 `e0112c55` (`cu_query_lens` split decode + row gate) stay extras.
-Dest tip `a5059cf0` does not change FA HIP. Do not dump. Do not pick
+Dest tip `30b0bd4e` does not change FA HIP. Do not dump. Do not pick
 Claude. No tok/s.
 
 ## V1 rev 4 contract (pinned)
