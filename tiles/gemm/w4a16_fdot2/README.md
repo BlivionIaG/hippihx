@@ -5,7 +5,7 @@ W4A16 GEMM class: nibble weights, zero-point, `fdot2` accumulate.
 GPTQ and AWQ share this tile; they differ in pack/zeros, not in a second
 GEMM family.
 
-**Shared DOT source** with gfx1100 (two fatbins). Never `#ifdef WMMA`.
+**Shared DOT source** with gfx1100 and gfx1200 (one fatbin each). Never `#ifdef WMMA`.
 **wave32 only.** **No `fdot2.bf16`.** Activations are **fp16**; bf16 is not
 a DOT path.
 

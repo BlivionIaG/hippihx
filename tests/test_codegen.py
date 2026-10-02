@@ -83,7 +83,7 @@ def test_build_script_refuses_later_slots(arch: str, tmp_path: Path) -> None:
 
 
 def test_build_script_refuses_unknown_arch(tmp_path: Path) -> None:
-    env = dict(os.environ, HIPPIHX_ARCH="gfx1200", BUILD_DIR=str(tmp_path / "build"))
+    env = dict(os.environ, HIPPIHX_ARCH="gfx1201", BUILD_DIR=str(tmp_path / "build"))
     proc = subprocess.run(
         ["bash", str(ROOT / "scripts" / "build_fatbin.sh")],
         env=env,
@@ -92,4 +92,4 @@ def test_build_script_refuses_unknown_arch(tmp_path: Path) -> None:
         check=False,
     )
     assert proc.returncode == 1
-    assert "unknown HIPPIHX_ARCH='gfx1200'" in proc.stderr
+    assert "unknown HIPPIHX_ARCH='gfx1201'" in proc.stderr

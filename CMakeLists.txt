@@ -163,5 +163,5 @@ endif()
 # Convenience: document slots without mixing them into this .a.
 add_custom_target(hippihx_list_fatbin_slots
   COMMAND ${CMAKE_COMMAND} -E echo
-          "DOT: gfx1030 gfx110x gfx1151 gfx103x; stub gfx900; Later gfx1013(Skillfish) gfx906(Vega20)"
+          "DOT: gfx1030 gfx110x gfx1200 gfx1151 gfx103x; stub gfx900; Later gfx1013(Skillfish) gfx906(Vega20)"
 )

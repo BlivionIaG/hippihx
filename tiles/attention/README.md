@@ -5,7 +5,7 @@ contract. Serve wiring (`rdna_extras`) binds these; it does not own ISA.
 
 | Directory | Class |
 |---|---|
-| `fa_fdot2` | Flash-attn / paged FA using `fdot2` (`v_dot2c`) — **shared DOT source** (gfx1030 + gfx1100) |
+| `fa_fdot2` | Flash-attn / paged FA using `fdot2` (`v_dot2c`) — **shared DOT source** (gfx1030 + gfx1100 + gfx1200) |
 | `gdn_scan` | GDN / hybrid linear-state scan |
 | `kda_scan` | KDA linear-state scan (not GDN, not a fused 128×128 product kernel) |
 | `qsa_indexer` | QSA / group-select indexer |
