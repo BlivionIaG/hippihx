@@ -115,8 +115,10 @@ def test_readme_unvalidated_inventory() -> None:
     assert "bfd5286d" in extras
     assert "83e6af80" in extras
     assert "e0112c55" in extras
+    assert "3a0786ea" in extras
     assert "a3f7e5da" in extras
     assert "VLLM_HIPPIHX" in extras
+    assert "VLLM_RDNA2_W4A8_SDOT4" in extras
     assert "e45dd5c" in extras
     assert "d1b200" in extras
     assert "1046782" in extras
@@ -161,6 +163,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "bfd5286d" in bp
     assert "83e6af80" in bp
     assert "e0112c55" in bp
+    assert "3a0786ea" in bp
     assert "d94e2209" in bp
     assert "dbb1e77" in bp
     assert "e45dd5c" in bp
@@ -207,13 +210,17 @@ def test_readme_unvalidated_inventory() -> None:
     assert "PR **#29**" in extras or "PR **#29**" in bp
     assert "PR **#30**" in extras or "PR **#30**" in bp
     assert "PR **#31**" in extras or "PR **#31**" in bp
+    assert "PR **#32**" in extras or "PR **#32**" in bp
+    assert "PR **#33**" in extras or "PR **#33**" in bp
+    assert "PR **#34**" in extras or "PR **#34**" in bp
     assert "VLLM_RDNA_MOE_RESIDENT" in extras
     assert "moe_resident" in extras
     contrib = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
-    assert "e0112c55" in contrib
+    assert "3a0786ea" in contrib
     assert "a4060647" in contrib
     # CONTRIBUTING is tip-only. Historical dest SHAs live in BACKPORT.
     for token in (
+        "e0112c55",
         "83e6af80",
         "d94e2209",
         "bfd5286d",

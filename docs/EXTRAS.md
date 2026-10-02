@@ -7,11 +7,12 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `e0112c55e48d` (2026-09-28 15:54 UTC). Dest default
+`rdna_extras` @ `3a0786eaa70f` (2026-09-30 09:56 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2**, **#18**. Draft **#9/#10**, **#23**,
-**#25**, **#30**, **#31**. Closed **#3/#16** unmerged; **#21** dest-integrated
+squash is `a4060647cfbb`. Open **#2**, **#18**. Draft **#10**, **#23**,
+**#25**, **#30**, **#31**, **#32**, **#33**, **#34**. Closed **#3/#9/#16**
+unmerged (**#9** superseded by dest W4A8); **#21** dest-integrated
 unmerged; **#12** superseded by **#15**. Merged **#13**, **#14**, **#15**,
 **#17**, **#19**, **#20**, **#22**, **#24**, **#26**, **#27**, **#28**, **#29**.
 **No** `torch.ops.hippihx.*`. Dest **#27** is opt-in `VLLM_HIPPIHX`
@@ -21,9 +22,10 @@ ctypes consume (default **off**; plans not ready).
 ships stubs.
 
 Observed SHAs and actions live in [`BACKPORT.md`](BACKPORT.md). Live dest
-bugs (do not copy): W4 scale-baked ZP, unaligned K-split, GDN HIP-on-BF16,
-ConfigH, GDN batched-decode n≥8. Dest retraces Flash-Next
-FULL_AND_PIECEWISE c=8 to probe artifacts (`609c9c0d`).
+bugs (do not copy): W4 scale-baked ZP, GDN HIP-on-BF16,
+ConfigH, GDN batched-decode n≥8. Dest @ `3a0786ea` K_STEP-aligns
+unusable POT K-splits. Dest retraces Flash-Next FULL_AND_PIECEWISE c=8
+to probe artifacts (`609c9c0d`).
 
 Status: **extras** = live on dest tip · **Later** = side branch ·
 **skip** = do not take · **stub** = hippihx contract only.
@@ -36,7 +38,9 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | FA INT8 KV writer | `reshape_and_cache_int8_rdna2` | `attention/fa_fdot2` | INT8 cache layout. **unvalidated** |
 | FA fp16 flash KV writer | `reshape_and_cache_flash_rdna2` | `attention/fa_fdot2` | Non-native KV. `__launch_bounds__(128, 4)`. **unvalidated** |
 | W4A16 dense decode | `q_gemm_rdna2.cu` | `gemm/w4a16_fdot2` | GPTQ + AWQ = pack/zeros, one GEMM. Dest ZP is scale-baked `half` — zoo uses integer `q-zero` then scale. **unvalidated** |
-| W4A16 prefill | `q_gemm_rdna2_prefill.cu` | `gemm/w4a16_fdot2` | Unified GPTQ+AWQ. ConfigA for `M>256`. Dest reverted ConfigH. Dest can pick K=640→16×40; zoo requires equal ×32. **unvalidated** |
+| W4A16 prefill | `q_gemm_rdna2_prefill.cu` | `gemm/w4a16_fdot2` | Unified GPTQ+AWQ. ConfigA for `M>256`. Dest reverted ConfigH. Dest @ `3a0786ea` K_STEP-aligns unusable POT splits. Zoo still refuse 40-wide. **unvalidated** |
+| W4A8 sdot4 dense prefill | `w4a8_sdot4_rdna2.{cu,cuh}` (dest @ `3a0786ea`) | — | Stay extras. Opt-in `VLLM_RDNA2_W4A8_SDOT4`. gfx1030 `M≥33`. Internal W4A16 fallback. Not a second W4 zoo family. Do not dump. **unvalidated** |
+| MoE W4A8 sdot4 | `moe_w4a8_rdna2.cu` (dest @ `3a0786ea`) | — | Stay extras. Opt-in. Hard-off under resident MoE. Do not dump. **unvalidated** |
 | W4A16 AWQ high-M prefill | ~~`q_gemm_rdna2_awq_prefill.cu`~~ | `gemm/w4a16_fdot2` | **Dest-deleted** @ `1046782`. Do not reintroduce. |
 | W4A16 MoE | `moe_q_gemm_rdna2.cu` | `moe/routed` | Same W4 family. Dest @ `e1315629` dequant/eight-row stay extras. moe_align prealloc is extras. **unvalidated** |
 | EXL3 dense / MoE / dequant / Hadamard / trellis decode | `exl3_dot2_*.cu` | `gemm/exl3_3inst` | Consume `-cb 3inst`. Produce outside. UNC-26. **unvalidated** |
@@ -61,7 +65,10 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | FA spec-decode split | dest PR **#29** @ `d94e2209` / tip `e0112c55` | `attention/fa_fdot2` | Stay extras. Dest rework of foreign Claude (`cu_query_lens` decode + row gate ≤256). Supersedes dest @ `83e6af80` per-position verify-decode. Do not dump. Do not pick Claude. **unvalidated** |
 | W4 `torch.compile` M-dispatch | draft PR **#30** | — | **skip** — explore, not dest. Claude. Opt-in `VLLM_RDNA2_W4A16_RUNTIME_DISPATCH`. Do not dump |
 | W4 exact-dequant explore | draft PR **#31** | — | **skip** — explore, not dest. Claude. Opt-in `VLLM_RDNA2_W4A16_EXACT_DEQUANT`. Zoo already locks integer `q-zero` then scale. Do not dump |
-| Explore W4A8 sdot4 / W4A4 sdot8 | extras PRs **#9/#10** | — | **skip** — not dest |
+| EXL3 mul1 decode / K=1..8 trellis | draft PR **#32** | — | **skip** — not dest. Claude. Do not dump |
+| FA decode scores / 4 barriers | draft PR **#33** | — | **skip** — not dest. Do not dump `fa_rdna2` |
+| FA D=128 prefill register-O GQA | draft PR **#34** | — | **skip** — not dest. Do not dump `fa_rdna2` |
+| Explore W4A8 sdot4 / W4A4 sdot8 | extras PRs **#9/#10** | — | **#9** closed-unmerged (superseded by dest W4A8 @ `3a0786ea`). **#10** **skip** — not dest |
 | Resident W4A16 MoE skinny decode | `moe_resident_decode.cu` (dest **#17** @ `e1315629`) | `moe/routed` (watch) | Stay extras. Opt-in `VLLM_RDNA_MOE_RESIDENT*`. ATen HIP. Do not dump. Closed **#16** unmerged. **unvalidated** |
 
 ### Modes / dispatch
@@ -79,6 +86,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | causal conv HIP | update + fwd | on unless set `0` | `causal_conv` |
 | Flash-Next HC/QSA/PLE HIP | dest scaffolding | **off**; S6 default-on reverted; wrappers @ `d0d577f1`; isolated HC @ `8960a3bc`; `_contig()` cache @ `50120e13` (same-shape clobber still live) | extras until dest-on |
 | Hybrid W4A16 gfx10 | extras linear backend | ungated; RDNA2 W4 auto on gfx1030 | not a second W4 family |
+| W4A8 sdot4 prefill | dest @ `3a0786ea` int4×int8 `sdot4` | **off** (`VLLM_RDNA2_W4A8_SDOT4` unset = W4A16) | extras; not a second W4 zoo family |
 | gfx1030 wvSplitK n≤5 | extras dense GEMM (`c350fa218`) | **dest-reverted** (`5c4ab989`); decode stays `gemv_f16_rdna2` `M<=8` | **no tile** |
 | V1 FULL_AND_PIECEWISE | dest captures FULL + piecewise | extras runner (`1ff73596`); dest @ `68a635ed` keeps FULL decode graphs; dest @ `e0112c55` `UNIFORM_BATCH` when split-decode + verify FULL graph | serve |
 | FA split decode | dest **#29** decode-first mixed/verify | **on** (`VLLM_FA_RDNA2_SPLIT_DECODE=1`); row gate ≤256 query×head @ `e0112c55` | extras |
@@ -114,6 +122,7 @@ stay extras (no D2H under capture in the zoo).
 | `VLLM_ROCM_MOE_SKINNY` | `1` | MoE skinny |
 | `VLLM_ROCM_MOE_SKINNY_MAX_M` | `8` (dest **#26** @ `7434efee`; opt-in `16`) | sequential HIP MoE row cap |
 | `VLLM_HIPPIHX` | `False` (dest **#27** @ `a3f7e5da`; only `"1"` enables) | opt-in hippihx V1 consume |
+| `VLLM_RDNA2_W4A8_SDOT4` | unset / `"0"` (dest @ `3a0786ea`; only `"1"` enables) | opt-in W4A8 sdot4 prefill |
 | `VLLM_HIPPIHX_LIB` / `VLLM_HIPPIHX_CODE_OBJECT` | unset | `libhippihx_v1.so` / `hippihx_<arch>.hsaco` |
 | `VLLM_RDNA_MOE_RESIDENT` / `VLLM_RDNA_MOE_RESIDENT_SKINNY` | `"0"` (dest **#17** @ `e1315629`) | resident W4A16 MoE layout / skinny decode |
 | `VLLM_FA_RDNA2_GQA_MODE` | `subgroup` | FA GQA-subgroup prefill |
@@ -148,9 +157,11 @@ stay extras (no D2H under capture in the zoo).
 ### Not taken / leave in extras
 
 Stay extras: serve, product HIP, dest-landed extras PRs, dest **#29**
-split decode / dest row-gate `e0112c55` (observe, do not pick). Skip:
-a17t PR **#3**, PR **#18** GPTQ `BLOCK_KN_SIZE` 256, draft PR **#23**
-PCIe P2P KV, draft PR **#25** rdna_ar retained-output, draft PR **#30**
-W4 compile-dispatch explore, draft PR **#31** W4 exact-dequant explore,
-explore **#9/#10**, closed PR **#12**, closed PR **#16**, closed
-**#5/#11**. Produce stays outside hippihx.
+split decode / dest row-gate `e0112c55` / dest W4A8 `3a0786ea`
+(observe, do not pick). Skip: a17t PR **#3**, PR **#18** GPTQ
+`BLOCK_KN_SIZE` 256, draft PR **#23** PCIe P2P KV, draft PR **#25**
+rdna_ar retained-output, draft PR **#30** W4 compile-dispatch explore,
+draft PR **#31** W4 exact-dequant explore, draft PR **#32** EXL3 mul1,
+draft PR **#33** FA decode scores, draft PR **#34** FA D=128 prefill,
+closed **#9** (superseded), explore **#10**, closed PR **#12**, closed
+PR **#16**, closed **#5/#11**. Produce stays outside hippihx.
