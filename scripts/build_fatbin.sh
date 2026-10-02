@@ -9,7 +9,7 @@ BUILD="${BUILD_DIR:-$ROOT/build-$ARCH}"
 
 # hippihx:gen begin arch_case -- python -m hippihx._lib.codegen; do not edit
 case "$ARCH" in
-  gfx1030|gfx1100|gfx1101|gfx1102|gfx1151|gfx1031|gfx1032|gfx1033|gfx1035|gfx1036|gfx900) ;;
+  gfx1030|gfx1100|gfx1101|gfx1102|gfx1200|gfx1151|gfx1031|gfx1032|gfx1033|gfx1035|gfx1036|gfx900) ;;
   gfx906)
     echo "gfx906: Later non-DOT (real Vega20/MI50). Not BC-250 — BC-250 is gfx1013 (Cyan Skillfish, also Later; not true RDNA2). Never load FA/EXL3 DOT objects" >&2
     exit 1
@@ -19,7 +19,7 @@ case "$ARCH" in
     exit 1
     ;;
   *)
-    echo "unknown HIPPIHX_ARCH='$ARCH' (built: gfx1030 gfx1100 gfx1101 gfx1102 gfx1151 gfx1031 gfx1032 gfx1033 gfx1035 gfx1036 gfx900; Later: gfx906 gfx1013)" >&2
+    echo "unknown HIPPIHX_ARCH='$ARCH' (built: gfx1030 gfx1100 gfx1101 gfx1102 gfx1200 gfx1151 gfx1031 gfx1032 gfx1033 gfx1035 gfx1036 gfx900; Later: gfx906 gfx1013)" >&2
     exit 1
     ;;
 esac
