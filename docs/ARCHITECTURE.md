@@ -234,7 +234,7 @@ optional activation `dtype` (revision **2**). Qualnames `attention.*`
 plan, params, tensor descriptors, the stream and `caps.fabric`. Per-op
 params, tensor slots and scratch rules live in the catalog, and
 `python -m hippihx._lib.codegen` writes the header enums and C tables.
-See [`CONSUME.md`](CONSUME.md). Dest extras tip `30632b2fa323` still
+See [`CONSUME.md`](CONSUME.md). Dest extras tip `bcdaaddc80d5` still
 has no `torch.ops.hippihx.*` rewire — see [`BACKPORT.md`](BACKPORT.md).
 Do not edit `opengfx1030/vllm-rdna` from this tree.
 
