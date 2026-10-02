@@ -29,10 +29,12 @@ extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
 `VLLM_RDNA_AR_BLOCKS` / `_PACE` / `_MAX_KB`. Dest extras @ `3b59ee16`
 (merged PR **#13**) moved flags into uncached VRAM and added the T44b
 wedge check. **AR default stays off.** Occupancy pin stays closed.
-`VLLM_RDNA_AR_MAX_KB` zoo lock **512** (dest extras default is now
-**64**). **Authorship of unique HIP is Aron Hsiao**
+`VLLM_RDNA_AR_MAX_KB` zoo lock **512** (dest extras default is **64**
+@ `101a16c8`; dest two-shot dest-off). Library `VLLM_RDNA_AR` still
+**off**. **Authorship of unique HIP is Aron Hsiao**
 `<leapdragon@gmail.com>` — Author **and** Committer on unique commits.
 Do **not** pick dest squash `a4060647` or `3b59ee16` (Cursor rewrite).
+Do not dump dest **#22**.
 C consume id: `HIPPIHX_V1_OP_COMM_PCIE` — stub only; do not dump the
 ATen wrapper until extras rewires onto this V1 entry.
 

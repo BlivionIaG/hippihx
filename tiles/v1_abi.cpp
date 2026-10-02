@@ -123,6 +123,7 @@ constexpr ArchRow kArches[HIPPIHX_V1_ARCH_COUNT] = {
     {"gfx1100", 1, 32, 0x41},
     {"gfx1101", 1, 32, 0x46},
     {"gfx1102", 1, 32, 0x47},
+    {"gfx1200", 1, 32, 0x48},
     {"gfx1151", 1, 32, 0x4A},
     {"gfx1031", 1, 32, 0x37},
     {"gfx1032", 1, 32, 0x38},
