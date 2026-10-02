@@ -112,7 +112,25 @@ def test_readme_unvalidated_inventory() -> None:
     assert "e131562" in extras
     assert "48c56ef" in extras
     assert "68a635" in extras
-    assert "30632b2" in extras
+    assert "bfd5286d" in extras
+    assert "83e6af80" in extras
+    assert "e0112c55" in extras
+    assert "3a0786ea" in extras
+    assert "3fb9d43a" in extras
+    assert "9cad8792" in extras
+    assert "a5059cf0" in extras
+    assert "30b0bd4e" in extras
+    assert "ac9dfd8f" in extras
+    assert "bc5fbee5" in extras
+    assert "ef8f0a28" in extras
+    assert "exl3_project_rdna2" in extras
+    assert "gemma_rms_norm_fake" in extras
+    assert "serve_rdna" in extras
+    assert "a3f7e5da" in extras
+    assert "VLLM_HIPPIHX" in extras
+    assert "VLLM_RDNA2_W4A8_SDOT4" in extras
+    assert "VLLM_RDNA2_W4A16_RUNTIME_DISPATCH" in extras
+    assert "VLLM_RDNA2_MOE_FP32_ACCUM" in extras
     assert "e45dd5c" in extras
     assert "d1b200" in extras
     assert "1046782" in extras
@@ -148,6 +166,27 @@ def test_readme_unvalidated_inventory() -> None:
     assert "2a5e893" in bp
     assert "700753d9" in bp
     assert "30632b2" in bp
+    assert "cd38a1d3" in bp
+    assert "22d6e346" in bp
+    assert "a3f7e5da" in bp
+    assert "7434efee" in bp
+    assert "101a16c8" in bp
+    assert "330b42ab" in bp
+    assert "bfd5286d" in bp
+    assert "83e6af80" in bp
+    assert "e0112c55" in bp
+    assert "3a0786ea" in bp
+    assert "3fb9d43a" in bp
+    assert "9cad8792" in bp
+    assert "a5059cf0" in bp
+    assert "30b0bd4e" in bp
+    assert "ac9dfd8f" in bp
+    assert "bc5fbee5" in bp
+    assert "ef8f0a28" in bp
+    assert "exl3_project_rdna2" in bp
+    assert "gemma_rms_norm_fake" in bp
+    assert "serve_rdna" in bp
+    assert "d94e2209" in bp
     assert "dbb1e77" in bp
     assert "e45dd5c" in bp
     assert "d1b200" in bp
@@ -186,13 +225,40 @@ def test_readme_unvalidated_inventory() -> None:
     assert "PR **#22**" in extras or "PR **#22**" in bp
     assert "PR **#23**" in extras or "PR **#23**" in bp
     assert "PR **#24**" in extras or "PR **#24**" in bp
+    assert "PR **#25**" in extras or "PR **#25**" in bp
+    assert "PR **#26**" in extras or "PR **#26**" in bp
+    assert "PR **#27**" in extras or "PR **#27**" in bp
+    assert "PR **#28**" in extras or "PR **#28**" in bp
+    assert "PR **#29**" in extras or "PR **#29**" in bp
+    assert "PR **#30**" in extras or "PR **#30**" in bp
+    assert "PR **#31**" in extras or "PR **#31**" in bp
+    assert "PR **#32**" in extras or "PR **#32**" in bp
+    assert "PR **#33**" in extras or "PR **#33**" in bp
+    assert "PR **#34**" in extras or "PR **#34**" in bp
     assert "VLLM_RDNA_MOE_RESIDENT" in extras
     assert "moe_resident" in extras
     contrib = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
-    assert "30632b2" in contrib
+    assert "ef8f0a28" in contrib
     assert "a4060647" in contrib
     # CONTRIBUTING is tip-only. Historical dest SHAs live in BACKPORT.
     for token in (
+        "bc5fbee5",
+        "ac9dfd8f",
+        "30b0bd4e",
+        "a5059cf0",
+        "9cad8792",
+        "3fb9d43a",
+        "3a0786ea",
+        "e0112c55",
+        "83e6af80",
+        "d94e2209",
+        "bfd5286d",
+        "330b42ab",
+        "30632b2",
+        "bcdaaddc",
+        "22d6e346",
+        "101a16c8",
+        "a3f7e5da",
         "700753d9",
         "2a5e893",
         "68a635",
