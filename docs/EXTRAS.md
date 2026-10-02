@@ -7,7 +7,7 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `bb40498cc002` (2026-10-02 00:13 UTC). Dest default
+`rdna_extras` @ `ab5ccf3d9f34` (2026-10-02 10:32 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
 squash is `a4060647cfbb`. Open **#2**, **#18**. Draft **#10**, **#23**,
@@ -18,7 +18,7 @@ dest-landed independently @ `284fbad0` / dest-presence `ef8f0a28`); **#21**
 dest-integrated unmerged; **#12** superseded by **#15**. Merged **#13**,
 **#14**, **#15**, **#17**, **#19**, **#20**, **#22**, **#24**, **#26**,
 **#27**, **#28**, **#29**. Dest **#30** @ `3fb9d43a` / dest **#32** @
-`a5059cf0` / dest **#34** @ `ef8f0a28` dest-presence / tip `bb40498c`. **No**
+`a5059cf0` / dest **#34** @ `ef8f0a28` dest-presence / tip `ab5ccf3d`. **No**
 `torch.ops.hippihx.*`. Dest **#27** is opt-in `VLLM_HIPPIHX` ctypes
 consume (default **off**; plans not ready).
 
@@ -38,7 +38,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 
 | Kernel / op | extras | hippihx tile | Notes |
 |---|---|---|---|
-| FA paged decode / prefill / split-K / short / GQA | `fa_rdna2.cu` | `attention/fa_fdot2` | `fdot2`. Occupancy pin closed. GQA-subgroup default. O register-resident @ `d1b200b1`. Dest **#28** @ `bfd5286d` tile skip / dest **#34** @ `ef8f0a28` D=128 register-O GQA prefill stay extras. Dest tip `bb40498c` is bench docs. Do not dump. Persist O stay extras. **unvalidated** |
+| FA paged decode / prefill / split-K / short / GQA | `fa_rdna2.cu` | `attention/fa_fdot2` | `fdot2`. Occupancy pin closed. GQA-subgroup default. O register-resident @ `d1b200b1`. Dest **#28** @ `bfd5286d` tile skip / dest **#34** @ `ef8f0a28` D=128 register-O GQA prefill stay extras. Dest tip `ab5ccf3d` is not-FA/not-HIP sweep. Do not dump. Persist O stay extras. **unvalidated** |
 | FA INT8 KV writer | `reshape_and_cache_int8_rdna2` | `attention/fa_fdot2` | INT8 cache layout. **unvalidated** |
 | FA fp16 flash KV writer | `reshape_and_cache_flash_rdna2` | `attention/fa_fdot2` | Non-native KV. `__launch_bounds__(128, 4)`. **unvalidated** |
 | W4A16 dense decode | `q_gemm_rdna2.cu` | `gemm/w4a16_fdot2` | GPTQ + AWQ = pack/zeros, one GEMM. Dest ZP is scale-baked `half` — zoo uses integer `q-zero` then scale. **unvalidated** |
@@ -50,9 +50,9 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | EXL3 dense / MoE / dequant / Hadamard / trellis decode | `exl3_dot2_*.cu` | `gemm/exl3_3inst` | Consume `-cb 3inst`. Produce outside. Dest **#32** @ `a5059cf0` mul1 / K=1..8 + MoE n-tile bound. Dest @ `7be99d84` fused `exl3_project_rdna2`. UNC-26. **unvalidated** |
 | GDN packed decode | `gdn_decode_rdna2.cu` | `attention/gdn_scan` | Dest @ `02adbfd4`: SSM **fp16 or fp32**. Dest @ `388a61b6`: no one-shot `zero_()` wipe. **fp16 act only.** **unvalidated** |
 | GDN prefill chain | `gdn_prefill_*_rdna2.cu` | `attention/gdn_scan` | **Opt-in** (`VLLM_GDN_HIP_PREFILL=1`; default Triton/FLA @ `cd1231fd`). `o` varlen `i_t_local` dest-fixed. Dispatch still misses dtype. **unvalidated** |
-| causal_conv1d update + fwd | `causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA. FIR on pre-shift then shift. Dest @ `b13effcb` gates HIP when `state_len != width-1`. BF16: fp32 mul, **not** `fdot2.bf16`. **unvalidated** |
+| causal_conv1d update + fwd | `causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA. FIR on pre-shift then shift. Dest @ `b13effcb` gates HIP when `state_len != width-1`. Dest @ `ab5ccf3d` HIP re-enable no-gain vs Triton. BF16: fp32 mul, **not** `fdot2.bf16`. **unvalidated** |
 | Paged MQA indexer | `indexer_paged_mqa_rdna2.cu` | `attention/qsa_indexer` | gfx1030 BF16 6h×256: **4 warps**. **unvalidated** |
-| Flash-Next QSA store/compress/MQA | `qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | `VLLM_RDNA_QSA_HIP` default **off**. Eager Triton serves (`8cf0dedb`). Dest @ `e45dd5cb`: empty QSA ring prefix hits. Dest @ `f3dd65fa`: live-context prefill scoring bound (Triton). **unvalidated** |
+| Flash-Next QSA store/compress/MQA | `qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | `VLLM_RDNA_QSA_HIP` default **off**. Eager Triton serves (`8cf0dedb`). Dest @ `e45dd5cb`: empty QSA ring prefix hits. Dest @ `f3dd65fa`: live-context prefill scoring bound (Triton). Dest @ `ab5ccf3d` QSA-HIP stays **off**. **unvalidated** |
 | Sparse MLA decode / prefill | `sparse_mla_rdna2.cu` | `attention/dsa_nope` | **unvalidated** |
 | M-RoPE / Flash-Next HC / PLE / fused glue | `mrope_rdna2.cu`, `hc_rdna2.cu`, `ple_short_conv_rdna2.cu`, `rdna_fused_glue.cu` | — | Product HIP. HC/PLE default off (S6 revert `9c9509b3`); wrappers @ `d0d577f1`; isolated HC @ `8960a3bc`; `_contig()` cache @ `50120e13` (gate still off). Stay extras. **unvalidated** |
 | W8A16 / FP8 / MXFP4 / gfx1100 WMMA / skinny GEMM / RMSNorm | `moe_w8a16*.cu`, `mxfp4_dot2_*.cu`, `q_gemm_rdna3_wmma.cu`, `skinny_gemms*.cu`, `layernorm.cu` | — | No tile. WMMA is Later overlay. Do not reintroduce leapdragon `gemv_f16`. **unvalidated** |
@@ -73,8 +73,9 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | EXL3 v0.30 loader / fused project / MoE / PLE | dest @ `30b0bd4e` (`exl3.py`, `exl3_moe.py`, `exl3_ple.py`, `exl3_project_rdna2`) | `gemm/exl3_3inst` | Stay extras. Codebook markers, suh grouping, TP slicing, `fold_weight` lm_head only, `Exl3MoEMethod`, inert `Exl3NgramTable`. Unique Blivion. Do not dump. |
 | TunableOp unify / EXL3 27B rows / gemma_rms fake | dest @ `ac9dfd8f` (`tunableop/rocblas-f30bb442e9b5`, `gemma_rms_norm_fake`) | — | Stay extras. Serve/ops + inductor fake. Unique Blivion. Do not dump. Do not copy tok/s. |
 | EXL3 MTP draft + `serve_rdna` recipes | dest @ `bc5fbee5` (`exl3.py` `mtp.fc`, `serve_rdna.sh`, HIP conv `state_len` gate) | — | Stay extras. Dest serves EXL3 quantized MTP. No zoo MTP tile. Unique Blivion. Do not dump. Do not copy tok/s. |
-| FA decode scores / 4 barriers | draft PR **#33** | — | **skip** — not dest. Do not dump `fa_rdna2` |
-| FA D=128 prefill register-O GQA | dest PR **#34** @ `ef8f0a28` / tip `bb40498c` | `attention/fa_fdot2` | Stay extras. `HEAD_DIM` 128/256; ~14 KiB LDS dest observation. Tip is bench-summary follow-on. GitHub closed-unmerged. Do not dump `fa_rdna2`. Do not copy tok/s. |
+| FA decode scores / 4 barriers | draft PR **#33** | — | **skip** — not dest. Dest @ `ab5ccf3d` still not merged. Do not dump `fa_rdna2` |
+| FA D=128 prefill register-O GQA | dest PR **#34** @ `ef8f0a28` / bench `bb40498c` | `attention/fa_fdot2` | Stay extras. `HEAD_DIM` 128/256; ~14 KiB LDS dest observation. Dest tip `ab5ccf3d` is not-FA/not-HIP sweep. GitHub closed-unmerged. Do not dump `fa_rdna2`. Do not copy tok/s. |
+| not-FA/not-HIP sweep + probes | dest @ `ab5ccf3d` (`tools/rdna2_028`) | — | Stay extras. Docs + A/B probes. Unique Blivion. QSA-HIP stays **off**. extras **#33** still skip. Do not dump. Do not copy tok/s. |
 | Explore W4A8 sdot4 / W4A4 sdot8 | extras PRs **#9/#10** | — | **#9** closed-unmerged (superseded by dest W4A8 @ `3a0786ea`). **#10** **skip** — not dest |
 | Resident W4A16 MoE skinny decode | `moe_resident_decode.cu` (dest **#17** @ `e1315629`) | `moe/routed` (watch) | Stay extras. Opt-in `VLLM_RDNA_MOE_RESIDENT*`. ATen HIP. Do not dump. Closed **#16** unmerged. **unvalidated** |
 
@@ -172,7 +173,7 @@ split decode / dest row-gate `e0112c55` / dest W4A8 `3a0786ea` / dest
 **#30** compile-dispatch `3fb9d43a` / dest MoE epilogue `9cad8792` /
 dest **#32** EXL3 mul1 `a5059cf0` / dest EXL3 loader `30b0bd4e` / dest
 TunableOp `ac9dfd8f` / dest EXL3 MTP + `serve_rdna` `bc5fbee5` / dest
-**#34** FA D=128 GQA `ef8f0a28` / bench follow-on `bb40498c` (observe, do not pick). Skip: a17t
+**#34** FA D=128 GQA `ef8f0a28` / bench follow-on `bb40498c` / dest sweep `ab5ccf3d` (observe, do not pick). Skip: a17t
 PR **#3**, PR **#18** GPTQ `BLOCK_KN_SIZE` 256, draft PR **#23** PCIe
 P2P KV, draft PR **#25** rdna_ar retained-output, draft PR **#31** W4
 exact-dequant explore, draft PR **#33** FA decode scores, closed **#9**
