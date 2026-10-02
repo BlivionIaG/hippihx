@@ -7,14 +7,15 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `bcdaaddc80d5` (2026-09-27 19:39 UTC). Dest default
+`rdna_extras` @ `330b42abb5b0` (2026-09-27 23:45 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
 squash is `a4060647cfbb`. Open **#2**, **#18**. Draft **#9/#10**, **#23**,
-**#25**, **#26**. Closed **#3/#16** unmerged; **#21** dest-integrated
+**#25**, **#28**, **#29**. Closed **#3/#16** unmerged; **#21** dest-integrated
 unmerged; **#12** superseded by **#15**. Merged **#13**, **#14**, **#15**,
-**#17**, **#19**, **#20**, **#22**, **#24**.
-**No** `torch.ops.hippihx.*`.
+**#17**, **#19**, **#20**, **#22**, **#24**, **#26**, **#27**.
+**No** `torch.ops.hippihx.*`. Dest **#27** is opt-in `VLLM_HIPPIHX`
+ctypes consume (default **off**; plans not ready).
 
 **Unvalidated.** Not dest. Not silicon-signed. No tok/s. hippihx still
 ships stubs.
@@ -48,13 +49,15 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | M-RoPE / Flash-Next HC / PLE / fused glue | `mrope_rdna2.cu`, `hc_rdna2.cu`, `ple_short_conv_rdna2.cu`, `rdna_fused_glue.cu` | — | Product HIP. HC/PLE default off (S6 revert `9c9509b3`); wrappers @ `d0d577f1`; isolated HC @ `8960a3bc`; `_contig()` cache @ `50120e13` (gate still off). Stay extras. **unvalidated** |
 | W8A16 / FP8 / MXFP4 / gfx1100 WMMA / skinny GEMM / RMSNorm | `moe_w8a16*.cu`, `mxfp4_dot2_*.cu`, `q_gemm_rdna3_wmma.cu`, `skinny_gemms*.cu`, `layernorm.cu` | — | No tile. WMMA is Later overlay. Do not reintroduce leapdragon `gemv_f16`. **unvalidated** |
 | GLM-5.3 KDA / DSA | `glm5_*.cu` (PR **#2**) | `kda_scan` / `dsa_nope` / `qsa_indexer` | Later. Drop `glm5_` name. **unvalidated** |
-| leapdragon push AR | `rdna_allreduce.{cu,cuh}` (merged PR **#1**; dest **#22** @ `22d6e346`) | `comm/pcie` | Dest extras, default **off**. Dest two-shot + dest `MAX_KB` **20480**. Zoo **512**. Occupancy pin closed. Do not dump. **unvalidated** |
+| leapdragon push AR | `rdna_allreduce.{cu,cuh}` (merged PR **#1**; dest **#22** @ `22d6e346`) | `comm/pcie` | Dest extras, default **off**. Dest two-shot then dest-off @ `101a16c8` (library `MAX_KB` **64**). Zoo **512**. Do not dump. **unvalidated** |
 | a17t extra AWQ GEMM / GEMV | `awq_gemm_rdna2.cu` etc. (closed PR **#3**) | — | **skip** — closed unmerged, second W4 family |
 | GPTQ exllama `BLOCK_KN_SIZE` 256 | `q_gemm.cu` (PR **#18**) | — | **skip** — not dest DOT W4 |
 | PCIe P2P KV disagg | `PcieP2pConnector` (draft PR **#23**) | — | **skip** — not dest. HIP IPC SDMA. Zoo `comm.pcie` is AR, not KV. Do not dump |
 | RAM KV offload | offloading connector (dest **#24** @ `cd38a1d3`) | — | Stay extras. George/Codex. Serve only. No HIP. Do not pick |
 | rdna_ar retained-output | draft PR **#25** | — | **skip** — not dest. George/Codex. Do not dump. Do not pick |
-| HIP MoE skinny `MAX_M=16` | draft PR **#26** | — | **skip** — not dest. George/Codex. Default still 8. Do not dump. Do not pick |
+| HIP MoE skinny `MAX_M=16` | dest PR **#26** @ `7434efee` | — | Stay extras. Opt-in `VLLM_ROCM_MOE_SKINNY_MAX_M`. Default still **8**. Do not dump. Do not pick |
+| hippihx V1 consume | `hippihx_v1.py` (dest **#27** @ `a3f7e5da`) | — | Stay extras. Opt-in `VLLM_HIPPIHX`. ctypes + `hippihx_v1_load`. Plans not ready. Still no `torch.ops.hippihx`. Do not dump. Do not pick Claude |
+| FA-RDNA2 tile skip / spec-decode split | draft PRs **#28/#29** | — | **skip** — not dest. Claude FA drafts. Do not dump |
 | Explore W4A8 sdot4 / W4A4 sdot8 | extras PRs **#9/#10** | — | **skip** — not dest |
 | Resident W4A16 MoE skinny decode | `moe_resident_decode.cu` (dest **#17** @ `e1315629`) | `moe/routed` (watch) | Stay extras. Opt-in `VLLM_RDNA_MOE_RESIDENT*`. ATen HIP. Do not dump. Closed **#16** unmerged. **unvalidated** |
 
@@ -76,8 +79,9 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | gfx1030 wvSplitK n≤5 | extras dense GEMM (`c350fa218`) | **dest-reverted** (`5c4ab989`); decode stays `gemv_f16_rdna2` `M<=8` | **no tile** |
 | V1 FULL_AND_PIECEWISE | dest captures FULL + piecewise | extras runner (`1ff73596`); dest @ `68a635ed` keeps FULL decode graphs; piecewise for mixed/prefill | serve |
 | Custom AR (vLLM/ROCm) | force custom all-reduce on PCIe | **on** in dest gfx1030 launcher (`4d25a048`); `envs.py` still False; cudagraph-correct @ `849292ec` | serve |
-| leapdragon `rdna_ar` | size-gated Uncached+push; dest **#22** two-shot | **off** (`VLLM_RDNA_AR=0`) | `comm/pcie` Later |
+| leapdragon `rdna_ar` | size-gated Uncached+push; dest **#22** two-shot dest-off @ `101a16c8` | **off** (`VLLM_RDNA_AR=0`) | `comm/pcie` Later |
 | Resident W4A16 MoE | native shuffled layout + skinny GEMV | **off** (dest **#17** @ `e1315629`) | extras |
+| hippihx V1 consume | dest **#27** ctypes + `hippihx_v1_load` | **off** (`VLLM_HIPPIHX=0`) | extras; plans not ready |
 
 ### Env (extras-added / extras-used)
 
@@ -104,6 +108,9 @@ stay extras (no D2H under capture in the zoo).
 | `VLLM_EXL3_FOLDED_CACHE` | unset | folded-weight cache dir |
 | `VLLM_ROCM_USE_SKINNY_GEMM` | `True` | skinny GEMM |
 | `VLLM_ROCM_MOE_SKINNY` | `1` | MoE skinny |
+| `VLLM_ROCM_MOE_SKINNY_MAX_M` | `8` (dest **#26** @ `7434efee`; opt-in `16`) | sequential HIP MoE row cap |
+| `VLLM_HIPPIHX` | `False` (dest **#27** @ `a3f7e5da`; only `"1"` enables) | opt-in hippihx V1 consume |
+| `VLLM_HIPPIHX_LIB` / `VLLM_HIPPIHX_CODE_OBJECT` | unset | `libhippihx_v1.so` / `hippihx_<arch>.hsaco` |
 | `VLLM_RDNA_MOE_RESIDENT` / `VLLM_RDNA_MOE_RESIDENT_SKINNY` | `"0"` (dest **#17** @ `e1315629`) | resident W4A16 MoE layout / skinny decode |
 | `VLLM_FA_RDNA2_GQA_MODE` | `subgroup` | FA GQA-subgroup prefill |
 | `VLLM_RDNA_HC_PREFILL_HIP` / `VLLM_RDNA_QSA_HIP` / `VLLM_RDNA_PLE_CONV_HIP` | `"0"` | Flash-Next product HIP (opt-in) |
@@ -117,7 +124,7 @@ stay extras (no D2H under capture in the zoo).
 | `VLLM_RDNA_AR` | `"0"` (dest extras; merged PR **#1**) | leapdragon push AR (opt-in; communicator gate, not the stale “enabled by default” docstring) |
 | `VLLM_RDNA_AR_BLOCKS` | auto | AR block cap |
 | `VLLM_RDNA_AR_PACE` | `0` | AR store pace |
-| `VLLM_RDNA_AR_MAX_KB` | dest extras **20480** (`22d6e346`). zoo lock **512** | AR fast-path size cap |
+| `VLLM_RDNA_AR_MAX_KB` | dest extras **64** (`101a16c8`). zoo lock **512** | AR fast-path size cap |
 | `VLLM_USE_BREAKABLE_CUDAGRAPH` | `0` (auto-on in some configs) | capture dispatcher |
 | `VLLM_LOG_GDN_PTRS` / `VLLM_GDN_DBG` / `VLLM_EXL3_*_DBG` / `VLLM_CONV1D_DEBUG` / `DBG_VLLM_STEP_TIMING` | off | probes |
 
@@ -129,19 +136,19 @@ stay extras (no D2H under capture in the zoo).
 | Custom all-reduce (vLLM/ROCm) | `VLLM_FORCE_CUSTOM_ALL_REDUCE` | **on** in dest gfx1030 launcher (`4d25a048`); envs.py still False | serve |
 | AITER custom AR | `VLLM_ROCM_USE_AITER_CUSTOM_AR` | on in envs, AITER itself off | CDNA, not gfx1030 dest |
 | Quick-reduce / symm-mem AR | `VLLM_ROCM_QUICK_REDUCE_*` / `VLLM_ALLREDUCE_USE_SYMM_MEM` | unset / on | serve |
-| leapdragon `rdna_ar` Uncached+push | dest extras (PR **#1** @ `a4060647`; T44b @ `3b59ee16`; dest **#22** @ `22d6e346`) | **off** | `comm/pcie` Later. Unique HIP: Aron Hsiao. Dest `MAX_KB` **20480**. Zoo **512**. Do not pick Cursor squash. |
+| leapdragon `rdna_ar` Uncached+push | dest extras (PR **#1** @ `a4060647`; T44b @ `3b59ee16`; dest **#22** then dest-off @ `101a16c8`) | **off** | `comm/pcie` Later. Unique HIP: Aron Hsiao. Dest `MAX_KB` **64**. Zoo **512**. Do not pick Cursor squash. |
 
 ### Not taken / leave in extras
 
 Stay extras: capture plumbing, product serve, skinny GEMM, ConfigH,
 graph mode, vLLM custom AR, `bench_report.py`, dest T44b `rdna_ar`
 (still opt-in), dest PR **#13** / PR **#14** / PR **#15** / PR **#17** /
-PR **#19** / PR **#20** / dest **#22** two-shot / dest **#24** RAM KV
-(observe, do not pick), dest-integrated PR **#21**, dest FA `RDNA_ATTN`
-pin, resident MoE ATen HIP, Qwen4Exp MTP (not dest), ROCm platform init,
-extras EXL3 docker arch-guard. Skip: a17t PR **#3**, PR **#18** GPTQ
-`BLOCK_KN_SIZE` 256, draft PR **#23** PCIe P2P KV (Cursor; HIP IPC SDMA;
-do not dump), draft PR **#25** rdna_ar retained-output (George/Codex; do
-not dump), draft PR **#26** MoE skinny `MAX_M=16` (George/Codex; do not
-dump), explore **#9/#10**, closed PR **#12**, closed PR **#16**,
+PR **#19** / PR **#20** / dest **#22** two-shot / dest **#24** RAM KV /
+dest **#26** MoE skinny `MAX_M` / dest **#27** V1 consume (observe, do
+not pick), dest-integrated PR **#21**, dest FA `RDNA_ATTN` pin, resident
+MoE ATen HIP, Qwen4Exp MTP (not dest), ROCm platform init, extras EXL3
+docker arch-guard. Skip: a17t PR **#3**, PR **#18** GPTQ
+`BLOCK_KN_SIZE` 256, draft PR **#23** PCIe P2P KV, draft PR **#25**
+rdna_ar retained-output, draft PRs **#28/#29** FA (Claude; do not dump),
+explore **#9/#10**, closed PR **#12**, closed PR **#16**,
 closed **#5/#11**. Produce stays outside hippihx.
