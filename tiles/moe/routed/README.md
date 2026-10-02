@@ -14,5 +14,6 @@ Dest extras @ `b549c229` wires the existing `moe_q_gemm_rdna2` kernel
 into the oracle as `RDNA2_W4A16` — extras serve, same W4 family. moe_align
 prealloc (`4b799bf4`) stays extras. Dest extras **#17** @ `e1315629`
 resident skinny (`moe_resident_decode.cu`) is dest-landed ATen HIP;
-`VLLM_RDNA_MOE_RESIDENT*` default **off**. Stay extras. Do not dump.
-Closed **#16** unmerged.
+`VLLM_RDNA_MOE_RESIDENT*` default **off**. Dest @ `9cad8792` packed-fp16
+CAS epilogue is dest default; `VLLM_RDNA2_MOE_FP32_ACCUM` is opt-in.
+Stay extras. Do not dump `moe_accum_rdna2.cuh`. Closed **#16** unmerged.
