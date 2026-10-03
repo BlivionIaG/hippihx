@@ -41,10 +41,9 @@ FA-RDNA2. Dest extras **#28** @ `bfd5286d` and dest **#29** @ `d94e2209` /
 `e0112c55` (`cu_query_lens` split decode + row gate) stay extras.
 Dest extras **#34** @ `284fbad0` / dest-presence `ef8f0a28` dest-lands
 D=128 register-O GQA prefill (`HEAD_DIM` 128/256; ~14 KiB LDS dest
-observation). Dest tip `ab5ccf3d` is not-FA/not-HIP sweep (extras
-**#33** still skip; QSA-HIP stays off), not FA HIP. GitHub
-closed-unmerged. Stay extras. Do not dump. Do not pick Claude. No
-tok/s.
+observation). Dest tip `a6ab43cf` is QSA HIP dest-presence (still
+default **off**), not FA HIP. GitHub closed-unmerged. Stay extras. Do
+not dump. Do not pick Claude. No tok/s.
 
 ## V1 rev 4 contract (pinned)
 
