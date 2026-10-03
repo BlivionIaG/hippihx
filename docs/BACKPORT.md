@@ -1,7 +1,7 @@
 # extras → hippihx backport review
 
 Lock: [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `ab5ccf3d9f34` (2026-10-02 10:32 UTC). Dest **default
+`rdna_extras` @ `a6ab43cf9661` (2026-10-02 20:57 UTC). Dest **default
 branch is `rdna_extras`**, not `main` (`c00091e02670` upstream vLLM — no
 dest HIP). **No** `torch.ops.hippihx.*`. Dest extras **#27** is opt-in
 `VLLM_HIPPIHX` ctypes consume (default **off**; plans not ready). Observe
@@ -73,6 +73,7 @@ until a body migrates and extras binds it.
 | `ef8f0a2831f2` | extras **#34** dest-presence (FA D=128 register-O GQA prefill) | Stay extras. ATen HIP. Unique Blivion dest landing. GitHub PR closed-unmerged. Do not dump `fa_rdna2`. Do not copy tok/s. |
 | `bb40498cc002` | extras **#34** bench-summary follow-on (GPU-5 kernel A/B) | Stay extras. Bench docs only (`SUMMARY.md` + `bench_clean_gpu5.out`). Unique Blivion. Do not dump. Do not copy tok/s. |
 | `ab5ccf3d9f34` | dest not-FA/not-HIP sweep + extras **#33** recovery | Stay extras. Docs + `tools/rdna2_028` probes. Unique Blivion. QSA-HIP stays **off**. extras **#33** still skip / not dest. Do not dump. Do not copy tok/s. |
+| `a6ab43cf9661` | dest QSA HIP dest-presence (v0.30 port + store-stride fix) | Stay extras. ATen HIP. Unique Blivion dest landing (`d19b87ea` / `c5fd67ef`). `VLLM_RDNA_QSA_HIP` default **off**. Do not dump `qsa_rdna2`. Do not copy tok/s. |
 
 Other dest-fixed ISA (keep in tile locks, not a dump): GDN prefill `o`
 `i_t_local`; causal_conv FIR pre-shift then shift; ConfigH
@@ -80,7 +81,7 @@ Other dest-fixed ISA (keep in tile locks, not a dump): GDN prefill `o`
 
 Open extras PRs **#2** (GLM Later), **#18**. Draft **#10** sdot8,
 **#23** PCIe P2P KV, **#25** rdna_ar retained-output, **#31** W4
-exact-dequant, **#33** FA decode scores — skip. Closed
+exact-dequant, **#33** FA decode scores, **#35** TunableOp MTP=2 rows — skip. Closed
 **#3/#9/#16/#30/#32/#34** unmerged (**#9** superseded by dest W4A8 @
 `3a0786ea`; **#30** dest-landed independently @ `3fb9d43a`; **#32**
 dest-landed independently @ `a5059cf0`; **#34** dest-landed independently
@@ -89,7 +90,7 @@ dest-landed independently @ `a5059cf0`; **#34** dest-landed independently
 dest **#15**. Merged
 **#13/#14/#15/#17/#19/#20/#22/#24/#26/#27/#28/#29** dest *presence*;
 dest **#30** @ `3fb9d43a` / dest **#32** @ `a5059cf0` / dest **#34** @
-`ef8f0a28` dest-presence / tip `ab5ccf3d`. Observe, do not pick.
+`ef8f0a28` dest-presence / tip `a6ab43cf`. Observe, do not pick.
 `rdna_extras_wip_20260910` is not dest.
 
 ## Action
@@ -102,8 +103,8 @@ dest **#30** @ `3fb9d43a` / dest **#32** @ `a5059cf0` / dest **#34** @
 | GDN decode fp16 SSM state | **Later** `attention/gdn_scan`. Recurrence stays 16 fp32 VGPR. |
 | leapdragon `rdna_ar` + PIX helpers + dest T44b (`3b59ee16`) | **Later** `comm.pcie`. Still opt-in. Dest extras `MAX_KB` **64** (two-shot dest-off @ `101a16c8`). Zoo **512**. Do not pick squash. |
 | PR **#2** GLM-5.3 KDA/DSA | **Later** `kda_scan` / `dsa_nope` / `qsa_indexer`. Do not name tiles `glm5_*`. |
-| Serve, product HIP, dest-landed extras PRs, MTP, graph mode, `new_zeros`/`zeros_like`, `qwen4_exp/**` | **Stay extras.** Product gates default off (S6 revert). Dest **#27** opt-in ctypes consume; plans not ready. Dest **#28** / dest **#29** split decode / dest row-gate (`e0112c55`) / dest W4A8 (`3a0786ea`) / dest **#30** compile-dispatch (`3fb9d43a`) / dest MoE epilogue (`9cad8792`) / dest **#32** EXL3 mul1 (`a5059cf0`) / dest EXL3 loader (`30b0bd4e`) / dest TunableOp (`ac9dfd8f`) / dest EXL3 MTP + `serve_rdna` (`bc5fbee5`) / dest **#34** FA D=128 GQA (`ef8f0a28`) / dest **#34** bench follow-on (`bb40498c`) / dest not-FA/not-HIP sweep (`ab5ccf3d`) stay extras; do not dump. No body migrate. See SHA index. |
-| PR **#3** a17t / closed **#9** / explore **#10** sdot8 / closed **#12** / closed **#16** / PR **#18** / PR **#23** / PR **#25** / PR **#31** / PR **#33** | **Skip.** Second W4 family, not dest, serve-only. **#9** closed-unmerged (superseded by dest W4A8). **#16** unmerged. **#18** GPTQ `BLOCK_KN_SIZE` 256. **#23** PCIe P2P KV (HIP IPC SDMA; zoo `comm.pcie` is AR, not KV disagg). **#25** rdna_ar retained-output (George/Codex). **#31** W4 exact-dequant explore. **#33** FA decode scores. |
+| Serve, product HIP, dest-landed extras PRs, MTP, graph mode, `new_zeros`/`zeros_like`, `qwen4_exp/**` | **Stay extras.** Product gates default off (S6 revert). Dest **#27** opt-in ctypes consume; plans not ready. Dest **#28** / dest **#29** split decode / dest row-gate (`e0112c55`) / dest W4A8 (`3a0786ea`) / dest **#30** compile-dispatch (`3fb9d43a`) / dest MoE epilogue (`9cad8792`) / dest **#32** EXL3 mul1 (`a5059cf0`) / dest EXL3 loader (`30b0bd4e`) / dest TunableOp (`ac9dfd8f`) / dest EXL3 MTP + `serve_rdna` (`bc5fbee5`) / dest **#34** FA D=128 GQA (`ef8f0a28`) / dest **#34** bench follow-on (`bb40498c`) / dest not-FA/not-HIP sweep (`ab5ccf3d`) / dest QSA HIP (`a6ab43cf`) stay extras; do not dump. No body migrate. See SHA index. |
+| PR **#3** a17t / closed **#9** / explore **#10** sdot8 / closed **#12** / closed **#16** / PR **#18** / PR **#23** / PR **#25** / PR **#31** / PR **#33** / PR **#35** | **Skip.** Second W4 family, not dest, serve-only. **#9** closed-unmerged (superseded by dest W4A8). **#16** unmerged. **#18** GPTQ `BLOCK_KN_SIZE` 256. **#23** PCIe P2P KV (HIP IPC SDMA; zoo `comm.pcie` is AR, not KV disagg). **#25** rdna_ar retained-output (George/Codex). **#31** W4 exact-dequant explore. **#33** FA decode scores. **#35** TunableOp MTP=2 verify GEMM rows. |
 | PR **#5** / **#8** Flash-Next, extras **#11** wvSplitK, extras **#13** T44b, extras **#14**, extras **#15**, extras **#17**, extras **#19**, extras **#20**, extras **#21**, extras **#22**, extras **#24**, extras **#26**, extras **#27**, extras **#28**, extras **#29** | **Closed.** Dest-landed observe-only. Dest reverted wvSplitK (`5c4ab989`). Do not re-merge. Do not grow `gemv_f16`. |
 
 Bodies stay in extras because every dest HIP file includes `torch/all.h`.
@@ -111,12 +112,12 @@ A dump is not a migrate. CONTRIBUTING: do not edit extras from this repo.
 
 ## Dest file → tile
 
-Observed at `ab5ccf3d9f34`. Numbers are extras observations, not dest
+Observed at `a6ab43cf9661`. Numbers are extras observations, not dest
 locks. Fill tile READMEs.
 
 | extras path | hippihx tile | Notes |
 |---|---|---|
-| `csrc/rocm/fa_rdna2.cu` | `attention/fa_fdot2` | ~33 KiB decode / ~48 KiB prefill smem. GQA-subgroup default. O accumulator register-resident @ `d1b200b1`. Dest @ `48c56ef` pins `RDNA_ATTN` from API-server `VLLM_USE_RDNA2_FA`. Dest @ `bfd5286d` tile skip / dest **#29** @ `d94e2209` `cu_query_lens` split decode stay extras. Dest **#34** @ `284fbad0` / dest-presence `ef8f0a28` D=128 register-O GQA prefill (~14 KiB LDS dest observation). Dest tip `ab5ccf3d` is not-FA/not-HIP sweep (extras **#33** still skip; QSA-HIP stays off). Do not dump. Persist O stay extras. |
+| `csrc/rocm/fa_rdna2.cu` | `attention/fa_fdot2` | ~33 KiB decode / ~48 KiB prefill smem. GQA-subgroup default. O accumulator register-resident @ `d1b200b1`. Dest @ `48c56ef` pins `RDNA_ATTN` from API-server `VLLM_USE_RDNA2_FA`. Dest @ `bfd5286d` tile skip / dest **#29** @ `d94e2209` `cu_query_lens` split decode stay extras. Dest **#34** @ `284fbad0` / dest-presence `ef8f0a28` D=128 register-O GQA prefill (~14 KiB LDS dest observation). Dest tip `a6ab43cf` is QSA HIP dest-presence (still default **off**). Do not dump. Persist O stay extras. |
 | `csrc/rocm/gdn_decode_rdna2.cu` | `attention/gdn_scan` | 16 fp32 VGPR/thread. SSM `fp16` or `fp32` @ `02adbfd4`. `NULL_BLOCK_ID=0` is a vLLM sentinel — zoo is “invalid slot → zero out”. |
 | `csrc/rocm/gdn_prefill_*_rdna2.cu` | `attention/gdn_scan` | `o` uses `i_t_local`. Prefill HIP opt-in @ `cd1231fd`. Dispatch still misses dtype. |
 | `csrc/rocm/q_gemm_rdna2.cu` + `q_gemm_rdna2_prefill.cu` + `qdq_4_rdna2.cuh` | `gemm/w4a16_fdot2` | One family (`use_v2_format`). ConfigA for `M>256`. Dest deleted `q_gemm_rdna2_awq_prefill.cu` @ `1046782`. ZP still scale-baked. Dest @ `3a0786ea` K_STEP-aligns unusable POT splits. |
@@ -133,7 +134,7 @@ locks. Fill tile READMEs.
 | `vllm/.../quantization/exl3_ple.py` | — | Dest @ `c7bc9381`. `Exl3NgramTable` gather. Inert until PLE offload rewrite. Stay extras. Python. Do not dump. |
 | `csrc/rocm/causal_conv1d_rdna2.cu` | `sequence/causal_conv` | Scalar FMA, wave32. FIR on pre-shift then shift. Dest @ `b13effcb` gates HIP when `state_len != width-1`. Stay extras. Do not dump. |
 | `csrc/rocm/indexer_paged_mqa_rdna2.cu` | `attention/qsa_indexer` | DeepSeek-class indexer. |
-| `csrc/rocm/qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | `VLLM_RDNA_QSA_HIP` default **off**. |
+| `csrc/rocm/qsa_rdna2.cu` | `attention/qsa_indexer` (watch) | `VLLM_RDNA_QSA_HIP` default **off**. Dest @ `a6ab43cf` v0.30 port + store-stride fix dest-landed independently. Stay extras. Do not dump. |
 | `csrc/rocm/sparse_mla_rdna2.cu` | `attention/dsa_nope` | Sparse MLA class. |
 | `csrc/rocm/rdna_allreduce.{cu,cuh}` | `comm/pcie` | Uncached+push Later. Dest @ `3b59ee16`: flags in uncached VRAM + T44b wedge. Dest @ `22d6e346` two-shot; dest @ `101a16c8` two-shot **off** (library `MAX_KB` **64**). Zoo **512**. Do not dump. |
 | `vllm/model_executor/layers/hippihx_v1.py` | — | Dest @ `a3f7e5da` (extras **#27**). Opt-in `VLLM_HIPPIHX`. ctypes + `hippihx_v1_load`. Plans not ready. Stay extras. Do not dump. |
@@ -151,7 +152,7 @@ extras consume.
    journals FPP13 16k c=8 green via serve arenas — still extras.
 2. Tile README LDS / `__launch_bounds__` / wave / DOT unit are filled.
 3. hippihx ships one HIP entry extras can bind. **Started:** V1
-   `plan`/`run`. `run` is `NOT_READY`. extras @ `ab5ccf3d9f34` has opt-in
+   `plan`/`run`. `run` is `NOT_READY`. extras @ `a6ab43cf9661` has opt-in
    `VLLM_HIPPIHX` ctypes consume (dest **#27**). Still no
    `torch.ops.hippihx.*`. Plans not ready.
 4. extras is rewired **in extras**. The extras copy is then deleted.
@@ -161,10 +162,10 @@ Until then: observe, lock numbers, keep stubs. Tracker:
 
 ## Dest extras defects
 
-Dest tip `ab5ccf3d9f34`. Live dest bugs / rolled-back paths — hippihx
+Dest tip `a6ab43cf9661`. Live dest bugs / rolled-back paths — hippihx
 must not reproduce them.
 
-| Defect | Where | Status @ `ab5ccf3d` | Zoo lock |
+| Defect | Where | Status @ `a6ab43cf` | Zoo lock |
 |---|---|---|---|
 | `llvm.amdgcn.fdot2.bf16.bf16` ISel abort | Hybrid W4 gfx10 + bf16. Dest HIP has **no** `fdot2.bf16`. | **Serve-mitigated** (`59237b3`). | Never `fdot2.bf16`. DOT + GDN HIP = **fp16 act**. |
 | Scale-baked W4 zero-point | `qdq_4_rdna2.cuh` `prep_zero_scale_fp16`: `0xE400 \| zero` then `scale * (-1024 - zero)` in `half`. | **Still live** | Integer `q - zero`, then `* scale`. |
@@ -229,5 +230,5 @@ This review is documentation, not a kernel migrate.
 | Explore PRs **#9/#10** sdot | **Not taken** | **#9** closed-unmerged (superseded by dest W4A8 @ `3a0786ea`). **#10** still not dest. |
 | dest W4A8 sdot4 (`w4a8_sdot4_rdna2.*`, `moe_w4a8_rdna2.cu`) | dest @ `3a0786ea` BlivionIaG | Stay extras. Opt-in. Not a second W4 zoo family. Do not dump. |
 | dest MoE epilogue (`moe_accum_rdna2.cuh`) | dest @ `9cad8792` BlivionIaG | Stay extras. Packed-fp16 CAS default. `VLLM_RDNA2_MOE_FP32_ACCUM` opt-in. Do not dump. |
-| extras dest-presence serve (dest-landed extras PRs, dest **#29** split decode, dest row-gate `e0112c55`, dest W4A8 `3a0786ea`, dest **#30** `3fb9d43a`, dest MoE epilogue `9cad8792`, dest **#32** `a5059cf0`, dest EXL3 loader `30b0bd4e`, dest TunableOp `ac9dfd8f`, dest EXL3 MTP + `serve_rdna` `bc5fbee5`, dest **#34** `ef8f0a28` / bench `bb40498c` / sweep `ab5ccf3d`, mamba `741e5bc3`) | observe | Python/Triton/serve + dest-landed ATen HIP. No HIP migrate. Do not pick Cursor/George/Codex/Karl/Waldecir/a17t/Claude rewrites. Unique Aron Hsiao `rdna_ar` still pickable. |
-| extras not dest (**#16** closed / **#18** / **#23** / **#25** / **#31** / **#33**) | **Not taken** | GPTQ `BLOCK_KN_SIZE` 256. PCIe P2P KV. rdna_ar retained-output. W4 exact-dequant explore. FA decode scores. |
+| extras dest-presence serve (dest-landed extras PRs, dest **#29** split decode, dest row-gate `e0112c55`, dest W4A8 `3a0786ea`, dest **#30** `3fb9d43a`, dest MoE epilogue `9cad8792`, dest **#32** `a5059cf0`, dest EXL3 loader `30b0bd4e`, dest TunableOp `ac9dfd8f`, dest EXL3 MTP + `serve_rdna` `bc5fbee5`, dest **#34** `ef8f0a28` / bench `bb40498c` / sweep `ab5ccf3d` / QSA HIP `a6ab43cf`, mamba `741e5bc3`) | observe | Python/Triton/serve + dest-landed ATen HIP. No HIP migrate. Do not pick Cursor/George/Codex/Karl/Waldecir/a17t/Claude rewrites. Unique Aron Hsiao `rdna_ar` still pickable. |
+| extras not dest (**#16** closed / **#18** / **#23** / **#25** / **#31** / **#33** / **#35**) | **Not taken** | GPTQ `BLOCK_KN_SIZE` 256. PCIe P2P KV. rdna_ar retained-output. W4 exact-dequant explore. FA decode scores. TunableOp MTP=2 verify GEMM rows. |
