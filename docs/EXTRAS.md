@@ -7,18 +7,19 @@ one V1 op. Review: [`BACKPORT.md`](BACKPORT.md).
 ## Unvalidated extras inventory
 
 Snapshot of [`opengfx1030/vllm-rdna`](https://github.com/opengfx1030/vllm-rdna)
-`rdna_extras` @ `a6ab43cf9661` (2026-10-02 20:57 UTC). Dest default
+`rdna_extras` @ `121af1b4786f` (2026-10-04 19:01 UTC). Dest default
 branch is **`rdna_extras`**. `main` is upstream vLLM `c00091e02670`.
 Merged extras [PR #1](https://github.com/opengfx1030/vllm-rdna/pull/1)
-squash is `a4060647cfbb`. Open **#2**, **#18**. Draft **#10**, **#23**,
-**#25**, **#31**, **#33**, **#35**. Closed **#3/#9/#16/#30/#32/#34** unmerged
+squash is `a4060647cfbb`. Open **#2**, **#18**, **#38**. Draft **#10**, **#23**,
+**#25**, **#31**, **#33**, **#35**, **#37**. Closed **#3/#9/#16/#30/#32/#34** unmerged
 (**#9** superseded by dest W4A8; **#30** dest-landed independently @
 `3fb9d43a`; **#32** dest-landed independently @ `a5059cf0`; **#34**
 dest-landed independently @ `284fbad0` / dest-presence `ef8f0a28`); **#21**
 dest-integrated unmerged; **#12** superseded by **#15**. Merged **#13**,
 **#14**, **#15**, **#17**, **#19**, **#20**, **#22**, **#24**, **#26**,
-**#27**, **#28**, **#29**. Dest **#30** @ `3fb9d43a` / dest **#32** @
-`a5059cf0` / dest **#34** @ `ef8f0a28` dest-presence / tip `a6ab43cf`. **No**
+**#27**, **#28**, **#29**, **#36**. Dest **#30** @ `3fb9d43a` / dest **#32** @
+`a5059cf0` / dest **#34** @ `ef8f0a28` dest-presence / dest QSA HIP
+`a6ab43cf` / tip `121af1b`. **No**
 `torch.ops.hippihx.*`. Dest **#27** is opt-in `VLLM_HIPPIHX` ctypes
 consume (default **off**; plans not ready).
 
@@ -38,7 +39,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 
 | Kernel / op | extras | hippihx tile | Notes |
 |---|---|---|---|
-| FA paged decode / prefill / split-K / short / GQA | `fa_rdna2.cu` | `attention/fa_fdot2` | `fdot2`. Occupancy pin closed. GQA-subgroup default. O register-resident @ `d1b200b1`. Dest **#28** @ `bfd5286d` tile skip / dest **#34** @ `ef8f0a28` D=128 register-O GQA prefill stay extras. Dest tip `a6ab43cf` is QSA HIP dest-presence (default **off**). Do not dump. Persist O stay extras. **unvalidated** |
+| FA paged decode / prefill / split-K / short / GQA | `fa_rdna2.cu` | `attention/fa_fdot2` | `fdot2`. Occupancy pin closed. GQA-subgroup default. O register-resident @ `d1b200b1`. Dest **#28** @ `bfd5286d` tile skip / dest **#34** @ `ef8f0a28` D=128 register-O GQA prefill stay extras. Dest tip `121af1b` is extras **#36** adaptive prefill (serve). QSA HIP dest-presence stays `a6ab43cf` (default **off**). Do not dump. Persist O stay extras. **unvalidated** |
 | FA INT8 KV writer | `reshape_and_cache_int8_rdna2` | `attention/fa_fdot2` | INT8 cache layout. **unvalidated** |
 | FA fp16 flash KV writer | `reshape_and_cache_flash_rdna2` | `attention/fa_fdot2` | Non-native KV. `__launch_bounds__(128, 4)`. **unvalidated** |
 | W4A16 dense decode | `q_gemm_rdna2.cu` | `gemm/w4a16_fdot2` | GPTQ + AWQ = pack/zeros, one GEMM. Dest ZP is scale-baked `half` — zoo uses integer `q-zero` then scale. **unvalidated** |
@@ -74,10 +75,13 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | TunableOp unify / EXL3 27B rows / gemma_rms fake | dest @ `ac9dfd8f` (`tunableop/rocblas-f30bb442e9b5`, `gemma_rms_norm_fake`) | — | Stay extras. Serve/ops + inductor fake. Unique Blivion. Do not dump. Do not copy tok/s. |
 | EXL3 MTP draft + `serve_rdna` recipes | dest @ `bc5fbee5` (`exl3.py` `mtp.fc`, `serve_rdna.sh`, HIP conv `state_len` gate) | — | Stay extras. Dest serves EXL3 quantized MTP. No zoo MTP tile. Unique Blivion. Do not dump. Do not copy tok/s. |
 | FA decode scores / 4 barriers | draft PR **#33** | — | **skip** — not dest. Dest @ `ab5ccf3d` still not merged. Do not dump `fa_rdna2` |
-| FA D=128 prefill register-O GQA | dest PR **#34** @ `ef8f0a28` / bench `bb40498c` | `attention/fa_fdot2` | Stay extras. `HEAD_DIM` 128/256; ~14 KiB LDS dest observation. Dest tip `a6ab43cf` is QSA HIP dest-presence. GitHub closed-unmerged. Do not dump `fa_rdna2`. Do not copy tok/s. |
+| FA D=128 prefill register-O GQA | dest PR **#34** @ `ef8f0a28` / bench `bb40498c` | `attention/fa_fdot2` | Stay extras. `HEAD_DIM` 128/256; ~14 KiB LDS dest observation. Dest tip `121af1b` is extras **#36** adaptive prefill (serve). QSA HIP dest-presence stays `a6ab43cf`. GitHub closed-unmerged. Do not dump `fa_rdna2`. Do not copy tok/s. |
 | not-FA/not-HIP sweep + probes | dest @ `ab5ccf3d` (`tools/rdna2_028`) | — | Stay extras. Docs + A/B probes. Unique Blivion. extras **#33** still skip. Do not dump. Do not copy tok/s. |
 | QSA HIP v0.30 port + store-stride | dest @ `a6ab43cf` (`qsa_rdna2.cu`) | `attention/qsa_indexer` (watch) | Stay extras. Unique Blivion dest landing. Default **off**. Do not dump. Do not copy tok/s. |
 | TunableOp MTP=2 verify GEMM rows | draft PR **#35** | — | **skip** — not dest. Serve/ops. Do not copy tok/s. |
+| Adaptive prefill chunk cap + cadence | dest PR **#36** @ `121af1b` (`dynamic_prefill.py`) | — | Stay extras. Python scheduler. Foreign Waldecir / wsantos. `VLLM_RDNA_DYNAMIC_PREFILL` default **off**. Do not dump. Do not pick. Do not copy tok/s. |
+| Routed-expert DRAM residency cache | draft PR **#37** | — | **skip** — not dest. Serve/ops. `VLLM_RDNA_MOE_EXPERT_OFFLOAD` default **off**. Do not dump. |
+| Restore mixed decode+prefill batching | PR **#38** | — | **skip** — not dest. Serve/scheduler. Removes `VLLM_ROCM_NO_MIXED_BATCH`. Do not dump. Do not copy tok/s. |
 | Explore W4A8 sdot4 / W4A4 sdot8 | extras PRs **#9/#10** | — | **#9** closed-unmerged (superseded by dest W4A8 @ `3a0786ea`). **#10** **skip** — not dest |
 | Resident W4A16 MoE skinny decode | `moe_resident_decode.cu` (dest **#17** @ `e1315629`) | `moe/routed` (watch) | Stay extras. Opt-in `VLLM_RDNA_MOE_RESIDENT*`. ATen HIP. Do not dump. Closed **#16** unmerged. **unvalidated** |
 
@@ -106,6 +110,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | hippihx V1 consume | dest **#27** ctypes + `hippihx_v1_load` | **off** (`VLLM_HIPPIHX=0`) | extras; plans not ready |
 | W4 compile-dispatch | dest **#30** `torch.ops.vllm.rdna2_w4a16_gemm` | **off** (`VLLM_RDNA2_W4A16_RUNTIME_DISPATCH=0`) | extras; dest keeps default off |
 | MoE epilogue accum | dest @ `9cad8792` packed-fp16 CAS | **off** (`VLLM_RDNA2_MOE_FP32_ACCUM=0`); `=1` is fp32 scratch | extras |
+| Adaptive prefill | dest **#36** @ `121af1b` live chunk cap + step cadence | **off** (`VLLM_RDNA_DYNAMIC_PREFILL=0`) | extras; serve/scheduler |
 
 ### Env (extras-added / extras-used)
 
@@ -137,6 +142,7 @@ stay extras (no D2H under capture in the zoo).
 | `VLLM_RDNA2_W4A8_SDOT4` | unset / `"0"` (dest @ `3a0786ea`; only `"1"` enables) | opt-in W4A8 sdot4 prefill |
 | `VLLM_RDNA2_W4A16_RUNTIME_DISPATCH` | `"0"` (dest **#30** @ `3fb9d43a`; only `"1"` enables) | opt-in W4 compile-time M-dispatch via custom op |
 | `VLLM_RDNA2_MOE_FP32_ACCUM` | `False` (dest @ `9cad8792`; only `"1"` enables) | opt-in MoE fp32 scratch epilogue; dest default is packed-fp16 CAS |
+| `VLLM_RDNA_DYNAMIC_PREFILL` | `"0"` (dest **#36** @ `121af1b`; only `"1"` enables) | opt-in adaptive prefill chunk cap + step cadence |
 | `VLLM_HIPPIHX_LIB` / `VLLM_HIPPIHX_CODE_OBJECT` | unset | `libhippihx_v1.so` / `hippihx_<arch>.hsaco` |
 | `VLLM_RDNA_MOE_RESIDENT` / `VLLM_RDNA_MOE_RESIDENT_SKINNY` | `"0"` (dest **#17** @ `e1315629`) | resident W4A16 MoE layout / skinny decode |
 | `VLLM_FA_RDNA2_GQA_MODE` | `subgroup` | FA GQA-subgroup prefill |
@@ -175,10 +181,10 @@ split decode / dest row-gate `e0112c55` / dest W4A8 `3a0786ea` / dest
 **#30** compile-dispatch `3fb9d43a` / dest MoE epilogue `9cad8792` /
 dest **#32** EXL3 mul1 `a5059cf0` / dest EXL3 loader `30b0bd4e` / dest
 TunableOp `ac9dfd8f` / dest EXL3 MTP + `serve_rdna` `bc5fbee5` / dest
-**#34** FA D=128 GQA `ef8f0a28` / bench follow-on `bb40498c` / dest sweep `ab5ccf3d` / dest QSA HIP `a6ab43cf` (observe, do not pick). Skip: a17t
+**#34** FA D=128 GQA `ef8f0a28` / bench follow-on `bb40498c` / dest sweep `ab5ccf3d` / dest QSA HIP `a6ab43cf` / dest **#36** adaptive prefill `121af1b` (observe, do not pick). Skip: a17t
 PR **#3**, PR **#18** GPTQ `BLOCK_KN_SIZE` 256, draft PR **#23** PCIe
 P2P KV, draft PR **#25** rdna_ar retained-output, draft PR **#31** W4
-exact-dequant explore, draft PR **#33** FA decode scores, draft PR **#35** TunableOp MTP=2 rows, closed **#9**
+exact-dequant explore, draft PR **#33** FA decode scores, draft PR **#35** TunableOp MTP=2 rows, draft PR **#37** MoE expert DRAM residency, PR **#38** restore mixed batch, closed **#9**
 (superseded), closed **#30** / **#32** / **#34** (dest-landed
 independently), explore **#10**, closed PR **#12**, closed PR **#16**,
 closed **#5/#11**. Produce stays outside hippihx.

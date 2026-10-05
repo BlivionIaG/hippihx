@@ -126,6 +126,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "bb40498c" in extras
     assert "ab5ccf3d" in extras
     assert "a6ab43cf" in extras
+    assert "121af1b" in extras
     assert "rdna2_028" in extras
     assert "exl3_project_rdna2" in extras
     assert "gemma_rms_norm_fake" in extras
@@ -135,6 +136,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "VLLM_RDNA2_W4A8_SDOT4" in extras
     assert "VLLM_RDNA2_W4A16_RUNTIME_DISPATCH" in extras
     assert "VLLM_RDNA2_MOE_FP32_ACCUM" in extras
+    assert "VLLM_RDNA_DYNAMIC_PREFILL" in extras
     assert "e45dd5c" in extras
     assert "d1b200" in extras
     assert "1046782" in extras
@@ -190,6 +192,7 @@ def test_readme_unvalidated_inventory() -> None:
     assert "bb40498c" in bp
     assert "ab5ccf3d" in bp
     assert "a6ab43cf" in bp
+    assert "121af1b" in bp
     assert "rdna2_028" in bp
     assert "exl3_project_rdna2" in bp
     assert "gemma_rms_norm_fake" in bp
@@ -244,13 +247,17 @@ def test_readme_unvalidated_inventory() -> None:
     assert "PR **#33**" in extras or "PR **#33**" in bp
     assert "PR **#34**" in extras or "PR **#34**" in bp
     assert "PR **#35**" in extras or "PR **#35**" in bp
+    assert "PR **#36**" in extras or "PR **#36**" in bp
+    assert "PR **#37**" in extras or "PR **#37**" in bp
+    assert "PR **#38**" in extras or "PR **#38**" in bp
     assert "VLLM_RDNA_MOE_RESIDENT" in extras
     assert "moe_resident" in extras
     contrib = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
-    assert "a6ab43cf" in contrib
+    assert "121af1b" in contrib
     assert "a4060647" in contrib
     # CONTRIBUTING is tip-only. Historical dest SHAs live in BACKPORT.
     for token in (
+        "a6ab43cf",
         "ab5ccf3d",
         "bb40498c",
         "ef8f0a28",
