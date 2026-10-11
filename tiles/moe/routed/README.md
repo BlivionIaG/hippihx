@@ -16,4 +16,7 @@ prealloc (`4b799bf4`) stays extras. Dest extras **#17** @ `e1315629`
 resident skinny (`moe_resident_decode.cu`) is dest-landed ATen HIP;
 `VLLM_RDNA_MOE_RESIDENT*` default **off**. Dest @ `9cad8792` packed-fp16
 CAS epilogue is dest default; `VLLM_RDNA2_MOE_FP32_ACCUM` is opt-in.
-Stay extras. Do not dump `moe_accum_rdna2.cuh`. Closed **#16** unmerged.
+Dest @ `c6d99ca` selects prefill `block_size_m=8` for large token
+counts (`VLLM_RDNA2_MOE_BSM_LARGE` / `_MIN_TOKENS`). Dest tip `7813953`
+is dest **#47** v0.31 port (serve). Stay extras. Do
+not dump `moe_accum_rdna2.cuh`. Closed **#16** unmerged.
