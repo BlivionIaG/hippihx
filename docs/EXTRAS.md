@@ -101,7 +101,7 @@ Status: **extras** = live on dest tip · **Later** = side branch ·
 | Decline asymmetric MoE checkpoints | dest PR **#84** @ `64d59b89` | — | Stay extras. Python only. Unique Blivion dest landing. Native RDNA2 MoE declines asymmetric weights (Triton WNA16 fallback). Do not dump. Do not copy tok/s. |
 | Bounded-memory PLE short-conv prefill | dest PR **#85** @ `a77e9e6d` | — | Stay extras. Unique Blivion dest landing. Python. Opt-in HIP path untouched. Do not dump. Do not copy tok/s. |
 | Qwen4Exp PLE INC (AutoRound) | dest PR **#91** @ `2893bdd7` | — | Stay extras. Python only. Cherry-pick upstream vllm#59990 (Vadim Gimpelson + Claude). Do not pick. Do not dump. Do not copy tok/s. |
-| Flash-Next PP + MTP drafter quantizer | dest PR **#82** @ `e245a469` | — | Stay extras. Python/serve/tools. Unique Blivion dest landing of **#80** PP=3 + **#58** PLE sidecar under PP + **#59** MTP drafter W4A16 quantizer. Foreign Alan/alanoo81 — do not pick. Do not dump. Do not copy tok/s. |
+| Flash-Next PP + MTP drafter quantizer | dest PR **#82** @ `e245a469` | — | Stay extras. Python/serve/tools. Unique Blivion dest landing of PR **#80** PP=3 + PR **#58** PLE sidecar under PP + PR **#59** MTP drafter W4A16 quantizer. Foreign Alan/alanoo81 — do not pick. Do not dump. Do not copy tok/s. |
 | Advertise `serve_rdna` + wiki | draft PR **#50** | — | **skip** — not dest. Docs only. |
 | Glm5Next through upstream model | draft PR **#51** | — | **skip** — not dest. Later. |
 | Launcher GQA decode default off | draft PR **#53** | — | **skip** — not dest. Serve scripts. |

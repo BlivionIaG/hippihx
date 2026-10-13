@@ -89,7 +89,7 @@ until a body migrates and extras binds it.
 | `64d59b8942d3` | extras PR **#84** dest-presence (decline asymmetric MoE) | Stay extras. Python only. Unique Blivion dest landing. Native RDNA2 MoE declines asymmetric checkpoints (Triton WNA16 fallback). Do not dump. Do not copy tok/s. |
 | `a77e9e6d2063` | extras PR **#85** dest-presence (PLE short-conv mem) | Stay extras. Python only. Unique Blivion dest landing. Bounded-memory PLE short-conv prefill (8k-batch OOM). Opt-in HIP path untouched. Do not dump. Do not copy tok/s. |
 | `2893bdd78fb2` | extras PR **#91** dest-presence (INC AutoRound PLE) | Stay extras. Python only. Cherry-pick upstream vllm#59990. Foreign Vadim Gimpelson + Claude. Do not pick. Do not dump. Do not copy tok/s. |
-| `e245a4697a13` | extras PR **#82** dest-presence (PP + MTP bundle) | Stay extras. Python/serve/tools. Unique Blivion dest landing of **#80** PP=3 + **#58** PLE sidecar under PP + **#59** MTP drafter W4A16 quantizer. Foreign Alan/alanoo81 — do not pick. Do not dump. Do not copy tok/s. |
+| `e245a4697a13` | extras PR **#82** dest-presence (PP + MTP bundle) | Stay extras. Python/serve/tools. Unique Blivion dest landing of PR **#80** PP=3 + PR **#58** PLE sidecar under PP + PR **#59** MTP drafter W4A16 quantizer. Foreign Alan/alanoo81 — do not pick. Do not dump. Do not copy tok/s. |
 
 Other dest-fixed ISA (keep in tile locks, not a dump): GDN prefill `o`
 `i_t_local`; causal_conv FIR pre-shift then shift; ConfigH
