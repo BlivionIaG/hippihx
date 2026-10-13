@@ -16,4 +16,10 @@ prealloc (`4b799bf4`) stays extras. Dest extras **#17** @ `e1315629`
 resident skinny (`moe_resident_decode.cu`) is dest-landed ATen HIP;
 `VLLM_RDNA_MOE_RESIDENT*` default **off**. Dest @ `9cad8792` packed-fp16
 CAS epilogue is dest default; `VLLM_RDNA2_MOE_FP32_ACCUM` is opt-in.
-Stay extras. Do not dump `moe_accum_rdna2.cuh`. Closed **#16** unmerged.
+Dest @ `c6d99ca` selects prefill `block_size_m=8` for large token
+counts (`VLLM_RDNA2_MOE_BSM_LARGE` / `_MIN_TOKENS`). Dest **#65** @
+`efe9cf5d` opt-in W4A8 MoE prefill (`VLLM_RDNA2_W4A8_SDOT4=1`, ≥512
+tokens). Dest **#84** @ `64d59b89` decline asymmetric MoE
+(Python). Dest tip `e245a469` is dest **#82** PP + MTP bundle
+(Python/serve). Stay extras. Do
+not dump `moe_accum_rdna2.cuh`. Closed **#16** unmerged.
