@@ -23,7 +23,8 @@ Dest @ `820465` recorded a Flash-Next **Triton** `forward_qsa` GPU trap
 the 2-warp prefill spill as that abort. Dest since then: eager QSA
 break (`8cf0dedb`) serves; dest V1 maps FULL→PIECEWISE (`1ff73596`).
 HIP `qsa_rdna2.cu` is dest-present @ `a6ab43cf` (v0.30 port +
-store-stride fix) and still default **off**. Dest @ `e45dd5cb`
+store-stride fix) and still default **off**. Dest tip `a01f2637` is
+dest **#106** test cleanup (not HIP). Dest **#94** MonoKernel decode stays dest-landed opt-in (`--monokernel`; includes HIP QSA decode part). Draft **#99** QSA/GDN HIP prefill is skip / not dest (foreign wsantos/Waldecir). Dest @ `e45dd5cb`
 fixed extras prefix hits when the QSA compression ring is empty at a
 group boundary — stay extras. Dest extras **#15** @ `f3dd65fa` bounds
 Triton prefill scoring to live context — Python only. Do not dump
