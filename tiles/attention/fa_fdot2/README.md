@@ -41,9 +41,16 @@ FA-RDNA2. Dest extras **#28** @ `bfd5286d` and dest **#29** @ `d94e2209` /
 `e0112c55` (`cu_query_lens` split decode + row gate) stay extras.
 Dest extras **#34** @ `284fbad0` / dest-presence `ef8f0a28` dest-lands
 D=128 register-O GQA prefill (`HEAD_DIM` 128/256; ~14 KiB LDS dest
-observation). Dest tip `a6ab43cf` is QSA HIP dest-presence (still
-default **off**), not FA HIP. GitHub closed-unmerged. Stay extras. Do
-not dump. Do not pick Claude. No tok/s.
+observation). Dest tip `12a46f40` is dest **#137** MTP2 MonoKernel
+execution (opt-in `--monokernel`). Dest **#132** @ `30d6e82d` DFlash2 +
+FA-RDNA2 BLHNC cache stays dest-landed. Dest **#132** BF16 noncausal FA
+converts tiles to FP16 for `V_DOT2` (zoo still never `fdot2.bf16`; V1
+still refuses bf16). Dest **#117** EXL3 Flash-Next serve stays
+dest-landed. Dest **#106** test cleanup stays dest-landed. Dest **#94**
+MonoKernel decode stays dest-landed opt-in (`--monokernel`). Dest **#130**
+dest-on QSA/GDN/HC HIP in Flash-Next recipes (`VLLM_RDNA_ALL_HIP`).
+GitHub closed-unmerged.
+Stay extras. Do not dump. Do not pick Claude. No tok/s.
 
 ## V1 rev 4 contract (pinned)
 

@@ -16,4 +16,17 @@ prealloc (`4b799bf4`) stays extras. Dest extras **#17** @ `e1315629`
 resident skinny (`moe_resident_decode.cu`) is dest-landed ATen HIP;
 `VLLM_RDNA_MOE_RESIDENT*` default **off**. Dest @ `9cad8792` packed-fp16
 CAS epilogue is dest default; `VLLM_RDNA2_MOE_FP32_ACCUM` is opt-in.
-Stay extras. Do not dump `moe_accum_rdna2.cuh`. Closed **#16** unmerged.
+Dest @ `c6d99ca` selects prefill `block_size_m=8` for large token
+counts (`VLLM_RDNA2_MOE_BSM_LARGE` / `_MIN_TOKENS`). Dest **#65** @
+`efe9cf5d` opt-in W4A8 MoE prefill (`VLLM_RDNA2_W4A8_SDOT4=1`, ≥512
+tokens). Dest **#84** @ `64d59b89` declined asymmetric MoE
+(Python). Dest **#98** @ `8bb8ff36` runtime `use_v2_format` zp
+accepts 4-bit asymmetric compressed-tensors; 8-bit still falls back.
+Dest **#117** @ `36f456d2` EXL3 Flash-Next serve (fused EXL3 MoE). Dest
+tip `12a46f40` is dest **#137** MTP2 MonoKernel (opt-in `--monokernel`).
+Dest **#132** @ `30d6e82d` DFlash2 + FA BLHNC stays dest-landed. Dest
+**#131** @ `3804d495` no shared-experts aux-stream fork in CUDA graphs
+on gfx10x. Dest **#106** test cleanup stays dest-landed. Dest **#94**
+MonoKernel decode stays dest-landed opt-in (`--monokernel`; k2 routed
+W4A16). Stay extras. Do not dump `moe_accum_rdna2.cuh`. Closed **#16**
+unmerged.
