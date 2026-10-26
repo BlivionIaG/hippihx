@@ -26,8 +26,16 @@ extras **#32** @ `a5059cf0` dest-lands unsigned mul1 + K=1..8 dispatch
 and dest-fixes MoE n-tile staging (GitHub closed-unmerged). Dest @
 `30b0bd4e` dest-lands the v0.30 loader, fused `exl3_project_rdna2`,
 `Exl3MoEMethod`, and inert `Exl3NgramTable` PLE gather. Dest @
-`b13effcb` serves the EXL3 quantized MTP draft. Dest tip `a6ab43cf`
-is QSA HIP dest-presence, not EXL3 HIP. Stay extras. Do not dump.
+`b13effcb` serves the EXL3 quantized MTP draft. Dest **#117** @
+`36f456d2` EXL3 Flash-Next serve (5 bpw on decode-once GEMM; fused
+EXL3 MoE; PLE EXL3 n-gram sidecar). Dest tip `8015ea48` is dest **#141**
+stale docs / MD060 (no HIP). Dest **#140** @ `0b4533ee` fp16 SSM /
+derived prefill budget / W4A8 prefill stays dest-landed. Dest **#139**
+@ `005db032` V620 CU-count comments stays dest-landed. Dest **#138**
+@ `2d461709` INT4 KV native QSA read stays dest-landed (never NVFP4). Dest **#134** @ `8cc4e2d5`
+INT4+FP16 KV block-scale stays dest-landed. Dest **#137** @ `12a46f40` MTP2
+MonoKernel stays dest-landed (opt-in `--monokernel`). Dest **#132** @
+`30d6e82d` DFlash2 + FA BLHNC stays dest-landed. Dest **#106** test cleanup stays dest-landed. Dest **#94** MonoKernel decode stays dest-landed opt-in (`--monokernel`). Stay extras. Do not dump. Do not copy tok/s.
 UNC-26 is
 still In Progress on extras — do not copy bodies until produce/consume
 and capture buffers stop moving. Port and later perf commits stay
